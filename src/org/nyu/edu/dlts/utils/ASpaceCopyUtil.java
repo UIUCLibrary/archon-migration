@@ -2162,7 +2162,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
             json.put("type", containerType);
 
             // if a linked location is specified add its data
-            if (location != null) addLocationInfo(json, location);
+            if (location != null) {
+                addLocationInfo(json, location);
+                //if shelf field is a barcode, add that to the top container
+                String barcodeAsShelf = location.getString("Shelf");
+                if (isBarcode(barcodeAsShelf)) {
+                    json.put("barcode",barcodeAsShelf);
+                }
+            }
 
             // save the top container record and get its uri
             String id = saveRecord(repoURI + ASpaceClient.TOP_CONTAINER_ENDPOINT, json.toString(), "Collection content->" + cid);
