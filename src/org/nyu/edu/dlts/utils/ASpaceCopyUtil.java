@@ -172,6 +172,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private String defaultRepositoryId;
 
     // variable to set the default instance type
+    // todo: set using the GUI
     private String defaultInstanceType = "mixed materials";
 
     // a hashmap for getting Archon enum IDs from enum values
@@ -1843,7 +1844,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
                 // add an instance that holds the location information
                 if(collection.has("Locations")) {
-                    addLocationInstances(resourceJS, collection.getJSONArray("Locations"), "text",
+                    addLocationInstances(resourceJS, collection.getJSONArray("Locations"), defaultInstanceType,
                             topContainerURIs, repoURI);
                 }
 
@@ -2090,7 +2091,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // create a json object for the instance
         JSONObject json = new JSONObject();
 
-        json.put("instance_type", "text");
+        json.put("instance_type", defaultInstanceType);
 
         // json object for the sub container
         JSONObject containerJS = new JSONObject();
