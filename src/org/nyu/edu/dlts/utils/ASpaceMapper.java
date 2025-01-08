@@ -1351,6 +1351,17 @@ public class ASpaceMapper {
 
         addMultipartNote(notesJA, "phystech", "Technical Access Requirements", record.getString("TechnicalAccess"));
 
+        //add language of materials note for all languages identified at the collection level
+        //todo: add each language separately to the same note as you can in the staff user interface
+        if(record.has("Languages")) {
+            JSONArray languageIds = record.getJSONArray("Languages");
+            for (int i = 0; i < languageIds.length(); i++) {
+                //should produce "<language langcode='eng'>English</language>" for English, as an example
+                noteContent = "<language langcode='" + languageIds[i] +"'>" + languageCodes.getString(languageIds[i]) + "</language>";
+                addSinglePartNote(notesJA, "langmaterial", "Language of Materials", noteContent);
+            }
+        }
+
         addMultipartNote(notesJA, "acqinfo", "Source of Acquisition", record.getString("AcquisitionSource"));
 
         addMultipartNote(notesJA, "acqinfo", "Method of Acquisition", record.getString("AcquisitionMethod"));
