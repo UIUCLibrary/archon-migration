@@ -947,7 +947,7 @@ public class ASpaceMapper {
             while (resourceIDs.contains(id)) {
                 id = "##" + randomString.nextString();
             }
-            aspaceCopyUtil.addErrorMessage("Empty collection ID. Changed to " + id + "\n");
+            aspaceCopyUtil.addErrorMessage("Empty collection ID for collection with Archon ID " + dbId + ". Changed to " + id + "\n");
         }
 
         String classificationID = record.getString("ClassificationID");
@@ -1696,7 +1696,7 @@ public class ASpaceMapper {
 
                 resourceIDs.add(fullId);
 
-                message = "Duplicate Resource Id: " + id + " Changed to: " + fullId + "\n";
+                message = "Duplicate Resource Id: " + id +"(Archon ID " + dbId + ") Changed to: " + fullId + "\n";
                 aspaceCopyUtil.addErrorMessage(message);
             }
 
