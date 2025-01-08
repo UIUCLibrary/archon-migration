@@ -2118,6 +2118,20 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+    * method to check whether a string is likely a barcode (14 characters long)
+    * todo: also check that it consists of digits rather than letters or other characters
+    @param possibleBarcode
+    @return
+     */
+     private Boolean isBarcode(String possibleBarcode){
+        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty() && length(possibleBarcode)==14) {
+            return true;
+        } else {
+            return false;
+        }
+     }
+
+    /**
      * method to add a top container to ASpace or return the URI of a previously added equivalent one
      * @param containerType
      * @param containerIndicator
