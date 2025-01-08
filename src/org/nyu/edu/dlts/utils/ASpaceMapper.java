@@ -922,7 +922,11 @@ public class ASpaceMapper {
         json.put("title", title);
 
         // add the language code
-        json.put("language", getLanguageCode(null, "eng"));
+        if(record.has("Languages")){
+            json.put("language", getLanguageCode(record.getJSONArray("Languages"), "eng"));
+        } else {
+            json.put("language", getLanguageCode(null, "eng"));
+        }
 
         // add the extent array containing one object or many depending if we using multiple extents
         addResourceExtent(record, json);
