@@ -976,11 +976,20 @@ public class ASpaceMapper {
             cId = classificationParents.get(cId);
         }
 
-        idParts[0] = fullId.pop();
-        if (!fullId.isEmpty()) idParts[1] = fullId.pop();
-        if (!fullId.isEmpty()) idParts[2] = fullId.pop();
-        while (fullId.size() > 1) idParts[2] += "-" + fullId.pop();
-        if (!fullId.isEmpty()) idParts[3] = fullId.pop();
+        //if there is an identifier prefix, add it to the front of the existing identifier
+        if(!identifierPrefix.isEmpty()) {
+            idParts[0] = identifierPrefix;
+            idParts[1] = fullId.pop();
+            if (!fullId.isEmpty()) idParts[2] = fullId.pop();
+            while (fullId.size() > 1) idParts[2] += "-" + fullId.pop();
+            if (!fullId.isEmpty()) idParts[3] = fullId.pop();
+        } else {
+            idParts[0] = fullId.pop();
+            if (!fullId.isEmpty()) idParts[1] = fullId.pop();
+            if (!fullId.isEmpty()) idParts[2] = fullId.pop();
+            while (fullId.size() > 1) idParts[2] += "-" + fullId.pop();
+            if (!fullId.isEmpty()) idParts[3] = fullId.pop();
+        }
 
         // make sure the id is unique
         getUniqueID(ASpaceClient.RESOURCE_ENDPOINT, "", idParts, title);
