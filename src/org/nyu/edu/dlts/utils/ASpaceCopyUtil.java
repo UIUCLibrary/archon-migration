@@ -171,6 +171,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // the default repository id
     private String defaultRepositoryId;
 
+    // variable to set the default instance type
+    private String defaultInstanceType = "mixed materials";
+
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
 
@@ -226,6 +229,17 @@ public class ASpaceCopyUtil implements  PrintConsole {
             baseURI = baseURI + "/";
         }
         mapper.setDigitalObjectBaseURI(baseURI);
+    }
+
+    
+    /**
+     * Method to set the default instance type
+     *
+     * @param instanceType
+     */
+    public void setDefaultInstanceType(String instanceType) {
+        //todo: check that the string is a valid instance type for aspace
+        defaultInstanceType = instanceType;
     }
 
     /**
