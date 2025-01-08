@@ -402,7 +402,8 @@ public class ASpaceMapper {
 
         agentJS.put("vocabulary", vocabularyURI);
 
-        agentJS.put("publish", true);
+        publishRecord = true; //all creators are public in Archon
+        agentJS.put("publish", publishRecord);
 
         // hold name information
         JSONArray namesJA = new JSONArray();
