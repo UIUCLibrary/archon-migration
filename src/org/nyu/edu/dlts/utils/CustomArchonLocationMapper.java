@@ -31,7 +31,11 @@ public class CustomArchonLocationMapper {
      * @param customOption
      */
     public CustomArchonLocationMapper(String customOption){
-        setLocationMappingVariables(customOption);
+        if(customOption != null && customOption != ""){
+            setLocationMappingVariables(customOption);
+        } else {
+            setLocationMappingVariables("default");
+        }
         loadLocationMapping();
     }
 
