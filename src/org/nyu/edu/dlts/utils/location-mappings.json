@@ -1,0 +1,5 @@
+{
+    "Location Example1": {"LocationText": "Location 2", "Building": "Example Main Building Name", "Floor": "1", "Room": "101", "Area": "Area 1"},
+    "Location Example2": {"LocationText": "Location 2", "Building": "Example Main Building Name", "Floor": "2", "Room": "201", "Area": "Area 2"},
+    "Location Example3": {"LocationText": "Location 3", "Building": "Example Offsite Building Name", "Floor": "1", "Room": "103", "Area": "Area 3"}
+}
