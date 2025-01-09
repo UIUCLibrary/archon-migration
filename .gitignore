@@ -5,4 +5,4 @@ META-INF/
 out/
 archon_migration.iml
 /logs/*.xml
-src/org/nyu/edu/dlts/utils/ala-location-mappings.json
+src/org/nyu/edu/dlts/utils/uiuc/
