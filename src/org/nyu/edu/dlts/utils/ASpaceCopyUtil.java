@@ -174,6 +174,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
 
+    //default container label if not found in content string for locations
+    String containerDefaultType = "box";
+    Boolean addDefaultContainerType = true;
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -2035,7 +2039,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
         }
 
         // if no type was found, type will be empty and the indicator will be location content
-        if (containerTypeID == null) containerIndicator = content;
+        if (containerTypeID == null) {
+            containerIndicator = content;
+            //if no type found, provide a default label if specified
+            if(addDefaultContainerType && containerDefaultType != null){
+                containerTypeID = getContainerTypeArchonID(containerDefaultType);
+            }
+        }
 
         // find the ASpace container type the Archon physical content type maps to
         containerType = enumUtil.getASpaceInstanceContainerType(containerTypeID);
