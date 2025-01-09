@@ -174,6 +174,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
 
+    // whether to use the custom location mapper
+    private Boolean useCustomLocationMapper = true;
+    
+    //custom location mapper object
+    private CustomArchonLocationMapper archonLocationMapper;
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -196,6 +202,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // set the enum util to that of the mapper
         enumUtil = mapper.getEnumUtil();
+
+        // create custom location mapper
+        if(useCustomLocationMapper) archonLocationMapper = new CustomArchonLocationMapper(mapper.getidentifierPrefix());
 
         // first add the admin repo to the repository URI map
         repositoryURIMap.put("adminRepo", ASpaceClient.ADMIN_REPOSITORY_ENDPOINT);
@@ -2202,6 +2211,19 @@ public class ASpaceCopyUtil implements  PrintConsole {
         String coordinate2 = location.getString("Section");
         String coordinate3 = location.getString("Shelf");
 
+        //if barcode as shelf, then remove that and split the section value on the separator
+        if(isBarcode(coordinate3)){
+            coordinate3="";
+            //if using custom location mapper, split section on separator into coordinate 2 or 3
+            if(useCustomLocationMapper && coordinate2 != null && length(coordinate2)>1){
+                String splitSection = coordinate2.split(archonLocationMapper.getSectionSeparator(),2);
+                coordinate2 = splitSection[0].trim();
+                if(splitSection.length()==2){
+                    coordinate3 = splitSection[1].trim();
+                }
+            }
+        }
+
         String locationURI = getLocationURI(building, coordinate1, coordinate2, coordinate3);
 
         if(locationURI != null) {
@@ -2670,7 +2692,41 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // lets create a JSON object for the location in case we need to save it
         JSONObject locationJS = new JSONObject();
+
+        //get the custom building, floor, room, and area text for the location text ("building")
+        if(useCustomLocationMapper){
+            String locationText = building;
+            String floor = "";
+            String room = "";
+            String area = "";
+            JSONObject locationComponents = archonLocationsMap.getLocationMap();
+            if(!locationComponents.equals("null") && locationComponents.length()==4){
+                building = locationComponents.getString("Building");
+                floor = locationComponents.getString("Floor");
+                room = locationComponents.getString("Room");
+                area = locationComponents.getString("Area");
+                //also overwrite default starting key to include the new building text
+                key = building;
+            }
+        }
+
         locationJS.put("building", building);
+
+        //add floor, room, and area if mapped
+        if(useCustomLocationMapper){
+            if (!floor.equals("null") && !floor.isEmpty()) {
+                locationJS.put("floor", floor);
+                key += "-" + floor;
+            }
+            if (!room.equals("null") && !room.isEmpty()) {
+                locationJS.put("room", room);
+                key += "-" + room;
+            }
+            if (!area.equals("null") && !area.isEmpty()) {
+                locationJS.put("area", area);
+                key += "-" + area;
+            }
+        }
 
         if (!coordinate1.equals("null") && !coordinate1.isEmpty()) {
             locationJS.put("coordinate_1_label", "Range");
