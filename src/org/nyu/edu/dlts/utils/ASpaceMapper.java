@@ -125,6 +125,15 @@ public class ASpaceMapper {
     }
 
     /**
+     * Method to get the identifier prefix for collections
+     *
+     * @return
+     */
+    public String getIdentifierPrefix() {
+        return identifierPrefix;
+    }
+
+    /**
      * Method to return the enum util
      * @return
      */
