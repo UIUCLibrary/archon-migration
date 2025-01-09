@@ -1,3 +1,7 @@
 {
-    "default":{"Option":"default","FileName":"location-mappings.json","SectionSeparator":":"}
+    "default":{"Option":"default","FileName":"location-mappings.json","SectionSeparator":":"},
+    "ala":{"Option":"ala","FileName":"ala-location-mappings.json","SectionSeparator":"-"},
+    "ihlc":{"Option":"ihlc","FileName":"ihlc-location-mappings.json","SectionSeparator":":"},
+    "rbml":{"Option":"rbml","FileName":"rbml-location-mappings.json","SectionSeparator":":"},
+    "ua":{"Option":"ua","FileName":"ua-location-mappings.json","SectionSeparator":":"}
 }
