@@ -174,6 +174,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
 
+    // whether to check if the shelf field in the location holds the barcode for the box
+    private String checkShelfForBarcode = true;
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -2162,14 +2165,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             json.put("type", containerType);
 
             // if a linked location is specified add its data
-            if (location != null) {
-                addLocationInfo(json, location);
-                //if shelf field is a barcode, add that to the top container
-                String barcodeAsShelf = location.getString("Shelf");
-                if (isBarcode(barcodeAsShelf)) {
-                    json.put("barcode",barcodeAsShelf);
-                }
-            }
+            if (location != null) addLocationInfo(json, location);
 
             // save the top container record and get its uri
             String id = saveRecord(repoURI + ASpaceClient.TOP_CONTAINER_ENDPOINT, json.toString(), "Collection content->" + cid);
@@ -2208,6 +2204,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
         String coordinate1 = location.getString("RangeValue");
         String coordinate2 = location.getString("Section");
         String coordinate3 = location.getString("Shelf");
+
+        //if shelf field for the location is a barcode, add that to the top container instead
+        if (checkShelfForBarcode && isBarcode(coordinate3)) {
+            containerJS.put("barcode",barcodeAsShelf);
+            coordinate3 = "";
+        }
 
         String locationURI = getLocationURI(building, coordinate1, coordinate2, coordinate3);
 
