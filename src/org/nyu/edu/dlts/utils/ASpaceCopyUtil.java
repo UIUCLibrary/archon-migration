@@ -2555,15 +2555,16 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 topContainerURI = topContainerURIs.get(containerKey);
 
                 //if top container isn't found, try looking for 1 or 2 leading zeroes to remove from the indicator
-                if(topContainerURI == null && !topContainerURIs.isEmpty() && containerIndicator.atChar(0)=='0'){
-                    if(containerIndicator.atChar(1)=='0'){
+                if(topContainerURI == null && !topContainerURIs.isEmpty() && containerIndicator.charAt(0)=='0'){
+                    String modifiedIndicator = "";
+                    if(containerIndicator.charAt(1)=='0'){
                         //if two leading zeros
                         modifiedIndicator = containerIndicator.substring(2);                        
                     } else {
                         //if one leading zero
                         modifiedIndicator = containerIndicator.substring(1);
                     }
-                    modifiedContainerKey = containerType + " " + modifiedIndicator;
+                    String modifiedContainerKey = containerType + " " + modifiedIndicator;
                     topContainerURI = topContainerURIs.get(modifiedContainerKey);
                 }
 
