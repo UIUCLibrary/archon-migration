@@ -2,6 +2,7 @@ package org.nyu.edu.dlts.utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.nyu.edu.dlts.utils.uiuc.UIUCPropertiesReader;
 
 import java.io.File;
 import java.util.HashMap;
@@ -169,7 +170,13 @@ public class ArchonRecordInspector {
         //archonClient = new ArchonClient(host, "MigAdmin", "111zwSHOO");
         //String host = "http://128.122.90.55:9000/~nathan/archon";
 
-        archonClient = new ArchonClient(host, "admin", "admin");
+        if (UIUCPropertiesReader.getUIUCProperties() != null) {
+            host = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.source");
+            archonClient = new ArchonClient(host, UIUCPropertiesReader.getUIUCProperties().getProperty("archon.user"), UIUCPropertiesReader.getUIUCProperties().getProperty("archon.password"));
+        } else {
+            archonClient = new ArchonClient(host, "admin", "admin");
+        }
+//        archonClient = new ArchonClient(host, "admin", "admin");
         archonClient.getSession();
 
         System.out.println("Connected to " + host + "\n\n");
@@ -178,7 +185,7 @@ public class ArchonRecordInspector {
         //loadAccessions();
 
         // load the collection record
-        loadCollection("27-3");
+//        loadCollection("27-3");
 
         // load the content record
         //loadCollectionContent("259");
