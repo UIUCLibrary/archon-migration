@@ -154,6 +154,60 @@ public class ArchonRecordInspector {
     }
 
     /**
+     * Method to load a particular collection record by archon database id
+     * @param archonID
+     */
+    public static void loadCollectionByArchonID(String archonID) {
+        JSONObject collectionRecordsJS = archonClient.getCollectionRecords();
+        if(collectionRecordsJS.has(archonID)){
+            try {
+                JSONObject recordJS = collectionRecordsJS.getJSONObject(archonID);
+
+                System.out.println("Found Record " + recordJS.get("Title"));
+
+                //print collection json
+                System.out.println(recordJS.toString(2));
+
+                // get the collection content
+                JSONObject collectionContentsJS = archonClient.getCollectionContentRecords(archonID);
+
+                System.out.println(collectionContentsJS.toString(2));
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+        /**
+     * Method test converting particular collection record by archon database id
+     * @param archonID
+     */
+    public static void testConvertCollection(String archonID) {
+        JSONObject collectionRecordsJS = archonClient.getCollectionRecords();
+        if(collectionRecordsJS.has(archonID)){
+            try {
+                JSONObject recordJS = collectionRecordsJS.getJSONObject(archonID);
+
+                System.out.println("Found Record " + recordJS.get("Title"));
+                ASpaceMapper mapper = new ASpaceMapper();
+                try {
+                    HashMap<String, String> testClassificationIdentifiers = new HashMap<String, String>();
+                    HashMap<String, String> testClassificationParents = new HashMap<String, String>();
+
+                    JSONObject convertedCollection  = mapper.convertCollection(recordJS,testClassificationIdentifiers,testClassificationParents);
+                    System.out.println(convertedCollection.toString(2));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
      * Main method
      *
      * @param args
@@ -193,5 +247,11 @@ public class ArchonRecordInspector {
 
         // process the content records
         //processCollectionContent();
+
+        //test loading specific collections
+        archonClient.setDebugMode(false);
+        String archonIDtoTest = "8753";
+        loadCollectionByArchonID(archonIDtoTest);
+        testConvertCollection(archonIDtoTest);
     }
 }
