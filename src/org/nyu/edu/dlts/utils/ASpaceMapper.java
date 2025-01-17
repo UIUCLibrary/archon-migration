@@ -1356,8 +1356,11 @@ public class ASpaceMapper {
         if(record.has("Languages")) {
             JSONArray languageIds = record.getJSONArray("Languages");
             for (int i = 0; i < languageIds.length(); i++) {
+                String languageCode = languageIds.getString(i);
+                String languageLong = "long version of " + languageCode;//placeholder text; need to write function for the ASpaceEnumUtil class to retrieve the long version of the language
+                
                 //should produce "<language langcode='eng'>English</language>" for English, as an example
-                noteContent = "<language langcode='" + languageIds[i] +"'>" + languageCodes.getString(languageIds[i]) + "</language>";
+                noteContent = "<language langcode='" + languageCode +"'>" + languageLong + "</language>";
                 addSinglePartNote(notesJA, "langmaterial", "Language of Materials", noteContent);
             }
         }
