@@ -5,3 +5,4 @@ META-INF/
 out/
 archon_migration.iml
 /logs/*.xml
+*.properties
