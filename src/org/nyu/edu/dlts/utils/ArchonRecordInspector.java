@@ -181,6 +181,7 @@ public class ArchonRecordInspector {
 
         /**
      * Method test converting particular collection record by archon database id
+     * Does NOT properly convert the identifier if classifications are used
      * @param archonID
      */
     public static void testConvertCollection(String archonID) {
@@ -192,6 +193,7 @@ public class ArchonRecordInspector {
                 System.out.println("Found Record " + recordJS.get("Title"));
                 ASpaceMapper mapper = new ASpaceMapper();
                 try {
+                    //for now, created but not filled
                     HashMap<String, String> testClassificationIdentifiers = new HashMap<String, String>();
                     HashMap<String, String> testClassificationParents = new HashMap<String, String>();
 
