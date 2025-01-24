@@ -5,3 +5,5 @@ META-INF/
 out/
 archon_migration.iml
 /logs/*.xml
+src/org/nyu/edu/dlts/utils/custom-json/
+*.properties
