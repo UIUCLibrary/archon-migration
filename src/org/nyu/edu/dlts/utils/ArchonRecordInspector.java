@@ -1,10 +1,12 @@
 package org.nyu.edu.dlts.utils;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.nyu.edu.dlts.utils.uiuc.UIUCPropertiesReader;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -21,6 +23,10 @@ public class ArchonRecordInspector {
     // variables which store a particular archon record
     private static JSONObject contentRecordsJS;
     private static  HashMap<String, String> archonRecordsMap;
+
+    //for use without saving to ASpace
+    private static HashMap<String, String> testClassificationIdentifiers = new HashMap<String, String>();
+    private static HashMap<String, String> testClassificationParents = new HashMap<String, String>();
 
     // file used to save the records locally
     private static File jsonFile;
@@ -179,8 +185,55 @@ public class ArchonRecordInspector {
         }
     }
 
+    /**
+     * Method to load data into the classification identifiers and parents 
+     * as needed for testing
+     */
+    private static void loadTestClassificationData(ArchonClient testArchonClient) throws Exception{
+        
+        JSONObject records = testArchonClient.getClassificationRecords();
+
+        Iterator<String> keys = records.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+
+            JSONObject classification = records.getJSONObject(key);
+
+            String arId = classification.getString("ID");
+
+            ASpaceMapper mapper = new ASpaceMapper();
+
+            JSONObject classificationJS = mapper.convertClassification(classification);
+
+
+            JSONArray batchJA = new JSONArray();
+
+            if (classificationJS != null) {
+                batchJA.put(classificationJS);
+
+                JSONArray classificationChildren = classification.getJSONArray("children");
+
+                // add the id for this classification
+                testClassificationIdentifiers.put(arId, classification.getString("ClassificationIdentifier"));
+
+                for (int i = 0; i < classificationChildren.length(); i++) {
+
+                    JSONObject classificationTerm = classificationChildren.getJSONObject(i);
+
+                    String cId = classificationTerm.getString("ID");
+
+                    testClassificationIdentifiers.put(cId, classificationTerm.getString("ClassificationIdentifier"));
+                    String pId = classificationTerm.getString("ParentID");
+                    testClassificationParents.put(cId, pId);
+                }
+            } else {
+                continue;
+            }
+         }
+        }
+
         /**
-     * Method test converting particular collection record by archon database id
+     * Method to test converting particular collection record by archon database id
      * Does NOT properly convert the identifier if classifications are used
      * @param archonID
      */
@@ -193,10 +246,6 @@ public class ArchonRecordInspector {
                 System.out.println("Found Record " + recordJS.get("Title"));
                 ASpaceMapper mapper = new ASpaceMapper();
                 try {
-                    //for now, created but not filled
-                    HashMap<String, String> testClassificationIdentifiers = new HashMap<String, String>();
-                    HashMap<String, String> testClassificationParents = new HashMap<String, String>();
-
                     JSONObject convertedCollection  = mapper.convertCollection(recordJS,testClassificationIdentifiers,testClassificationParents);
                     System.out.println(convertedCollection.toString(2));
                 } catch (Exception e) {
@@ -252,8 +301,18 @@ public class ArchonRecordInspector {
 
         //test loading specific collections
         archonClient.setDebugMode(false);
+
+        try {
+            loadTestClassificationData(archonClient);
+        } catch(Exception e){
+            System.out.println("Error loading classification data" + "\n\n");
+        }
+        System.out.println("Classification hashmap size: " + testClassificationIdentifiers.size() + "\n\n");
+        System.out.println("Classification parents hashmap size: " + testClassificationParents.size() + "\n\n");
+
         String archonIDtoTest = "8753";
         loadCollectionByArchonID(archonIDtoTest);
         testConvertCollection(archonIDtoTest);
+
     }
 }
