@@ -235,6 +235,7 @@ public class ArchonRecordInspector {
         /**
      * Method to test converting particular collection record by archon database id
      * Does NOT properly convert the identifier if classifications are used
+     * Need to load test classification data first if using classifications in identifier
      * @param archonID
      */
     public static void testConvertCollection(String archonID) {
