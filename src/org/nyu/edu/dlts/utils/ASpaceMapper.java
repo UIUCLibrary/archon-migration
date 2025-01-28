@@ -67,7 +67,7 @@ public class ASpaceMapper {
 
     //prefix to add before identifier to make unique when combining multiple instances of Archon
     //todo: add option to set in GUI rather than hardcoding here
-    private String identifierPrefix = "ALA";
+    private String identifierPrefix = "";
 
     /**
      *  Main constructor
@@ -977,7 +977,7 @@ public class ASpaceMapper {
         }
 
         //if there is an identifier prefix, add it to the front of the existing identifier
-        if(!identifierPrefix.isEmpty()) {
+        if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
             idParts[0] = identifierPrefix;
             idParts[1] = fullId.pop();
             if (!fullId.isEmpty()) idParts[2] = fullId.pop();
