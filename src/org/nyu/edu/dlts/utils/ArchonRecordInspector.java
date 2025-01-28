@@ -188,8 +188,10 @@ public class ArchonRecordInspector {
     /**
      * Method to load data into the classification identifiers and parents 
      * as needed for testing
+     * @param testArchonClient
+     * @param mapper
      */
-    private static void loadTestClassificationData(ArchonClient testArchonClient) throws Exception{
+    private static void loadTestClassificationData(ArchonClient testArchonClient, ASpaceMapper mapper) throws Exception{
         
         JSONObject records = testArchonClient.getClassificationRecords();
 
@@ -201,10 +203,7 @@ public class ArchonRecordInspector {
 
             String arId = classification.getString("ID");
 
-            ASpaceMapper mapper = new ASpaceMapper();
-
             JSONObject classificationJS = mapper.convertClassification(classification);
-
 
             JSONArray batchJA = new JSONArray();
 
@@ -237,15 +236,15 @@ public class ArchonRecordInspector {
      * Does NOT properly convert the identifier if classifications are used
      * Need to load test classification data first if using classifications in identifier
      * @param archonID
+     * @param mapper
      */
-    public static void testConvertCollection(String archonID) {
+    public static void testConvertCollection(String archonID, ASpaceMapper mapper) {
         JSONObject collectionRecordsJS = archonClient.getCollectionRecords();
         if(collectionRecordsJS.has(archonID)){
             try {
                 JSONObject recordJS = collectionRecordsJS.getJSONObject(archonID);
 
                 System.out.println("Found Record " + recordJS.get("Title"));
-                ASpaceMapper mapper = new ASpaceMapper();
                 try {
                     JSONObject convertedCollection  = mapper.convertCollection(recordJS,testClassificationIdentifiers,testClassificationParents);
                     System.out.println(convertedCollection.toString(2));
@@ -303,8 +302,10 @@ public class ArchonRecordInspector {
         //test loading specific collections
         archonClient.setDebugMode(false);
 
+        ASpaceMapper mapper = new ASpaceMapper();
+
         try {
-            loadTestClassificationData(archonClient);
+            loadTestClassificationData(archonClient,mapper);
         } catch(Exception e){
             System.out.println("Error loading classification data" + "\n\n");
         }
@@ -313,7 +314,7 @@ public class ArchonRecordInspector {
 
         String archonIDtoTest = "8753";
         loadCollectionByArchonID(archonIDtoTest);
-        testConvertCollection(archonIDtoTest);
+        testConvertCollection(archonIDtoTest, mapper);
 
     }
 }
