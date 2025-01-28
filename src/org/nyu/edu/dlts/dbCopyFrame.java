@@ -183,6 +183,12 @@ public class dbCopyFrame extends JFrame {
                     // set the base uri for digital objects
                     ascopy.setDigitalObjectBaseURI(doURLTextField.getText().trim());
 
+                    //set identifier prefix if indicated in properties file
+                    //todo: add text field to provide option to set in GUI
+                    if (UIUCPropertiesReader.getUIUCProperties() != null) {
+                        ascopy.setIdentifierPrefix(UIUCPropertiesReader.getUIUCProperties().getProperty("archon.prefix"));
+                    }
+
                     // try getting the session and only continue if a valid session is return;
                     if(!ascopy.getSession()) {
                         consoleTextArea.append("No session, nothing to do ...\n");
