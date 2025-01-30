@@ -2,6 +2,7 @@
 archon.source=
 archon.user=
 archon.password=
+archon.prefix=
 
 # ArchivesSpace credentials
 aspace.host=
