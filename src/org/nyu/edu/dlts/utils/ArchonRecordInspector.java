@@ -237,8 +237,36 @@ public class ArchonRecordInspector {
      * Need to load test classification data first if using classifications in identifier
      * @param archonID
      * @param mapper
+     * @return
      */
-    public static void testConvertCollection(String archonID, ASpaceMapper mapper) {
+    public static JSONObject testConvertCollection(String archonID, ASpaceMapper mapper) {
+        JSONObject collectionRecordsJS = archonClient.getCollectionRecords();
+        JSONObject convertedCollection = new JSONObject(); 
+        if(collectionRecordsJS.has(archonID)){
+            try {
+                JSONObject recordJS = collectionRecordsJS.getJSONObject(archonID);
+
+                System.out.println("Found Record " + recordJS.get("Title"));
+                try {
+                    convertedCollection  = mapper.convertCollection(recordJS,testClassificationIdentifiers,testClassificationParents);
+                    System.out.println(convertedCollection.toString(2));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return convertedCollection;
+    }
+
+     /**
+     * Method to test converting a collection and its locations
+     * @param archonID
+     * @param mapper
+     */
+    public static void testConvertCollectionLocations(String archonID, ASpaceMapper mapper, ASpaceCopyUtil aspaceTestCopyUtil) {
         JSONObject collectionRecordsJS = archonClient.getCollectionRecords();
         if(collectionRecordsJS.has(archonID)){
             try {
@@ -248,6 +276,14 @@ public class ArchonRecordInspector {
                 try {
                     JSONObject convertedCollection  = mapper.convertCollection(recordJS,testClassificationIdentifiers,testClassificationParents);
                     System.out.println(convertedCollection.toString(2));
+
+                    if(recordJS.has("Locations")) {
+                        String defaultInstanceType = aspaceTestCopyUtil.getDefaultInstanceType();
+                        String repoURI = "test repo URI";
+                        HashMap<String, String> topContainerURIs = new HashMap<String, String>();
+                        aspaceTestCopyUtil.addLocationInstances(convertedCollection, recordJS.getJSONArray("Locations"), defaultInstanceType, topContainerURIs, repoURI, true);
+                        System.out.println(convertedCollection.toString(2));
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -302,7 +338,8 @@ public class ArchonRecordInspector {
         //test loading specific collections
         archonClient.setDebugMode(false);
 
-        ASpaceMapper mapper = new ASpaceMapper();
+        ASpaceCopyUtil aspaceTestCopyUtil = new ASpaceCopyUtil(archonClient, "http://localhost:8089", "admin", "test", true);
+        ASpaceMapper mapper = new ASpaceMapper(aspaceTestCopyUtil);
 
         try {
             loadTestClassificationData(archonClient,mapper);
@@ -314,7 +351,9 @@ public class ArchonRecordInspector {
 
         String archonIDtoTest = "8753";
         loadCollectionByArchonID(archonIDtoTest);
-        testConvertCollection(archonIDtoTest, mapper);
+        //testConvertCollection(archonIDtoTest, mapper);
+
+        testConvertCollectionLocations(archonIDtoTest, mapper, aspaceTestCopyUtil);
 
     }
 }

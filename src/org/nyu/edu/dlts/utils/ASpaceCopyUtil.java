@@ -179,6 +179,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
 
+    // whether to save records to ASpace (set to false for testing)
+    private Boolean saveRecords = true;
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -188,6 +191,23 @@ public class ASpaceCopyUtil implements  PrintConsole {
         this.archonClient = archonClient;
         this.aspaceClient = new ASpaceClient(host, admin, adminPassword);
         init();
+    }
+
+    /**
+     * Overloaded constructor, to be used for testing with the ArchonRecordInspector class
+     *
+     * @param archonClient
+     * @param toTest
+     */
+    public ASpaceCopyUtil(ArchonClient archonClient, String host, String admin, String adminPassword, Boolean toTest) {
+        this.archonClient = archonClient;
+        this.aspaceClient = new ASpaceClient(host, admin, adminPassword);
+        if(toTest){
+            this.saveRecords = false;
+            initForTesting();
+        } else {
+            init();
+        }
     }
 
     /**
@@ -211,6 +231,30 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // start the stop watch object so we can see how long this data transfer takes
         startWatch();
+    }
+
+    /**
+     * Method to initiate certain variables that are needed to work
+     * For testing with ArchonRecordInspector
+     */
+    private void initForTesting() {
+        //print("Starting database copy ... ");
+
+        // set the error buffer for the mapper
+        mapper = new ASpaceMapper(this);
+
+        // set the enum util to that of the mapper
+        enumUtil = mapper.getEnumUtil();
+
+        // first add the admin repo to the repository URI map
+        repositoryURIMap.put("adminRepo", ASpaceClient.ADMIN_REPOSITORY_ENDPOINT);
+
+        // set the print console object so we have something to print out while the
+        // records are being read in batches of 100
+        //archonClient.setPrintConsole(this);
+
+        // start the stop watch object so we can see how long this data transfer takes
+        //startWatch();
     }
 
     /**
@@ -242,6 +286,15 @@ public class ASpaceCopyUtil implements  PrintConsole {
     public void setDefaultInstanceType(String instanceType) {
         //todo: check that the string is a valid instance type for aspace
         defaultInstanceType = instanceType;
+    }
+    
+    /**
+     * Method to get the default instance type
+     *
+     * @return
+     */
+    public String getDefaultInstanceType() {
+        return defaultInstanceType;
     }
 
     /**
@@ -2587,6 +2640,18 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Method to test adding an instance to an Accession or Resource record which hold location information
+     *  @param recordJS
+     * @param locations
+     */
+    public void addLocationInstances(JSONObject recordJS, JSONArray locations, String instanceType,
+                                      HashMap<String, String> topContainerURIs, String repoURI, Boolean testing) throws Exception {
+        if(!saveRecords && testing){
+            addLocationInstances(recordJS, locations, instanceType,topContainerURIs, repoURI);
+        }
+    }
+
+    /**
      * this attempts to tell if the location content is referring to multiple containers
      * again, could be better but not worth increasing migration time too much
      *
@@ -2925,6 +2990,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @param params   parameters to pass to service
      */
     public String saveRecord(String endpoint, String jsonText, NameValuePair[] params, String atId) {
+        if(!saveRecords){
+            return "testing only: "+ randomString.nextString();
+        }
+        
         String id = NO_ID;
 
         try {
