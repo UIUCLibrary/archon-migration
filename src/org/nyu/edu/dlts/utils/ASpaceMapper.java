@@ -1357,10 +1357,20 @@ public class ASpaceMapper {
 
         addMultipartNote(notesJA, "custodhist", "Custodial History", record.getString("CustodialHistory"));
 
-        noteContent = record.getString("OrigCopiesNote") + "\n\n" + record.get("OrigCopiesURL");
+//        noteContent = record.getString("OrigCopiesNote") + "\n\n" + record.get("OrigCopiesURL");
+        if (!record.getString("OrigCopiesURL").isEmpty()) {
+            noteContent = "<a href=\"" + record.getString("OrigCopiesURL") + "\">" + record.getString("OrigCopiesNote") + "</a>";
+        } else {
+            noteContent = record.getString("OrigCopiesNote");
+        }
         addMultipartNote(notesJA, "originalsloc", "Existence and Location of Originals", noteContent);
 
-        noteContent = record.getString("RelatedMaterials") + "\n\n" + record.get("RelatedMaterialsURL");
+//        noteContent = record.getString("RelatedMaterials") + "\n\n" + record.get("RelatedMaterialsURL");
+        if (!record.getString("RelatedMaterialsURL").isEmpty()) {
+            noteContent = "<a href=\"" + record.getString("RelatedMaterialsURL") + "\">" + record.getString("RelatedMaterials") + "</a>";
+        } else {
+            noteContent = record.getString("RelatedMaterials");
+        }
         addMultipartNote(notesJA, "relatedmaterial", "Related Materials", noteContent);
 
         addMultipartNote(notesJA, "relatedmaterial", "Related Publications", record.getString("RelatedPublications"));
