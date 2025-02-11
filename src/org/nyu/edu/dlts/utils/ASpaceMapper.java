@@ -1355,14 +1355,16 @@ public class ASpaceMapper {
         //todo: add each language separately to the same note as you can in the staff user interface
         if(record.has("Languages")) {
             JSONArray languageIds = record.getJSONArray("Languages");
+            String langNoteContent = "";
             for (int i = 0; i < languageIds.length(); i++) {
                 String languageCode = languageIds.getString(i);
                 String languageLong = enumUtil.getLanguageLong(languageCode);
-                
+                String separator = (i > 0) ? ", " :  "";
+
                 //should produce "<language langcode='eng'>English</language>" for English, as an example
-                noteContent = "<language langcode='" + languageCode +"'>" + languageLong + "</language>";
-                addSinglePartNote(notesJA, "langmaterial", "Language of Materials", noteContent);
+                langNoteContent += separator + "<language langcode='" + languageCode +"'>" + languageLong + "</language>";
             }
+            addSinglePartNote(notesJA, "langmaterial", "Language of Materials", langNoteContent);
         }
 
         addMultipartNote(notesJA, "acqinfo", "Source of Acquisition", record.getString("AcquisitionSource"));
