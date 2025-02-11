@@ -856,6 +856,15 @@ public class ArchonClient {
     }
 
     /**
+     * Set the debug mode
+     *
+     * @param debugOption
+     */
+    public void setDebugMode(Boolean debugOption) {
+        this.debug = debugOption;
+    }
+
+    /**
      * Method to test the client
      *
      * @param args
