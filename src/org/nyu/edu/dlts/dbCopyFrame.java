@@ -11,6 +11,7 @@ import org.nyu.edu.dlts.utils.ASpaceClient;
 import org.nyu.edu.dlts.utils.ASpaceCopyUtil;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.nyu.edu.dlts.utils.ArchonClient;
+import org.nyu.edu.dlts.utils.uiuc.UIUCPropertiesReader;
 
 import javax.swing.*;
 import java.awt.*;
@@ -83,10 +84,22 @@ public class dbCopyFrame extends JFrame {
         viewRecordButton.setVisible(false);
         basicUIButton.setVisible(false);
 
+        if (UIUCPropertiesReader.getUIUCProperties() != null) {
+            sourceTextField.setText(UIUCPropertiesReader.getUIUCProperties().getProperty("archon.source"));
+            archonAdminTextField.setText(UIUCPropertiesReader.getUIUCProperties().getProperty("archon.user"));
+            archonPasswordTextField.setText(UIUCPropertiesReader.getUIUCProperties().getProperty("archon.password"));
+            hostTextField.setText(UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.host"));
+            adminTextField.setText(UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.admin"));
+            adminPasswordTextField.setText(UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.password"));
+        } else {
+            // clear out some defaults used when in development
+            sourceTextField.setText("http://localhost/archon");
+            hostTextField.setText("http://localhost:8089");
+        }
         // clear out some defaults used when in development
-        sourceTextField.setText("http://localhost/archon");
+//        sourceTextField.setText("http://localhost/archon");
         downloadFolderTextField.setText("");
-        hostTextField.setText("http://localhost:8089");
+//        hostTextField.setText("http://localhost:8089");
 
         isBasicUI = true;
     }
