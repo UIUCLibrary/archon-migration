@@ -176,7 +176,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
 
     // whether to check if the shelf field in the location holds the barcode for the box
-    private String checkShelfForBarcode = true;
+    private Boolean checkShelfForBarcode = true;
 
     /**
      * The main constructor, used when running as a stand alone application
@@ -2128,7 +2128,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
     @return
      */
      private Boolean isBarcode(String possibleBarcode){
-        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty() && length(possibleBarcode)==14) {
+        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty() && possibleBarcode.length() == 14) {
             return true;
         } else {
             return false;
@@ -2208,7 +2208,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         //if shelf field for the location is a barcode, add that to the top container instead
         if (checkShelfForBarcode && isBarcode(coordinate3)) {
-            containerJS.put("barcode",barcodeAsShelf);
+            containerJS.put("barcode", coordinate3);
             coordinate3 = "";
         }
 
