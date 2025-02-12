@@ -1,7 +1,6 @@
 package org.nyu.edu.dlts.utils;
 
 import org.apache.commons.io.IOUtils;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -48,16 +47,16 @@ public class CustomArchonLocationMapper {
         try {
             String text = IOUtils.toString(this.getClass().getResourceAsStream("custom-location-info.json"), "UTF-8");
             JSONObject customInfo = new JSONObject(text);
+                    //set variables based on json
+            if(customInfo.has(optionCode)) {
+                JSONObject optionCodeJS = customInfo.getJSONObject(optionCode);
+                if(optionCodeJS.has("FileName")) locationMapFileName = optionCodeJS.getString("FileName");
+                if(optionCodeJS.has("SectionSeparator")) archonSectionSeparator = optionCodeJS.getString("SectionSeparator");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
             e.printStackTrace();
-        }
-        //set variables based on json
-        if(customInfo.has(optionCode)) {
-            JSONObject optionCodeJS = customInfo.getJSONObject(optionCode);
-            if(optionCodeJS.has("FileName")) locationMapFileName = optionCodeJS.getString("FileName");
-            if(optionCodeJS.has("SectionSeparator")) archonSectionSeparator = optionCodeJS.getString("SectionSeparator");
         }
     }
     
@@ -82,7 +81,7 @@ public class CustomArchonLocationMapper {
      * Method to get the locations map
      * @return
      */
-    public HashMap getLocationsMap(){
+    public JSONObject getLocationsMap(){
         return archonLocationsMap;
     }
 
@@ -91,6 +90,6 @@ public class CustomArchonLocationMapper {
      * @return
      */
     public String getSectionSeparator(){
-        return sectionShelfSeparator;
+        return archonSectionSeparator;
     }
 }

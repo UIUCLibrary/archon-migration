@@ -205,7 +205,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
         enumUtil = mapper.getEnumUtil();
 
         // create custom location mapper
-        if(useCustomLocationMapper) archonLocationMapper = new CustomArchonLocationMapper(mapper.getidentifierPrefix());
+        if(useCustomLocationMapper) archonLocationMapper = new CustomArchonLocationMapper(mapper.getIdentifierPrefix());
 
         // first add the admin repo to the repository URI map
         repositoryURIMap.put("adminRepo", ASpaceClient.ADMIN_REPOSITORY_ENDPOINT);
@@ -2134,7 +2134,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
     @return
      */
      private Boolean isBarcode(String possibleBarcode){
-        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty() && length(possibleBarcode)==14) {
+        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty() && possibleBarcode.length()==14) {
             return true;
         } else {
             return false;
@@ -2216,10 +2216,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
         if(isBarcode(coordinate3)){
             coordinate3="";
             //if using custom location mapper, split section on separator into coordinate 2 or 3
-            if(useCustomLocationMapper && coordinate2 != null && length(coordinate2)>1){
-                String splitSection = coordinate2.split(archonLocationMapper.getSectionSeparator(),2);
+            if(useCustomLocationMapper && coordinate2 != null && coordinate2.length()>1){
+                String[] splitSection = coordinate2.split(archonLocationMapper.getSectionSeparator(),2);
                 coordinate2 = splitSection[0].trim();
-                if(splitSection.length()==2){
+                if(splitSection.length==2){
                     coordinate3 = splitSection[1].trim();
                 }
             }
@@ -2700,7 +2700,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             String floor = "";
             String room = "";
             String area = "";
-            JSONObject locationComponents = archonLocationsMap.getLocationMap();
+            JSONObject locationComponents = archonLocationMapper.getLocationsMap();
             if(!locationComponents.equals("null") && locationComponents.length()==4){
                 building = locationComponents.getString("Building");
                 floor = locationComponents.getString("Floor");
@@ -2709,12 +2709,6 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 //also overwrite default starting key to include the new building text
                 key = building;
             }
-        }
-
-        locationJS.put("building", building);
-
-        //add floor, room, and area if mapped
-        if(useCustomLocationMapper){
             if (!floor.equals("null") && !floor.isEmpty()) {
                 locationJS.put("floor", floor);
                 key += "-" + floor;
@@ -2728,6 +2722,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 key += "-" + area;
             }
         }
+
+        locationJS.put("building", building);
 
         if (!coordinate1.equals("null") && !coordinate1.isEmpty()) {
             locationJS.put("coordinate_1_label", "Range");
