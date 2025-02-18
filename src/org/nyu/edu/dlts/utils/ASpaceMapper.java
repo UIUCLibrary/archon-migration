@@ -707,6 +707,7 @@ public class ASpaceMapper {
 
         noteJS.put("jsonmodel_type", "note_bioghist");
         noteJS.put("label", "biographical statement");
+        noteJS.put("publish", publishRecord);
 
         JSONArray subnotesJA = new JSONArray();
 
@@ -721,6 +722,7 @@ public class ASpaceMapper {
             JSONArray contentJA = new JSONArray();
             contentJA.put("Author: " + record.get("BiogHistAuthor"));
             citationJS.put("content", contentJA);
+            citationJS.put("publish", publishRecord);
             subnotesJA.put(citationJS);
         }
 
