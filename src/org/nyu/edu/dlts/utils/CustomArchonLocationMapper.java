@@ -31,7 +31,8 @@ public class CustomArchonLocationMapper {
      */
     public CustomArchonLocationMapper(String customOption){
         if(customOption != null && customOption != ""){
-            setLocationMappingVariables(customOption);
+            String lowercaseCustomOption = customOption.toLowerCase();
+            setLocationMappingVariables(lowercaseCustomOption);
         } else {
             setLocationMappingVariables("default");
         }
@@ -45,7 +46,7 @@ public class CustomArchonLocationMapper {
     private void setLocationMappingVariables(String optionCode){
         //load json
         try {
-            String text = IOUtils.toString(this.getClass().getResourceAsStream("custom-location-info.json"), "UTF-8");
+            String text = IOUtils.toString(this.getClass().getResourceAsStream("custom-json/custom-location-info.json"), "UTF-8");
             JSONObject customInfo = new JSONObject(text);
                     //set variables based on json
             if(customInfo.has(optionCode)) {
@@ -86,10 +87,61 @@ public class CustomArchonLocationMapper {
     }
 
     /**
+     * Method to get the components of a given location from the locations map
+     * @param locationText
+     * @return
+     */
+    public JSONObject getLocationComponents(String locationText){
+        if(archonLocationsMap.has(locationText)){
+            try{
+                return archonLocationsMap.getJSONObject(locationText);
+            } catch(Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        } else {
+            return null;
+        }
+        
+    }
+
+    /**
      * Method to get the section shelf separator
      * @return
      */
     public String getSectionSeparator(){
         return archonSectionSeparator;
+    }
+
+    /**
+     * Method to test the class without running the whole process
+     *
+     * @param args
+     */
+    public static void main(String[] args) throws JSONException {
+        CustomArchonLocationMapper customMapper = new CustomArchonLocationMapper("ALA");
+        String separator = customMapper.getSectionSeparator();
+        if(separator != null){
+            System.out.println("Separator: " + separator);
+        }else{
+            System.out.println("separator is null");
+        }
+
+        try {
+            JSONObject locationsMap  = customMapper.getLocationsMap();
+            if(locationsMap != null){
+                System.out.println("locations map is not null!");
+                //System.out.println(locationsMap.toString(2));
+                JSONObject locationComponents = customMapper.getLocationComponents("AS2: 201 ARC (Second Floor Stacks)");
+                System.out.println(locationComponents.toString(2));
+                System.out.println(locationComponents.length());
+                System.out.println(locationComponents.getString("Area2"));
+            }else{
+                System.out.println("locations map is null");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

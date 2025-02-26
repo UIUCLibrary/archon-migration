@@ -2700,14 +2700,27 @@ public class ASpaceCopyUtil implements  PrintConsole {
             String floor = "";
             String room = "";
             String area = "";
-            JSONObject locationComponents = archonLocationMapper.getLocationsMap();
-            if(!locationComponents.equals("null") && locationComponents.length()==4){
-                building = locationComponents.getString("Building");
-                floor = locationComponents.getString("Floor");
-                room = locationComponents.getString("Room");
-                area = locationComponents.getString("Area");
+            JSONObject locationComponents = archonLocationMapper.getLocationComponents(locationText);
+            if(locationComponents != null){
+                //find building for location text or use default text since this is a required field
+                if(locationComponents.has("Building")) {
+                    building = locationComponents.getString("Building");
+                } else {
+                    building = "Unknown";
+                    addErrorMessage("No building found for " + locationText);
+                }
+                floor = (locationComponents.has("Floor")) ? locationComponents.getString("Floor") : "";
+                room = (locationComponents.has("Room")) ? locationComponents.getString("Room") : "";
+                area = (locationComponents.has("Area")) ? locationComponents.getString("Area") : "";
                 //also overwrite default starting key to include the new building text
                 key = building;
+            }else{
+                String locationErrorType ="";
+                if(locationComponents == null){
+                    locationErrorType = "locations map is null";
+                }    
+                String locationErrorMessage = "Error with archonLocationMapper with mapping " + locationText + "; " + locationErrorType;
+                addErrorMessage(locationErrorMessage);
             }
             if (!floor.equals("null") && !floor.isEmpty()) {
                 locationJS.put("floor", floor);
@@ -3382,6 +3395,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
 
+        //limit collections for testing
+        ArrayList<String> collectionsIDsList = new ArrayList<String>();
+        collectionsIDsList.add("9");
+        //collectionsIDsList.add("10");
+        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+
+        //archonClient.setDebugMode(false);
+
         try {
             /*
             File recordDirectory = new File("/Users/nathan/temp/JSON_Records");
@@ -3389,21 +3410,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            aspaceCopyUtil.copyRepositoryRecords();
-            aspaceCopyUtil.mapRepositoryGroups();
-            aspaceCopyUtil.copyUserRecords();
-            aspaceCopyUtil.copySubjectRecords();
-            aspaceCopyUtil.copyCreatorRecords();
-            aspaceCopyUtil.copyClassificationRecords();
-            aspaceCopyUtil.findAccessionRecordRepositories();
-            aspaceCopyUtil.copyAccessionRecords();
-            aspaceCopyUtil.copyDigitalObjectRecords();
+            //aspaceCopyUtil.copyRepositoryRecords();
+            //aspaceCopyUtil.mapRepositoryGroups();
+            //aspaceCopyUtil.copyUserRecords();
+            //aspaceCopyUtil.copySubjectRecords();
+            //aspaceCopyUtil.copyCreatorRecords();
+            //aspaceCopyUtil.copyClassificationRecords();
+            //aspaceCopyUtil.findAccessionRecordRepositories();
+            //aspaceCopyUtil.copyAccessionRecords();
+            //aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
-            aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
+            //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            aspaceCopyUtil.deleteUnlinkedClassifications();
+            //aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }
