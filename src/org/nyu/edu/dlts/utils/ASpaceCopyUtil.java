@@ -174,7 +174,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
     // variable to set the default instance type
     // todo: set using the GUI
-    private String defaultInstanceType = "mixed materials";
+    private String defaultInstanceType = "mixed_materials";
 
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
@@ -3400,6 +3400,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
 
+        //limit collections for testing
+        ArrayList<String> collectionsIDsList = new ArrayList<String>();
+        //collectionsIDsList.add("9");
+        collectionsIDsList.add("59");
+        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+        
+        //archonClient.setDebugMode(false);
+
         try {
             /*
             File recordDirectory = new File("/Users/nathan/temp/JSON_Records");
@@ -3407,21 +3415,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            aspaceCopyUtil.copyRepositoryRecords();
-            aspaceCopyUtil.mapRepositoryGroups();
-            aspaceCopyUtil.copyUserRecords();
-            aspaceCopyUtil.copySubjectRecords();
-            aspaceCopyUtil.copyCreatorRecords();
-            aspaceCopyUtil.copyClassificationRecords();
-            aspaceCopyUtil.findAccessionRecordRepositories();
-            aspaceCopyUtil.copyAccessionRecords();
-            aspaceCopyUtil.copyDigitalObjectRecords();
+            //aspaceCopyUtil.copyRepositoryRecords();
+            //aspaceCopyUtil.mapRepositoryGroups();
+            //aspaceCopyUtil.copyUserRecords();
+            //aspaceCopyUtil.copySubjectRecords();
+            //aspaceCopyUtil.copyCreatorRecords();
+            //aspaceCopyUtil.copyClassificationRecords();
+            //aspaceCopyUtil.findAccessionRecordRepositories();
+            //aspaceCopyUtil.copyAccessionRecords();
+            //aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
-            aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
+            //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            aspaceCopyUtil.deleteUnlinkedClassifications();
+            ///aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }
