@@ -1,7 +1,0 @@
-{
-    "default":{"Option":"default","FileName":"location-mappings.json","SectionSeparator":":"},
-    "ala":{"Option":"ala","FileName":"uiuc/ala-location-mappings.json","SectionSeparator":"-"},
-    "ihlc":{"Option":"ihlc","FileName":"uiuc/ihlc-location-mappings.json","SectionSeparator":":"},
-    "rbml":{"Option":"rbml","FileName":"uiuc/rbml-location-mappings.json","SectionSeparator":":"},
-    "ua":{"Option":"ua","FileName":"uiuc/ua-location-mappings.json","SectionSeparator":":"}
-}
