@@ -2042,8 +2042,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // if no type was found, type will be empty and the indicator will be location content
         if (containerTypeID == null) {
             containerIndicator = content;
-            //if no type found, provide a default label if specified
-            if(addDefaultContainerType && containerDefaultType != null){
+            //if no type found, provide a default label if specified if the first character is a number
+            Boolean likelyBoxNumber = Character.isDigit(content.charAt(0));
+            if(addDefaultContainerType && containerDefaultType != null && likelyBoxNumber){
                 containerTypeID = getContainerTypeArchonID(containerDefaultType);
             }
         }
@@ -3340,6 +3341,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
 
+        //limit collections for testing
+        ArrayList<String> collectionsIDsList = new ArrayList<String>();
+        collectionsIDsList.add("22");
+        //collectionsIDsList.add("84");
+        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+        
+        archonClient.setDebugMode(false);
+
         try {
             /*
             File recordDirectory = new File("/Users/nathan/temp/JSON_Records");
@@ -3347,21 +3356,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            aspaceCopyUtil.copyRepositoryRecords();
-            aspaceCopyUtil.mapRepositoryGroups();
-            aspaceCopyUtil.copyUserRecords();
-            aspaceCopyUtil.copySubjectRecords();
-            aspaceCopyUtil.copyCreatorRecords();
-            aspaceCopyUtil.copyClassificationRecords();
-            aspaceCopyUtil.findAccessionRecordRepositories();
-            aspaceCopyUtil.copyAccessionRecords();
-            aspaceCopyUtil.copyDigitalObjectRecords();
+            //aspaceCopyUtil.copyRepositoryRecords();
+            //aspaceCopyUtil.mapRepositoryGroups();
+            //aspaceCopyUtil.copyUserRecords();
+            //aspaceCopyUtil.copySubjectRecords();
+            //aspaceCopyUtil.copyCreatorRecords();
+            //aspaceCopyUtil.copyClassificationRecords();
+            //aspaceCopyUtil.findAccessionRecordRepositories();
+            //aspaceCopyUtil.copyAccessionRecords();
+            //aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
-            aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
+            //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            aspaceCopyUtil.deleteUnlinkedClassifications();
+            ///aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }
