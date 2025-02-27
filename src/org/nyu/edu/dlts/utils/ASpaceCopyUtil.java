@@ -2183,7 +2183,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             extentString += location.getString("Extent") + " ";
             extentString += enumUtil.getASpaceExtentType(location.getInt("ExtentUnitID"));
         }
-        extentNote = "Described as content " + location.getString("Content") + "with extent "+ extentString + " in Archon";
+        extentNote = "Described as content " + location.getString("Content") + " with extent "+ extentString + " in Archon";
 
         // add a location record record now
         String building = location.getString("Location");
