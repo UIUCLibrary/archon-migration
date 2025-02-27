@@ -2176,11 +2176,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private void addLocationInfo(JSONObject containerJS, JSONObject location) throws Exception {
         // add the extent information
         String extentNote = "";
+        String extentString ="";
 
         if(location.has("Extent")) {
-            extentNote += location.getString("Extent") + " ";
-            extentNote += enumUtil.getASpaceExtentType(location.getInt("ExtentUnitID"));
+            extentString += location.getString("Extent") + " ";
+            extentString += enumUtil.getASpaceExtentType(location.getInt("ExtentUnitID"));
         }
+        extentNote = "Described as content " + location.getString("Content") + "with extent "+ extentString + " in Archon";
 
         // add a location record record now
         String building = location.getString("Location");
