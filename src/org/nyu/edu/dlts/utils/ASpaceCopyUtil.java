@@ -2358,8 +2358,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     accessionsJA.put(mapper.getReferenceObject(accessionURI));
                     if (debug) print("Added Accession to Resource: " + arId);
                 } else {
-                    message = "Repository Mismatch Between Resource -- Accession: " +
-                            arId + " [ " + recordRepoURI + " ] / [ " + accessionURI + " ]\n";
+                    message = "Repository Mismatch Between Resource -- Accession (for collection with Archon ID: " + dbId + "); Resource Repository URI [ "+ recordRepoURI + " ] / Accession URI [ " + accessionURI + " ]\n";
                     addErrorMessage(message);
                 }
             }
