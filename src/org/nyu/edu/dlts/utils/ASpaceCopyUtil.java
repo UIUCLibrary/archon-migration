@@ -179,6 +179,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     String containerDefaultType = "box";
     Boolean addDefaultContainerType = true;
 
+    // whether to check if the shelf field in the location holds the barcode for the box
+    private Boolean checkShelfForBarcode = true;
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -2130,6 +2133,20 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+    * method to check whether a string is likely a barcode (14 characters long)
+    * todo: also check that it consists of digits rather than letters or other characters
+    @param possibleBarcode
+    @return
+     */
+     private Boolean isBarcode(String possibleBarcode){
+        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty() && possibleBarcode.length() == 14) {
+            return true;
+        } else {
+            return false;
+        }
+     }
+
+    /**
      * method to add a top container to ASpace or return the URI of a previously added equivalent one
      * @param containerType
      * @param containerIndicator
@@ -2201,6 +2218,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
         String coordinate1 = location.getString("RangeValue");
         String coordinate2 = location.getString("Section");
         String coordinate3 = location.getString("Shelf");
+
+        //if shelf field for the location is a barcode, add that to the top container instead
+        if (checkShelfForBarcode && isBarcode(coordinate3)) {
+            containerJS.put("barcode", coordinate3);
+            coordinate3 = "";
+        }
 
         String locationURI = getLocationURI(building, coordinate1, coordinate2, coordinate3);
 
@@ -3342,6 +3365,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.setSimulateRESTCalls(false);
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
+
+        //limit collections for testing
+        ArrayList<String> collectionsIDsList = new ArrayList<String>();
+        collectionsIDsList.add("69");
+        collectionsIDsList.add("84");
+        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+        
+        //archonClient.setDebugMode(false);
 
         try {
             /*
