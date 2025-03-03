@@ -1071,7 +1071,7 @@ public class ASpaceMapper {
         JSONObject dateJS = new JSONObject();
 
         dateJS.put("date_type", "single");
-        dateJS.put("label", "created");
+        dateJS.put("label", "creation");
 
         String dateExpression = record.getString("InclusiveDates");
         dateJS.put("expression", dateExpression);
@@ -1195,7 +1195,7 @@ public class ASpaceMapper {
         String title = cleanTitle(record.getString("Title"));
         json.put("title", title);
 
-        boolean dateAdded = addDate(record.getString("Date"), json, null, "created");
+        boolean dateAdded = addDate(record.getString("Date"), json, null, "creation");
 
         // need to add title if no date or title
         String uniqueId = record.getString("UniqueID");
