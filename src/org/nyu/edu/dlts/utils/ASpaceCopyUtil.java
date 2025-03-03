@@ -172,6 +172,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // the default repository id
     private String defaultRepositoryId;
 
+    // variable to set the default instance type
+    // todo: set using the GUI
+    private String defaultInstanceType = "mixed_materials";
+
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
 
@@ -234,6 +238,17 @@ public class ASpaceCopyUtil implements  PrintConsole {
             baseURI = baseURI + "/";
         }
         mapper.setDigitalObjectBaseURI(baseURI);
+    }
+
+    
+    /**
+     * Method to set the default instance type
+     *
+     * @param instanceType
+     */
+    public void setDefaultInstanceType(String instanceType) {
+        //todo: check that the string is a valid instance type for aspace
+        defaultInstanceType = instanceType;
     }
 
     /**
@@ -1837,7 +1852,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
                 // add an instance that holds the location information
                 if(collection.has("Locations")) {
-                    addLocationInstances(resourceJS, collection.getJSONArray("Locations"), "text",
+                    addLocationInstances(resourceJS, collection.getJSONArray("Locations"), defaultInstanceType,
                             topContainerURIs, repoURI);
                 }
 
@@ -2091,7 +2106,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // create a json object for the instance
         JSONObject json = new JSONObject();
 
-        json.put("instance_type", "text");
+        json.put("instance_type", defaultInstanceType);
 
         // json object for the sub container
         JSONObject containerJS = new JSONObject();
@@ -3365,14 +3380,6 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.setSimulateRESTCalls(false);
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
-
-        //limit collections for testing
-        ArrayList<String> collectionsIDsList = new ArrayList<String>();
-        collectionsIDsList.add("69");
-        collectionsIDsList.add("84");
-        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
-        
-        //archonClient.setDebugMode(false);
 
         try {
             /*
