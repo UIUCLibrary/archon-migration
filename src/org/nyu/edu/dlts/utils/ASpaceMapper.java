@@ -424,7 +424,8 @@ public class ASpaceMapper {
 
         agentJS.put("vocabulary", vocabularyURI);
 
-        agentJS.put("publish", true);
+        publishRecord = true; //all creators are public in Archon
+        agentJS.put("publish", publishRecord);
 
         // hold name information
         JSONArray namesJA = new JSONArray();
@@ -728,6 +729,7 @@ public class ASpaceMapper {
 
         noteJS.put("jsonmodel_type", "note_bioghist");
         noteJS.put("label", "biographical statement");
+        noteJS.put("publish", publishRecord);
 
         JSONArray subnotesJA = new JSONArray();
 
@@ -742,6 +744,7 @@ public class ASpaceMapper {
             JSONArray contentJA = new JSONArray();
             contentJA.put("Author: " + record.get("BiogHistAuthor"));
             citationJS.put("content", contentJA);
+            citationJS.put("publish", publishRecord);
             subnotesJA.put(citationJS);
         }
 
