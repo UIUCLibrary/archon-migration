@@ -175,6 +175,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
 
+    //default container label if not found in content string for locations
+    String containerDefaultType = "box";
+    Boolean addDefaultContainerType = true;
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -2036,7 +2040,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
         }
 
         // if no type was found, type will be empty and the indicator will be location content
-        if (containerTypeID == null) containerIndicator = content;
+        if (containerTypeID == null) {
+            containerIndicator = content;
+            //if no type found, provide a default label if specified if the first character is a number
+            Boolean likelyBoxNumber = Character.isDigit(content.charAt(0));
+            if(addDefaultContainerType && containerDefaultType != null && likelyBoxNumber){
+                containerTypeID = getContainerTypeArchonID(containerDefaultType);
+            }
+        }
 
         // find the ASpace container type the Archon physical content type maps to
         containerType = enumUtil.getASpaceInstanceContainerType(containerTypeID);
@@ -2546,6 +2557,20 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 String containerKey = containerType + " " + containerIndicator;
 
                 topContainerURI = topContainerURIs.get(containerKey);
+
+                //if top container isn't found, try looking for 1 or 2 leading zeroes to remove from the indicator
+                if(topContainerURI == null && !topContainerURIs.isEmpty() && containerIndicator.charAt(0)=='0'){
+                    String modifiedIndicator = "";
+                    if(containerIndicator.charAt(1)=='0'){
+                        //if two leading zeros
+                        modifiedIndicator = containerIndicator.substring(2);                        
+                    } else {
+                        //if one leading zero
+                        modifiedIndicator = containerIndicator.substring(1);
+                    }
+                    String modifiedContainerKey = containerType + " " + modifiedIndicator;
+                    topContainerURI = topContainerURIs.get(modifiedContainerKey);
+                }
 
                 if (topContainerURI == null) {
                     createInstanceForLocation(location, instanceType, containerType, containerIndicator, instancesJA,
@@ -3318,14 +3343,6 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
 
-        //limit collections for testing
-        ArrayList<String> collectionsIDsList = new ArrayList<String>();
-        collectionsIDsList.add("54");
-        //collectionsIDsList.add("84");
-        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
-        
-        archonClient.setDebugMode(false);
-
         try {
             /*
             File recordDirectory = new File("/Users/nathan/temp/JSON_Records");
@@ -3333,21 +3350,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            aspaceCopyUtil.copyRepositoryRecords();
-            aspaceCopyUtil.mapRepositoryGroups();
-            aspaceCopyUtil.copyUserRecords();
-            aspaceCopyUtil.copySubjectRecords();
-            aspaceCopyUtil.copyCreatorRecords();
-            aspaceCopyUtil.copyClassificationRecords();
-            aspaceCopyUtil.findAccessionRecordRepositories();
-            aspaceCopyUtil.copyAccessionRecords();
-            aspaceCopyUtil.copyDigitalObjectRecords();
+            //aspaceCopyUtil.copyRepositoryRecords();
+            //aspaceCopyUtil.mapRepositoryGroups();
+            //aspaceCopyUtil.copyUserRecords();
+            //aspaceCopyUtil.copySubjectRecords();
+            //aspaceCopyUtil.copyCreatorRecords();
+            //aspaceCopyUtil.copyClassificationRecords();
+            //aspaceCopyUtil.findAccessionRecordRepositories();
+            //aspaceCopyUtil.copyAccessionRecords();
+            //aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            aspaceCopyUtil.deleteUnlinkedClassifications();
+            ///aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }
