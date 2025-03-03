@@ -1148,6 +1148,7 @@ public class ASpaceMapper {
         }
 
         // add the acquisition date
+        /** 
         String acquisitionDate = record.getString("AcquisitionDate");
         if(!acquisitionDate.isEmpty()) {
             dateJS = new JSONObject();
@@ -1165,6 +1166,7 @@ public class ASpaceMapper {
 
             dateJA.put(dateJS);
         }
+        */
 
         // it is still possible to get to this point without any dates so just hard a dummy
         // date so that the record can be saved.
@@ -1375,6 +1377,12 @@ public class ASpaceMapper {
         addMultipartNote(notesJA, "phystech", "Physical Access Requirements", record.getString("PhysicalAccess"));
 
         addMultipartNote(notesJA, "phystech", "Technical Access Requirements", record.getString("TechnicalAccess"));
+
+        String acquisitionDate = record.getString("AcquisitionDate");
+        if(!acquisitionDate.isEmpty()) {
+            acquisitionDate = getHumanReadableDate(acquisitionDate);
+            addMultipartNote(notesJA, "acqinfo", "Date of Acquisition", acquisitionDate);
+        }
 
         addMultipartNote(notesJA, "acqinfo", "Source of Acquisition", record.getString("AcquisitionSource"));
 
