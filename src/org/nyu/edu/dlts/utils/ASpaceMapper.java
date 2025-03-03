@@ -580,6 +580,9 @@ public class ASpaceMapper {
             json.put("jsonmodel_type", "classification_term");
             /*TODO 10/8/2015 Below code causes bug in ASpace v1.4.0*/
             //json.put("position", record.getInt("Position"));
+            try {
+                json.put("position", Integer.parseInt((String)record.get("ClassificationIdentifier")));
+            } catch (NumberFormatException e) {}
         }
 
         json.put("identifier", record.get("ClassificationIdentifier"));
