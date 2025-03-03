@@ -65,6 +65,10 @@ public class ASpaceMapper {
     // variable to store the base uri for digital objects
     private String digitalObjectBaseURI = "";
 
+    //prefix to add before identifier to make unique when combining multiple instances of Archon
+    //todo: add option to set in GUI rather than hardcoding here
+    private String identifierPrefix = "ALA";
+
     /**
      *  Main constructor
      */
@@ -109,6 +113,24 @@ public class ASpaceMapper {
      */
     public void setDigitalObjectBaseURI(String baseURI) {
         digitalObjectBaseURI = baseURI;
+    }
+
+    /**
+     * Method to set the identifier prefix for collections
+     *
+     * @param prefix
+     */
+    public void setIdentifierPrefix(String prefix) {
+        identifierPrefix = prefix;
+    }
+
+    /**
+     * Method to get the identifier prefix for collections
+     *
+     * @return
+     */
+    public String getIdentifierPrefix() {
+        return identifierPrefix;
     }
 
     /**

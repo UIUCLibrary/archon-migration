@@ -186,6 +186,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // whether to check if the shelf field in the location holds the barcode for the box
     private Boolean checkShelfForBarcode = true;
 
+    // whether to use the custom location mapper
+    private Boolean useCustomLocationMapper = true;
+    
+    //custom location mapper object
+    private CustomArchonLocationMapper archonLocationMapper;
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -208,6 +214,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // set the enum util to that of the mapper
         enumUtil = mapper.getEnumUtil();
+
+        // create custom location mapper
+        if(useCustomLocationMapper) archonLocationMapper = new CustomArchonLocationMapper(mapper.getIdentifierPrefix());
 
         // first add the admin repo to the repository URI map
         repositoryURIMap.put("adminRepo", ASpaceClient.ADMIN_REPOSITORY_ENDPOINT);
@@ -2234,6 +2243,19 @@ public class ASpaceCopyUtil implements  PrintConsole {
         String coordinate2 = location.getString("Section");
         String coordinate3 = location.getString("Shelf");
 
+        //if barcode as shelf, then remove that and split the section value on the separator
+        if(isBarcode(coordinate3)){
+            coordinate3="";
+            //if using custom location mapper, split section on separator into coordinate 2 or 3
+            if(useCustomLocationMapper && coordinate2 != null && coordinate2.length()>1){
+                String[] splitSection = coordinate2.split(archonLocationMapper.getSectionSeparator(),2);
+                coordinate2 = splitSection[0].trim();
+                if(splitSection.length==2){
+                    coordinate3 = splitSection[1].trim();
+                }
+            }
+        }
+
         //if shelf field for the location is a barcode, add that to the top container instead
         if (checkShelfForBarcode && isBarcode(coordinate3)) {
             containerJS.put("barcode", coordinate3);
@@ -2722,6 +2744,49 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // lets create a JSON object for the location in case we need to save it
         JSONObject locationJS = new JSONObject();
+
+        //get the custom building, floor, room, and area text for the location text ("building")
+        if(useCustomLocationMapper){
+            String locationText = building;
+            String floor = "";
+            String room = "";
+            String area = "";
+            JSONObject locationComponents = archonLocationMapper.getLocationComponents(locationText);
+            if(locationComponents != null){
+                //find building for location text or use default text since this is a required field
+                if(locationComponents.has("Building")) {
+                    building = locationComponents.getString("Building");
+                } else {
+                    building = "Unknown";
+                    addErrorMessage("No building found for " + locationText);
+                }
+                floor = (locationComponents.has("Floor")) ? locationComponents.getString("Floor") : "";
+                room = (locationComponents.has("Room")) ? locationComponents.getString("Room") : "";
+                area = (locationComponents.has("Area")) ? locationComponents.getString("Area") : "";
+                //also overwrite default starting key to include the new building text
+                key = building;
+            }else{
+                String locationErrorType ="";
+                if(locationComponents == null){
+                    locationErrorType = "locations map is null";
+                }    
+                String locationErrorMessage = "Error with archonLocationMapper with mapping " + locationText + "; " + locationErrorType;
+                addErrorMessage(locationErrorMessage);
+            }
+            if (!floor.equals("null") && !floor.isEmpty()) {
+                locationJS.put("floor", floor);
+                key += "-" + floor;
+            }
+            if (!room.equals("null") && !room.isEmpty()) {
+                locationJS.put("room", room);
+                key += "-" + room;
+            }
+            if (!area.equals("null") && !area.isEmpty()) {
+                locationJS.put("area", area);
+                key += "-" + area;
+            }
+        }
+
         locationJS.put("building", building);
 
         if (!coordinate1.equals("null") && !coordinate1.isEmpty()) {
@@ -3381,6 +3446,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
 
+        //limit collections for testing
+        ArrayList<String> collectionsIDsList = new ArrayList<String>();
+        collectionsIDsList.add("9");
+        //collectionsIDsList.add("10");
+        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+
+        //archonClient.setDebugMode(false);
+
         try {
             /*
             File recordDirectory = new File("/Users/nathan/temp/JSON_Records");
@@ -3402,7 +3475,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            ///aspaceCopyUtil.deleteUnlinkedClassifications();
+            aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }
