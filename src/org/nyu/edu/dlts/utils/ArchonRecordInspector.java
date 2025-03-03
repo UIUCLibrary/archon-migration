@@ -378,6 +378,11 @@ public class ArchonRecordInspector {
         archonClient.setDebugMode(false);
 
         ASpaceMapper mapper = new ASpaceMapper();
+        String identiferPrefix = null;
+        if (UIUCPropertiesReader.getUIUCProperties() != null) {
+            identiferPrefix = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.prefix");
+        }
+        mapper.setIdentifierPrefix(identiferPrefix);
 
         try {
             loadTestClassificationData(archonClient,mapper);
