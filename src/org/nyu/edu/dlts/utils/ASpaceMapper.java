@@ -950,7 +950,11 @@ public class ASpaceMapper {
         json.put("title", title);
 
         // add the language code
-        json.put("language", getLanguageCode(null, "eng"));
+        if(record.has("Languages")){
+            json.put("language", getLanguageCode(record.getJSONArray("Languages"), "eng"));
+        } else {
+            json.put("language", getLanguageCode(null, "eng"));
+        }
 
         // add the extent array containing one object or many depending if we using multiple extents
         addResourceExtent(record, json);
@@ -1377,6 +1381,22 @@ public class ASpaceMapper {
         addMultipartNote(notesJA, "phystech", "Physical Access Requirements", record.getString("PhysicalAccess"));
 
         addMultipartNote(notesJA, "phystech", "Technical Access Requirements", record.getString("TechnicalAccess"));
+
+        //add language of materials note for all languages identified at the collection level
+        //todo: add each language separately to the same note as you can in the staff user interface
+        if(record.has("Languages")) {
+            JSONArray languageIds = record.getJSONArray("Languages");
+            String langNoteContent = "";
+            for (int i = 0; i < languageIds.length(); i++) {
+                String languageCode = languageIds.getString(i);
+                String languageLong = enumUtil.getLanguageLong(languageCode);
+                String separator = (i > 0) ? ", " :  "";
+
+                //should produce "<language langcode='eng'>English</language>" for English, as an example
+                langNoteContent += separator + "<language langcode='" + languageCode +"'>" + languageLong + "</language>";
+            }
+            addSinglePartNote(notesJA, "langmaterial", "Language of Materials", langNoteContent);
+        }
 
         String acquisitionDate = record.getString("AcquisitionDate");
         if(!acquisitionDate.isEmpty()) {
