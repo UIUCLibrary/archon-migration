@@ -2177,11 +2177,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private void addLocationInfo(JSONObject containerJS, JSONObject location) throws Exception {
         // add the extent information
         String extentNote = "";
+        String extentString ="";
 
         if(location.has("Extent")) {
-            extentNote += location.getString("Extent") + " ";
-            extentNote += enumUtil.getASpaceExtentType(location.getInt("ExtentUnitID"));
+            extentString += location.getString("Extent") + " ";
+            extentString += enumUtil.getASpaceExtentType(location.getInt("ExtentUnitID"));
         }
+        extentNote = "Described as content " + location.getString("Content") + " with extent "+ extentString + " in Archon";
 
         // add a location record record now
         String building = location.getString("Location");
@@ -3331,7 +3333,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            /**aspaceCopyUtil.copyRepositoryRecords();
+            aspaceCopyUtil.copyRepositoryRecords();
             aspaceCopyUtil.mapRepositoryGroups();
             aspaceCopyUtil.copyUserRecords();
             aspaceCopyUtil.copySubjectRecords();
@@ -3339,13 +3341,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.copyClassificationRecords();
             aspaceCopyUtil.findAccessionRecordRepositories();
             aspaceCopyUtil.copyAccessionRecords();
-            aspaceCopyUtil.copyDigitalObjectRecords();*/
+            aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            //aspaceCopyUtil.deleteUnlinkedClassifications();
+            aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }
