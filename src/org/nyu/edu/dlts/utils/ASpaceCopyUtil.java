@@ -175,6 +175,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
 
+    // whether to check if the shelf field in the location holds the barcode for the box
+    private Boolean checkShelfForBarcode = true;
+
     // whether to use the custom location mapper
     private Boolean useCustomLocationMapper = true;
     
@@ -2149,7 +2152,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
     @return
      */
      private Boolean isBarcode(String possibleBarcode){
-        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty() && possibleBarcode.length()==14) {
+        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty() && possibleBarcode.length() == 14) {
             return true;
         } else {
             return false;
@@ -2226,6 +2229,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
         String coordinate1 = location.getString("RangeValue");
         String coordinate2 = location.getString("Section");
         String coordinate3 = location.getString("Shelf");
+
+        //if shelf field for the location is a barcode, add that to the top container instead
+        if (checkShelfForBarcode && isBarcode(coordinate3)) {
+            containerJS.put("barcode", coordinate3);
+            coordinate3 = "";
+        }
 
         //if barcode as shelf, then remove that and split the section value on the separator
         if(isBarcode(coordinate3)){
@@ -3439,7 +3448,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            //aspaceCopyUtil.deleteUnlinkedClassifications();
+            aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }
