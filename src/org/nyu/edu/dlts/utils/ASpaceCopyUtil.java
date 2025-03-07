@@ -215,9 +215,6 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // set the enum util to that of the mapper
         enumUtil = mapper.getEnumUtil();
 
-        // create custom location mapper
-        if(useCustomLocationMapper) archonLocationMapper = new CustomArchonLocationMapper(mapper.getIdentifierPrefix());
-
         // first add the admin repo to the repository URI map
         repositoryURIMap.put("adminRepo", ASpaceClient.ADMIN_REPOSITORY_ENDPOINT);
 
@@ -310,6 +307,24 @@ public class ASpaceCopyUtil implements  PrintConsole {
             defaultRepositoryId = sa[0];
         } else {
             defaultRepositoryId = id;
+        }
+    }
+
+    /**
+     * Checks the CustomArchonLocationMapper and returns true if it is ready to use.
+     * If the archonLocationMapper variable is not yet set, it will create it.
+     * Returns false if useCustomLocationMapper is set to false.
+     * @return
+     */
+    private Boolean checkCustomArchonLocationMapper(){
+        if(useCustomLocationMapper) {
+            if(archonLocationMapper == null) {
+                // create custom location mapper
+                archonLocationMapper = new CustomArchonLocationMapper(mapper.getIdentifierPrefix());
+            }
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -2251,23 +2266,23 @@ public class ASpaceCopyUtil implements  PrintConsole {
         String coordinate2 = location.getString("Section");
         String coordinate3 = location.getString("Shelf");
 
+        //if shelf field for the location is a barcode, add that to the top container instead
+        if (checkShelfForBarcode && isBarcode(coordinate3)) {
+            containerJS.put("barcode", coordinate3);
+            coordinate3 = "";
+        }
+
         //if barcode as shelf, then remove that and split the section value on the separator
         if(isBarcode(coordinate3)){
             coordinate3="";
             //if using custom location mapper, split section on separator into coordinate 2 or 3
-            if(useCustomLocationMapper && coordinate2 != null && coordinate2.length()>1){
+            if(checkCustomArchonLocationMapper() && coordinate2 != null && coordinate2.length()>1){
                 String[] splitSection = coordinate2.split(archonLocationMapper.getSectionSeparator(),2);
                 coordinate2 = splitSection[0].trim();
                 if(splitSection.length==2){
                     coordinate3 = splitSection[1].trim();
                 }
             }
-        }
-
-        //if shelf field for the location is a barcode, add that to the top container instead
-        if (checkShelfForBarcode && isBarcode(coordinate3)) {
-            containerJS.put("barcode", coordinate3);
-            coordinate3 = "";
         }
 
         String locationURI = getLocationURI(building, coordinate1, coordinate2, coordinate3);
@@ -2753,7 +2768,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
         JSONObject locationJS = new JSONObject();
 
         //get the custom building, floor, room, and area text for the location text ("building")
-        if(useCustomLocationMapper){
+        if(checkCustomArchonLocationMapper()){
             String locationText = building;
             String floor = "";
             String room = "";

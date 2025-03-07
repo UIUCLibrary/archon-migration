@@ -92,7 +92,7 @@ public class CustomArchonLocationMapper {
      * @return
      */
     public JSONObject getLocationComponents(String locationText){
-        if(archonLocationsMap.has(locationText)){
+        if(archonLocationsMap != null && archonLocationsMap.has(locationText)){
             try{
                 return archonLocationsMap.getJSONObject(locationText);
             } catch(Exception e) {
