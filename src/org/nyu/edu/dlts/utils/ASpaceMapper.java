@@ -561,7 +561,7 @@ public class ASpaceMapper {
 
         json.put("identifier", record.get("ClassificationIdentifier"));
         json.put("title", record.get("Title"));
-        json.put("description", record.get("Description"));
+        json.put("description", bbCodeToHtmlLinks(record.getString("Description")));
 
         return json;
     }
@@ -1777,6 +1777,20 @@ public class ASpaceMapper {
         }
 
         return title;
+    }
+
+    /**
+     * A Method to convert BBCode "url" to HTML "a" tags
+     *
+     * @param inputString
+     */
+    private String bbCodeToHtmlLinks(String inputString) {
+        String output = inputString;
+        if (output != null && !output.isEmpty()) {
+            output = output.replaceAll("\\[url\\](.*?)\\[\\/url\\]", "<a href=\"$1\">$1</a>");
+            output = output.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "<a href=\"$1\">$2</a>");
+        }
+        return output;
     }
 
     /**
