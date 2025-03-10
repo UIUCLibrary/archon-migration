@@ -1509,7 +1509,7 @@ public class ASpaceMapper {
         noteJS.put("publish", publishRecord);
 
         JSONArray contentJA = new JSONArray();
-        contentJA.put(noteContent);
+        contentJA.put(bbCodeToHtmlLinks(noteContent));
         noteJS.put("content", contentJA);
 
         notesJA.put(noteJS);
