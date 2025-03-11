@@ -705,7 +705,26 @@ public class ASpaceMapper {
         JSONObject noteJS = new JSONObject();
 
         noteJS.put("jsonmodel_type", "note_bioghist");
-        noteJS.put("label", "biographical statement");
+        String noteLabel = "";
+        switch (creatorTypeId) {
+            case 19:
+            case 21:
+            case 23:
+                //personal name
+                noteLabel = "Biographical Note";
+                break;
+            case 20:
+                //family name
+                noteLabel = "Family History";
+                break;
+            case 22:
+                //corporate body
+                noteLabel = "Historical Note";
+                break;
+            default:
+                noteLabel = "Historical Note";
+        }
+        noteJS.put("label", noteLabel);
 
         JSONArray subnotesJA = new JSONArray();
 
