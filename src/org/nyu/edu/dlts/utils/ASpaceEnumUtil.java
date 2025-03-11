@@ -238,7 +238,7 @@ public class ASpaceEnumUtil {
     }
 
     /**
-     * Map the aspace resource type
+     * Map the aspace accession type for a given archon id
      *
      * @param arID
      * @return
@@ -1204,7 +1204,8 @@ public class ASpaceEnumUtil {
     }
 
     /**
-     * Method to return the AccessionResourceType
+     * Method to return the AccessionResourceType, given the string version of the type
+     * Note: Appears to be written for Archivist Toolkit migrations rather than Archon ones
      *
      * @param atValue
      * @return
