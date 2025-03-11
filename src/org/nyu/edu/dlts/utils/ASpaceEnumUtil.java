@@ -238,6 +238,17 @@ public class ASpaceEnumUtil {
     }
 
     /**
+     * Map the aspace resource type
+     *
+     * @param arID
+     * @return
+     */
+    public String getASpaceAccessionType(String arID) {
+        String key = "accession_type_" + arID;
+        return getEnumValueForID(key, "records");
+    }
+
+    /**
      * Method to map the name rule
      *
      * @param atValue
