@@ -1319,6 +1319,16 @@ public class ASpaceEnumUtil {
         }
     }
 
+    /**
+     * Get method for enumListIDsToValues
+     * for testing/debugging
+     * 
+     * @return
+     */
+    public HashMap<String, String> getEnumListIDsToValues(){
+        return enumListIDsToValues;
+    }
+
     // used for testing
     public static void main(String[] args) {
         ASpaceEnumUtil enumUtil = new ASpaceEnumUtil();
