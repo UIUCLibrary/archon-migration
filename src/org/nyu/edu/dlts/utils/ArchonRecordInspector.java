@@ -1,10 +1,12 @@
 package org.nyu.edu.dlts.utils;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.nyu.edu.dlts.utils.uiuc.UIUCPropertiesReader;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -21,6 +23,10 @@ public class ArchonRecordInspector {
     // variables which store a particular archon record
     private static JSONObject contentRecordsJS;
     private static  HashMap<String, String> archonRecordsMap;
+
+    //for use without saving to ASpace
+    private static HashMap<String, String> testClassificationIdentifiers = new HashMap<String, String>();
+    private static HashMap<String, String> testClassificationParents = new HashMap<String, String>();
 
     // file used to save the records locally
     private static File jsonFile;
@@ -179,24 +185,144 @@ public class ArchonRecordInspector {
         }
     }
 
-        /**
-     * Method test converting particular collection record by archon database id
-     * @param archonID
+    /**
+     * Method to load data into the classification identifiers and parents 
+     * as needed for testing
+     * @param testArchonClient
+     * @param mapper
      */
-    public static void testConvertCollection(String archonID) {
+    private static void loadTestClassificationData(ArchonClient testArchonClient, ASpaceMapper mapper) throws Exception{
+        
+        JSONObject records = testArchonClient.getClassificationRecords();
+
+        Iterator<String> keys = records.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+
+            JSONObject classification = records.getJSONObject(key);
+
+            String arId = classification.getString("ID");
+
+            JSONObject classificationJS = mapper.convertClassification(classification);
+
+            JSONArray batchJA = new JSONArray();
+
+            if (classificationJS != null) {
+                batchJA.put(classificationJS);
+
+                JSONArray classificationChildren = classification.getJSONArray("children");
+
+                // add the id for this classification
+                testClassificationIdentifiers.put(arId, classification.getString("ClassificationIdentifier"));
+
+                for (int i = 0; i < classificationChildren.length(); i++) {
+
+                    JSONObject classificationTerm = classificationChildren.getJSONObject(i);
+
+                    String cId = classificationTerm.getString("ID");
+
+                    testClassificationIdentifiers.put(cId, classificationTerm.getString("ClassificationIdentifier"));
+                    String pId = classificationTerm.getString("ParentID");
+                    testClassificationParents.put(cId, pId);
+                }
+            } else {
+                continue;
+            }
+         }
+        }
+
+        /**
+     * Method to test converting particular collection record by archon database id
+     * Does NOT properly convert the identifier if classifications are used
+     * Need to load test classification data first if using classifications in identifier
+     * @param archonID
+     * @param mapper
+     */
+    public static void testConvertCollection(String archonID, ASpaceMapper mapper) {
         JSONObject collectionRecordsJS = archonClient.getCollectionRecords();
         if(collectionRecordsJS.has(archonID)){
             try {
                 JSONObject recordJS = collectionRecordsJS.getJSONObject(archonID);
 
                 System.out.println("Found Record " + recordJS.get("Title"));
-                ASpaceMapper mapper = new ASpaceMapper();
                 try {
-                    HashMap<String, String> testClassificationIdentifiers = new HashMap<String, String>();
-                    HashMap<String, String> testClassificationParents = new HashMap<String, String>();
-
                     JSONObject convertedCollection  = mapper.convertCollection(recordJS,testClassificationIdentifiers,testClassificationParents);
                     System.out.println(convertedCollection.toString(2));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Method to load a particular creator record by archon database id
+     * @param archonID
+     */
+    public static void loadCreatorByArchonID(String archonID) {
+        JSONObject creatorRecordsJS = archonClient.getCreatorRecords();
+        if(creatorRecordsJS.has(archonID)){
+            try {
+                JSONObject recordJS = creatorRecordsJS.getJSONObject(archonID);
+
+                System.out.println("Found Record " + recordJS.get("Name"));
+
+                //print collection json
+                System.out.println(recordJS.toString(2));
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Method to test converting particular creator record by archon database id
+     * @param archonID
+     * @param mapper
+     */
+    public static void testConvertCreator(String archonID, ASpaceMapper mapper) {
+        JSONObject creatorRecordsJS = archonClient.getCreatorRecords();
+        if(creatorRecordsJS.has(archonID)){
+            try {
+                JSONObject recordJS = creatorRecordsJS.getJSONObject(archonID);
+                int creatorTypeId = recordJS.getInt("CreatorTypeID");
+
+                System.out.println("Found Record " + recordJS.get("Name"));
+                try {
+                    JSONObject convertedcreator  = mapper.convertCreator(recordJS, creatorTypeId);
+                    System.out.println(convertedcreator.toString(2));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+        /**
+     * Method to test converting particular creator record by archon database id
+     * @param archonID
+     * @param mapper
+     */
+    public static void testConvertDigitalObject(String archonID, ASpaceMapper mapper) {
+        JSONObject digitalObjectRecordsJS = archonClient.getDigitalObjectRecords();
+        if(digitalObjectRecordsJS.has(archonID)){
+            try {
+                JSONObject recordJS = digitalObjectRecordsJS.getJSONObject(archonID);
+
+                System.out.println("Found Record with ArchonID " + recordJS.get("ID"));
+                System.out.println(recordJS.toString(2));
+
+                try {
+                    JSONObject convertedDigitalObject  = mapper.convertDigitalObject(recordJS);
+                    System.out.println("Converted Record with ArchonID " + recordJS.get("ID"));
+                    System.out.println(convertedDigitalObject.toString(2));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -250,8 +376,28 @@ public class ArchonRecordInspector {
 
         //test loading specific collections
         archonClient.setDebugMode(false);
-        String archonIDtoTest = "8753";
+
+        ASpaceMapper mapper = new ASpaceMapper();
+
+        try {
+            loadTestClassificationData(archonClient,mapper);
+        } catch(Exception e){
+            System.out.println("Error loading classification data" + "\n\n");
+        }
+        System.out.println("Classification hashmap size: " + testClassificationIdentifiers.size() + "\n\n");
+        System.out.println("Classification parents hashmap size: " + testClassificationParents.size() + "\n\n");
+
+        
+        String archonIDtoTest = "7394";//"8753";
         loadCollectionByArchonID(archonIDtoTest);
-        testConvertCollection(archonIDtoTest);
+        testConvertCollection(archonIDtoTest, mapper);
+
+        String archonCreatorIDtoTest = "3473";
+        loadCreatorByArchonID(archonCreatorIDtoTest);
+        testConvertCreator(archonCreatorIDtoTest, mapper);
+        
+        String archonDigitalIDtoTest = "188";
+        testConvertDigitalObject(archonDigitalIDtoTest, mapper);
+
     }
 }
