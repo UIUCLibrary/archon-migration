@@ -468,7 +468,18 @@ public class ASpaceEnumUtil {
      */
     public String getASpaceCollectionManagementRecordProcessingPriority(int arID) {
         String key = "processing_priority_" + arID;
-        return getEnumValueForID(key, "low");
+        String arValue = getEnumValueForID(key, "low");
+        if (arValue.contains("high")) {
+            return ASpaceCollectionManagementRecordEnums[0];
+        } else if(arValue.contains("medium")) {
+            return ASpaceCollectionManagementRecordEnums[1];
+        } else if(arValue.contains("low")) {
+            return ASpaceCollectionManagementRecordEnums[2];
+        } else if(returnATValue) {
+            return arValue;
+        } else {
+            return UNMAPPED;
+        }
     }
 
     /**
