@@ -185,6 +185,12 @@ public class ASpaceMapper {
                 valuesJA.put(ASpaceEnumUtil.UNMAPPED);
             }
 
+            // need to add default to processing priorities enum list
+            if (endpoint.contains("processingpriorities")) {
+                valuesJA.put("default");
+                count++;
+            }
+
 
             if (count != 0) {
                 dynamicEnumsUpdated.add(dynamicEnumJS);
