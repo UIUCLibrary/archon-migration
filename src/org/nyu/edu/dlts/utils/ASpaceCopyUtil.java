@@ -3332,6 +3332,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
 
+        //limit collections for testing
+        ArrayList<String> collectionsIDsList = new ArrayList<String>();
+        collectionsIDsList.add("54");
+        //collectionsIDsList.add("84");
+        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+
         try {
             /*
             File recordDirectory = new File("/Users/nathan/temp/JSON_Records");
