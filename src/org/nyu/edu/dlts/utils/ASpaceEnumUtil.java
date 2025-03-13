@@ -587,7 +587,8 @@ public class ASpaceEnumUtil {
      * @return
      */
     public String getASpaceLanguageCode(String arId) {
-        if(arId.isEmpty()) return "und";
+        String defaultLanguageCode = "eng";
+        if(arId.isEmpty()) return defaultLanguageCode;
 
         if(languagesJS.has(arId)) {
             try {
@@ -597,7 +598,28 @@ public class ASpaceEnumUtil {
                 return "und";
             }
         } else {
-            return "und";
+            return defaultLanguageCode;
+        }
+    }
+
+    /**
+     * Method to return the long version of the language name
+     *
+     * @param langaugeShort
+     * @return
+     */
+    public String getLanguageLong(String languageShort) {
+        if(languageShort.isEmpty())  return "undefined";
+
+        if(textLanguagesJS.has(languageShort)) {
+            try {
+                JSONObject languageJS = textLanguagesJS.getJSONObject(languageShort);
+                return languageJS.getString("LanguageLong");
+            } catch (JSONException e) {
+                return "undedfined";
+            }
+        } else {
+            return "undefined";
         }
     }
 
