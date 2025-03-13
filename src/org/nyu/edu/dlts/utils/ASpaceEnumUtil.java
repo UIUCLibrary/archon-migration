@@ -567,7 +567,8 @@ public class ASpaceEnumUtil {
      * @return
      */
     public String getASpaceLanguageCode(String arId) {
-        if(arId.isEmpty()) return "und";
+        String defaultLanguageCode = "eng";
+        if(arId.isEmpty()) return defaultLanguageCode;
 
         if(languagesJS.has(arId)) {
             try {
@@ -577,7 +578,7 @@ public class ASpaceEnumUtil {
                 return "und";
             }
         } else {
-            return "und";
+            return defaultLanguageCode;
         }
     }
 
