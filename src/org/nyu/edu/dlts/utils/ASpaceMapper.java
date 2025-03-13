@@ -587,7 +587,7 @@ public class ASpaceMapper {
 
         json.put("identifier", record.get("ClassificationIdentifier"));
         json.put("title", record.get("Title"));
-        json.put("description", record.get("Description"));
+        json.put("description", bbCodeToHtmlLinks(record.getString("Description")));
 
         return json;
     }
@@ -764,7 +764,7 @@ public class ASpaceMapper {
             JSONObject citationJS = new JSONObject();
             citationJS.put("jsonmodel_type", "note_citation");
             JSONArray contentJA = new JSONArray();
-            contentJA.put("Author: " + record.get("BiogHistAuthor"));
+            contentJA.put("Author: " + bbCodeToHtmlLinks((String)record.get("BiogHistAuthor")));
             citationJS.put("content", contentJA);
             citationJS.put("publish", publishRecord);
             subnotesJA.put(citationJS);
@@ -780,7 +780,7 @@ public class ASpaceMapper {
             JSONObject subnoteJS = new JSONObject();
             subnoteJS.put("jsonmodel_type", noteType);
             JSONArray contentJA = new JSONArray();
-            contentJA.put(record.get("Sources"));
+            contentJA.put(bbCodeToHtmlLinks((String)record.get("Sources")));
             subnoteJS.put("content", contentJA);
             subnoteJS.put("publish", publishRecord);
             subnotesJA.put(subnoteJS);
@@ -1525,7 +1525,7 @@ public class ASpaceMapper {
         noteJS.put("publish", publishRecord);
 
         JSONArray contentJA = new JSONArray();
-        contentJA.put(noteContent);
+        contentJA.put(bbCodeToHtmlLinks(noteContent));
         noteJS.put("content", contentJA);
 
         notesJA.put(noteJS);
@@ -1549,7 +1549,7 @@ public class ASpaceMapper {
         // these note types should be single part
         if (noteType.equals("physfacet") || noteType.equals("physdesc") || noteType.equals("langmaterial") ||
                 noteType.equals("materialspec")) {
-            addSinglePartNote(notesJA, noteType, noteLabel, noteContent);
+            addSinglePartNote(notesJA, noteType, noteLabel, bbCodeToHtmlLinks(noteContent));
             return;
         }
 
@@ -1564,7 +1564,7 @@ public class ASpaceMapper {
 
         // add the default text note
         JSONObject textNoteJS = new JSONObject();
-        addTextNote(textNoteJS, fixEmptyString(noteContent, "multi-part note content"));
+        addTextNote(textNoteJS, fixEmptyString(bbCodeToHtmlLinks(noteContent), "multi-part note content"));
         subnotesJA.put(textNoteJS);
 
         noteJS.put("subnotes", subnotesJA);
@@ -1582,7 +1582,7 @@ public class ASpaceMapper {
     private void addTextNote(JSONObject noteJS, String content) throws Exception {
         noteJS.put("jsonmodel_type", "note_text");
         noteJS.put("publish", publishRecord);
-        noteJS.put("content", content);
+        noteJS.put("content", bbCodeToHtmlLinks(content));
     }
 
     /**
@@ -1605,7 +1605,7 @@ public class ASpaceMapper {
         noteJS.put("publish", publishRecord);
 
         JSONArray contentJA = new JSONArray();
-        contentJA.put(noteContent);
+        contentJA.put(bbCodeToHtmlLinks(noteContent));
         noteJS.put("content", contentJA);
 
         notesJA.put(noteJS);
@@ -1873,6 +1873,20 @@ public class ASpaceMapper {
         }
 
         return title;
+    }
+
+    /**
+     * A Method to convert BBCode "url" to HTML "a" tags
+     *
+     * @param inputString
+     */
+    private String bbCodeToHtmlLinks(String inputString) {
+        String output = inputString;
+        if (output != null && !output.isEmpty()) {
+            output = output.replaceAll("\\[url\\](.*?)\\[\\/url\\]", "<a href=\"$1\">$1</a>");
+            output = output.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "<a href=\"$1\">$2</a>");
+        }
+        return output;
     }
 
     /**
