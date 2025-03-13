@@ -763,6 +763,7 @@ public class ASpaceMapper {
             JSONArray contentJA = new JSONArray();
             contentJA.put(record.get("Sources"));
             subnoteJS.put("content", contentJA);
+            subnoteJS.put("publish", publishRecord);
             subnotesJA.put(subnoteJS);
         }
 
