@@ -643,7 +643,7 @@ public class ASpaceMapper {
         json.put("general_note", record.get("Comments"));
 
         if(record.has("MaterialTypeID")) {
-            json.put("resource_type", enumUtil.getASpaceResourceType(record.getString("MaterialTypeID")));
+            json.put("resource_type", enumUtil.getASpaceAccessionType(record.getString("MaterialTypeID")));
         }
 
         /* add linked records (extents, dates, rights statement)*/

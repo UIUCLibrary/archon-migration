@@ -256,6 +256,17 @@ public class ASpaceEnumUtil {
     }
 
     /**
+     * Map the aspace accession type for a given archon id
+     *
+     * @param arID
+     * @return
+     */
+    public String getASpaceAccessionType(String arID) {
+        String key = "accession_type_" + arID;
+        return getEnumValueForID(key, "records");
+    }
+
+    /**
      * Method to map the name rule
      *
      * @param atValue
@@ -1232,7 +1243,8 @@ public class ASpaceEnumUtil {
     }
 
     /**
-     * Method to return the AccessionResourceType
+     * Method to return the AccessionResourceType, given the string version of the type
+     * Note: Appears to be written for Archivist Toolkit migrations rather than Archon ones
      *
      * @param atValue
      * @return
@@ -1356,6 +1368,16 @@ public class ASpaceEnumUtil {
         } else {
             return defaultValue;
         }
+    }
+
+    /**
+     * Get method for enumListIDsToValues
+     * for testing/debugging
+     * 
+     * @return
+     */
+    public HashMap<String, String> getEnumListIDsToValues(){
+        return enumListIDsToValues;
     }
 
     // used for testing

@@ -3434,6 +3434,22 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Print the EnumIDsToValues list entries for a given starting string
+     * for testing/debugging 
+     * @param type
+     */
+    public void printEnumIDList(String type){
+        HashMap<String, String> enumIDList = enumUtil.getEnumListIDsToValues();
+        System.out.println("\n**Contents of Enum ID List for " + type + "**");
+        for (Map.Entry<String, String> e : enumIDList.entrySet()){
+            if(e.getKey().startsWith(type)){    
+                System.out.println("Key: " + e.getKey() + " Value: " + e.getValue());
+            }
+        }
+        System.out.println("**End contents of Enum ID List for " + type + "**");
+    }
+
+    /**
      * Method to test the conversion without having to startup the gui
      *
      * @param args
@@ -3489,21 +3505,29 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            //aspaceCopyUtil.copyRepositoryRecords();
-            //aspaceCopyUtil.mapRepositoryGroups();
-            //aspaceCopyUtil.copyUserRecords();
-            //aspaceCopyUtil.copySubjectRecords();
-            //aspaceCopyUtil.copyCreatorRecords();
-            //aspaceCopyUtil.copyClassificationRecords();
-            //aspaceCopyUtil.findAccessionRecordRepositories();
-            //aspaceCopyUtil.copyAccessionRecords();
-            //aspaceCopyUtil.copyDigitalObjectRecords();
+            aspaceCopyUtil.printEnumIDList("accession_type");
+            aspaceCopyUtil.printEnumIDList("resource_type");
+            aspaceCopyUtil.printEnumIDList("extent_type");
+            aspaceCopyUtil.printEnumIDList("container_type");
+            aspaceCopyUtil.printEnumIDList("processing_priority");
+            aspaceCopyUtil.printEnumIDList("subject_source");
+            /* 
+            aspaceCopyUtil.copyRepositoryRecords();
+            aspaceCopyUtil.mapRepositoryGroups();
+            aspaceCopyUtil.copyUserRecords();
+            aspaceCopyUtil.copySubjectRecords();
+            aspaceCopyUtil.copyCreatorRecords();
+            aspaceCopyUtil.copyClassificationRecords();
+            aspaceCopyUtil.findAccessionRecordRepositories();
+            aspaceCopyUtil.copyAccessionRecords();
+            aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
             aspaceCopyUtil.deleteUnlinkedClassifications();
+            */
         } catch (Exception e) {
             e.printStackTrace();
         }
