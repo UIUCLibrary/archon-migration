@@ -396,7 +396,7 @@ public class ArchonRecordInspector {
         //loadCollectionByArchonID(archonIDtoTest);
         //testConvertCollection(archonIDtoTest, mapper);
 
-        String archonCreatorIDtoTest = "3473";
+        String archonCreatorIDtoTest = "3945";//"3473";
         loadCreatorByArchonID(archonCreatorIDtoTest);
         testConvertCreator(archonCreatorIDtoTest, mapper);
         
