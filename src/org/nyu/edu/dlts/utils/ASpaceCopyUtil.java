@@ -1496,20 +1496,20 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             // get the at resource identifier to see if to only copy a specified resource
             // and to use for trouble shooting purposes
-            String arId = collection.getString("CollectionIdentifier");
+            String archonIdentifier = collection.getString("CollectionIdentifier");
 
-            if(arId == null || arId.isEmpty()) {
-                arId = "DBID-" +dbId;
+            if(archonIdentifier == null || archonIdentifier.isEmpty()) {
+                archonIdentifier = "DBID-" +dbId;
             }
 
-            currentRecordIdentifier = "DB ID: " + dbId + "\nAR ID: " + arId;
+            currentRecordIdentifier = "DB ID: " + dbId + "\nAR ID: " + archonIdentifier;
             currentRecordDBID = dbId;
 
-            // set the atId in the mapper object
-            mapper.setCurrentCollectionRecordIdentifier(arId);
+            // set the achonIdentifier in the mapper object
+            mapper.setCurrentCollectionRecordIdentifier(archonIdentifier);
 
             // check to see if we are not just copy a single resource
-            if(collectionsIDsList != null && !collectionsIDsList.contains(arId)) {
+            if(collectionsIDsList != null && !collectionsIDsList.contains(archonIdentifier)) {
                 print("Not Copied: Collection not in list: " + collectionTitle);
                 continue;
             }
@@ -1558,7 +1558,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 addDigitalInstances(resourceJS, intID, 0, collectionTitle, batchEndpoint);
 
                 // add the linked accessions
-                addRelatedAccessions(resourceJS, dbId, arId, repoURI + "/");
+                addRelatedAccessions(resourceJS, dbId, archonIdentifier, repoURI + "/");
 
                 // if we using batch import then we not not going to
                 resourceJS.put("uri", endpoint + "/" + dbId);
@@ -1850,7 +1850,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 if (notFoundIDs.size() != 0) {
                     StringBuilder errorMessage = new StringBuilder();
                     errorMessage.append("Could not find ").append(notFoundIDs.size())
-                            .append(" component(s) for resource: ").append(arId);
+                            .append(" component(s) for resource: ").append(archonIdentifier);
                     if (notFoundIDs.size() <= 20) {
                         errorMessage.append("\nNot found components:");
                         for (String id : notFoundIDs) errorMessage.append(" ").append(id);
@@ -1872,7 +1872,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 if (invalidParentIDs.size() != 0) {
                     StringBuilder errorMessage = new StringBuilder();
                     errorMessage.append("Invalid parent relationships found for ").append(invalidParentIDs.size())
-                            .append(" component(s) for resource: ").append(arId);
+                            .append(" component(s) for resource: ").append(archonIdentifier);
                     if (invalidParentIDs.size() <= 20) {
                         errorMessage.append("\nInvalid relationships found for components:");
                         for (String id : invalidParentIDs) errorMessage.append(" ").append(id);
@@ -1887,7 +1887,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
                 print("Batch Copying Resource # " + count + " || Title: " + collectionTitle);
 
-                String bids = saveRecord(batchEndpoint, batchJA.toString(2), arId);
+                String bids = saveRecord(batchEndpoint, batchJA.toString(2), archonIdentifier);
                 if (!bids.equals(NO_ID)) {
                     if (!simulateRESTCalls) {
                         JSONObject bidsJS = new JSONObject(bids);
