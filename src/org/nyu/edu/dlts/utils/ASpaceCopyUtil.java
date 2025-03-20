@@ -168,6 +168,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // this list is used to copy a specific resource
     private ArrayList<String> collectionsIDsList;
 
+    // this list is used to copy a specific resource
+    private ArrayList<String> collArchonIDsList;
+
     // A string builder object to track errors
     private StringBuilder errorBuffer = new StringBuilder();
 
@@ -1140,6 +1143,30 @@ public class ASpaceCopyUtil implements  PrintConsole {
             String arId = accession.getString("ID");
             String accessionTitle = accession.getString("Title");
 
+            // check to see if we are only copying accessions for specific collections based on collection archon ID
+            if(collArchonIDsList != null) {
+                Boolean attachedToCollInList = false;
+                String notInList = "";
+                if(accession.has("Collections")) {
+                    JSONArray collectionIds = accession.getJSONArray("Collections");
+                    for(int i = 0; i < collectionIds.length(); i++) {
+                        String cid = collectionIds.getString(i);
+                        if(collArchonIDsList.contains(cid)){
+                            attachedToCollInList = true;
+                            break;
+                        } else {
+                            notInList += ", " + cid;
+                        }
+                    }
+                } else {
+                    notInList = ", no collection ID noted";
+                }
+                if(!attachedToCollInList){
+                    print("Not Copied: Accession not attached to Archon Collection ID in list: " + accessionTitle + notInList);
+                    continue;
+                }
+            }
+
             JSONObject accessionJS = mapper.convertAccession(accession);
 
             if (accessionJS != null) {
@@ -1251,6 +1278,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             String arId = digitalObject.getString("ID");
             String digitalObjectTitle = digitalObject.getString("Title");
+
+            // check to see if we are only copying digital objects for specific collections based on collection archon ID
+            String strCollectionID = digitalObject.getString("CollectionID");
+            if(collArchonIDsList != null && !collArchonIDsList.contains(strCollectionID)) {
+                print("Not Copied: Digital Object not attached to Archon Collection ID in list: " + digitalObjectTitle);
+                continue;
+            }
 
             // create the batch import JSON array and dummy URI now
             JSONArray batchJA = new JSONArray();
@@ -1523,9 +1557,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
             // set the atId in the mapper object
             mapper.setCurrentCollectionRecordIdentifier(arId);
 
-            // check to see if we are not just copy a single resource
+            // check to see if we are not just copying a single resource based on collection identifier
             if(collectionsIDsList != null && !collectionsIDsList.contains(arId)) {
-                print("Not Copied: Collection not in list: " + collectionTitle);
+                print("Not Copied: Collection not in Collection identifier list: " + collectionTitle);
+                continue;
+            }
+            // check to see if we are not just copying a single resource based on archon ID
+            if(collArchonIDsList != null && !collArchonIDsList.contains(dbId)) {
+                print("Not Copied: Collection not in Archon ID list: " + collectionTitle);
                 continue;
             }
 
@@ -3287,6 +3326,19 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Method to set the resources to copy by archon collection ID
+     *
+     * @param collArchonIDsList
+     */
+    public void setCollArchonIDToCopyList(ArrayList<String> collArchonIDsList) {
+        if(collArchonIDsList.size() != 0) {
+            this.collArchonIDsList = collArchonIDsList;
+        } else {
+            this.collArchonIDsList = null;
+        }
+    }
+
+    /**
      * Method to get the current
      * @return
      */
@@ -3346,9 +3398,18 @@ public class ASpaceCopyUtil implements  PrintConsole {
         ArrayList<String> collectionsIDsList = new ArrayList<String>();
         collectionsIDsList.add("72");
         //collectionsIDsList.add("84");
-        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+        //aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+
+        //limit collections for testing by archon collection ID
+        ArrayList<String> collArchonIDsList = new ArrayList<String>();
+        collArchonIDsList.add("8434");
+        collArchonIDsList.add("8457");
+        collArchonIDsList.add("8020");
+        collArchonIDsList.add("8734");
+        aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
         
         archonClient.setDebugMode(false);
+        aspaceCopyUtil.mapper.setAppendTestIdentifier("0320test17");
 
         try {
             /*
