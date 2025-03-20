@@ -1505,7 +1505,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             currentRecordIdentifier = "DB ID: " + dbId + "\nAR ID: " + archonIdentifier;
             currentRecordDBID = dbId;
 
-            // set the atId in the mapper object
+            // set the achonIdentifier in the mapper object
             mapper.setCurrentCollectionRecordIdentifier(archonIdentifier);
 
             // check to see if we are not just copy a single resource
