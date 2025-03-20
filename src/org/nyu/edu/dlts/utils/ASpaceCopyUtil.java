@@ -162,6 +162,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // this list is used to copy a specific resource
     private ArrayList<String> collectionsIDsList;
 
+    // this list is used to copy a specific resource
+    private ArrayList<String> collArchonIDsList;
+
     // A string builder object to track errors
     private StringBuilder errorBuffer = new StringBuilder();
 
@@ -1246,6 +1249,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
             String arId = digitalObject.getString("ID");
             String digitalObjectTitle = digitalObject.getString("Title");
 
+            // check to see if we are not just copy a single resource based on archon ID
+            String strCollectionID = digitalObject.getString("CollectionID");
+            if(collArchonIDsList != null && !collArchonIDsList.contains(strCollectionID)) {
+                print("Not Copied: Digital Object not attached to Archon Collection ID in list: " + digitalObjectTitle);
+                continue;
+            }
+
             // create the batch import JSON array and dummy URI now
             JSONArray batchJA = new JSONArray();
 
@@ -1509,9 +1519,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
             // set the atId in the mapper object
             mapper.setCurrentCollectionRecordIdentifier(arId);
 
-            // check to see if we are not just copy a single resource
+            // check to see if we are not just copying a single resource based on collection identifier
             if(collectionsIDsList != null && !collectionsIDsList.contains(arId)) {
-                print("Not Copied: Collection not in list: " + collectionTitle);
+                print("Not Copied: Collection not in Collection identifier list: " + collectionTitle);
+                continue;
+            }
+            // check to see if we are not just copying a single resource based on archon ID
+            if(collArchonIDsList != null && !collArchonIDsList.contains(dbId)) {
+                print("Not Copied: Collection not in Archon ID list: " + collectionTitle);
                 continue;
             }
 
@@ -3261,6 +3276,19 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Method to set the resources to copy by archon collection ID
+     *
+     * @param collArchonIDsList
+     */
+    public void setCollArchonIDToCopyList(ArrayList<String> collArchonIDsList) {
+        if(collArchonIDsList.size() != 0) {
+            this.collArchonIDsList = collArchonIDsList;
+        } else {
+            this.collArchonIDsList = null;
+        }
+    }
+
+    /**
      * Method to get the current
      * @return
      */
@@ -3320,7 +3348,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
         ArrayList<String> collectionsIDsList = new ArrayList<String>();
         collectionsIDsList.add("54");
         //collectionsIDsList.add("84");
-        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+        //aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+
+        //limit collections for testing by archon collection ID
+        ArrayList<String> collArchonIDsList = new ArrayList<String>();
+        collArchonIDsList.add("7994");
+        aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
         
         archonClient.setDebugMode(false);
 
@@ -3338,8 +3371,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.copyCreatorRecords();
             aspaceCopyUtil.copyClassificationRecords();
             aspaceCopyUtil.findAccessionRecordRepositories();
-            aspaceCopyUtil.copyAccessionRecords();
-            aspaceCopyUtil.copyDigitalObjectRecords();*/
+            aspaceCopyUtil.copyAccessionRecords();*/
+            aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
