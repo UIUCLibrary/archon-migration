@@ -3352,10 +3352,11 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         //limit collections for testing by archon collection ID
         ArrayList<String> collArchonIDsList = new ArrayList<String>();
-        collArchonIDsList.add("7994");
+        collArchonIDsList.add("8434");
         aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
         
         archonClient.setDebugMode(false);
+        aspaceCopyUtil.mapper.setAppendTestIdentifier("0320test12");
 
         try {
             /*

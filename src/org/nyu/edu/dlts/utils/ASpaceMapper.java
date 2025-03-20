@@ -65,6 +65,9 @@ public class ASpaceMapper {
     // variable to store the base uri for digital objects
     private String digitalObjectBaseURI = "";
 
+    //for appending to ids to aid in testing
+    private String appendTestIdentifier = "";
+
     /**
      *  Main constructor
      */
@@ -109,6 +112,15 @@ public class ASpaceMapper {
      */
     public void setDigitalObjectBaseURI(String baseURI) {
         digitalObjectBaseURI = baseURI;
+    }
+
+    /**
+     * Method to set a string to create unique identifiers for testing
+     *
+     * @param testString
+     */
+    public void setAppendTestIdentifier(String testString) {
+        appendTestIdentifier = "_" + testString;
     }
 
     /**
@@ -815,8 +827,11 @@ public class ASpaceMapper {
 
         json.put("position", record.getInt("DisplayOrder"));
 
-        json.put("component_id", fixEmptyString(record.getString("ID"), "ID_" + randomString.nextString()));
-
+        if(appendTestIdentifier == ""){
+            json.put("component_id", fixEmptyString(record.getString("ID"), "ID_" + randomString.nextString()));
+        } else {
+            json.put("component_id", fixEmptyString(record.getString("ID") + appendTestIdentifier, "ID_" + randomString.nextString() + appendTestIdentifier));
+        }
         return json;
     }
 
@@ -978,6 +993,10 @@ public class ASpaceMapper {
             idParts[1] = randomString.nextString();
             idParts[2] = randomString.nextString();
             idParts[3] = randomString.nextString();
+        }
+
+        if(appendTestIdentifier != ""){
+            idParts[0] += appendTestIdentifier;
         }
 
         json.put("id_0", idParts[0]);
@@ -1648,6 +1667,10 @@ public class ASpaceMapper {
             if(id.isEmpty()) {
                 id = "Digital Object ID ##"+ randomStringLong.nextString();
             }
+            
+            if(appendTestIdentifier != ""){
+                id += "_" + appendTestIdentifier;
+            }
 
             if(!digitalObjectIDs.contains(id)) {
                 digitalObjectIDs.add(id);
@@ -1660,6 +1683,10 @@ public class ASpaceMapper {
         } else if(endpoint.equals(ASpaceClient.ACCESSION_ENDPOINT)) {
             String message;
 
+            if(appendTestIdentifier != ""){
+                id += "_" + appendTestIdentifier;
+            }
+
             if(!accessionIDs.contains(id)) {
                 accessionIDs.add(id);
                 return "";
@@ -1669,6 +1696,10 @@ public class ASpaceMapper {
                 do {
                     nid = "##" + randomStringLong.nextString();
                 } while (accessionIDs.contains(nid));
+
+                if(appendTestIdentifier != ""){
+                    nid += "_" + appendTestIdentifier;
+                }
 
                 accessionIDs.add(nid);
 
@@ -1708,6 +1739,10 @@ public class ASpaceMapper {
                 return "";
             }
 
+            if(appendTestIdentifier != ""){
+                id += appendTestIdentifier;
+            }
+
             if(!eadIDs.contains(id)) {
                 eadIDs.add(id);
             } else {
@@ -1716,6 +1751,10 @@ public class ASpaceMapper {
                 do {
                     nid = id + " ##" + randomString.nextString();
                 } while(eadIDs.contains(nid));
+
+                if(appendTestIdentifier != ""){
+                    nid += appendTestIdentifier;
+                }
 
                 eadIDs.add(nid);
 
