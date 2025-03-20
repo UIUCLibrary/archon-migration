@@ -2570,7 +2570,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
                                       HashMap<String, String> topContainerURIs, String repoURI) throws Exception {
         if (topContainerURIs == null) topContainerURIs = new HashMap<String, String>();
 
-        JSONArray instancesJA = new JSONArray();
+        JSONArray instancesJA;
+        //check if the recordJS already has instances added (e.g., from digital objects)
+        if(recordJS.has("instances")){
+            instancesJA = recordJS.getJSONArray("instances");
+        } else {
+            instancesJA = new JSONArray();
+        } 
 
         for (int i = 0; i < locations.length(); i++) {
 
@@ -3409,7 +3415,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
         
         archonClient.setDebugMode(false);
-        aspaceCopyUtil.mapper.setAppendTestIdentifier("0320test17");
+        aspaceCopyUtil.mapper.setAppendTestIdentifier("0320test19");
 
         try {
             /*
