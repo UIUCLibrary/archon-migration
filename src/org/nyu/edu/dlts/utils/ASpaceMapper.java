@@ -604,6 +604,10 @@ public class ASpaceMapper {
             id_0 = randomStringLong.nextString();
         }
 
+        if(appendTestIdentifier != ""){
+            id_0 += appendTestIdentifier;
+        }
+
         Date date = getDate(record.getString("AccessionDate"));
 
         if (date == null) {
@@ -1669,7 +1673,7 @@ public class ASpaceMapper {
             }
             
             if(appendTestIdentifier != ""){
-                id += "_" + appendTestIdentifier;
+                id += appendTestIdentifier;
             }
 
             if(!digitalObjectIDs.contains(id)) {
@@ -1684,7 +1688,7 @@ public class ASpaceMapper {
             String message;
 
             if(appendTestIdentifier != ""){
-                id += "_" + appendTestIdentifier;
+                id += appendTestIdentifier;
             }
 
             if(!accessionIDs.contains(id)) {
@@ -1698,7 +1702,7 @@ public class ASpaceMapper {
                 } while (accessionIDs.contains(nid));
 
                 if(appendTestIdentifier != ""){
-                    nid += "_" + appendTestIdentifier;
+                    nid += appendTestIdentifier;
                 }
 
                 accessionIDs.add(nid);
