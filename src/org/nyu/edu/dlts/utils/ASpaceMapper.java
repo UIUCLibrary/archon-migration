@@ -921,10 +921,9 @@ public class ASpaceMapper {
 
         json.put("title", title);
 
-        // add the language code
-        if(record.has("Languages")){
-            json.put("language", getLanguageCode(record.getJSONArray("Languages"), "eng"));
-        } else {
+        // add English as the default language code if no language specified in Archon
+        // (otherwise, add language later using a language of materials note)
+        if(!record.has("Languages")){
             json.put("language", getLanguageCode(null, "eng"));
         }
 
@@ -1352,7 +1351,6 @@ public class ASpaceMapper {
         addMultipartNote(notesJA, "phystech", "Technical Access Requirements", record.getString("TechnicalAccess"));
 
         //add language of materials note for all languages identified at the collection level
-        //todo: add each language separately to the same note as you can in the staff user interface
         if(record.has("Languages")) {
             JSONArray languageIds = record.getJSONArray("Languages");
             String langNoteContent = "";
