@@ -2705,8 +2705,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
         } else {
             // put in dummy range so record saves
             locationJS.put("coordinate_1_label", "Range");
-            locationJS.put("coordinate_1_indicator", "0");
-            key += "-0";
+            locationJS.put("coordinate_1_indicator", "n/a");
+            key += "-na";
         }
 
         if (!coordinate2.equals("null") && !coordinate2.isEmpty()) {
