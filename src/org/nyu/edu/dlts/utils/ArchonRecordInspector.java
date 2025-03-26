@@ -284,6 +284,33 @@ public class ArchonRecordInspector {
         }
     }
 
+   /**
+     * Method to test converting particular classification record by archon database id
+     * @param archonID
+     * @param mapper
+     */
+    public static void testConvertClassification(String archonID, ASpaceMapper mapper) {
+        JSONObject archonRecordsJS = archonClient.getClassificationRecords();
+        if(archonRecordsJS.has(archonID)){
+            try {
+                JSONObject recordJS = archonRecordsJS.getJSONObject(archonID);
+
+                System.out.println("Found Record " + recordJS.get("Title"));
+                System.out.println(recordJS.toString(2));
+                try {
+                    JSONObject convertedRecord  = mapper.convertClassification(recordJS);
+                    System.out.println("Converted Record " + recordJS.get("Title"));
+                    System.out.println(convertedRecord.toString(2));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     /**
      * Method to load a particular creator record by archon database id
      * @param archonID
@@ -427,6 +454,9 @@ public class ArchonRecordInspector {
 
         String archonAccesionIDtoTest = "142";
         testConvertAccession(archonAccesionIDtoTest, mapper);
+
+        String archonClassificationIDtoTest = "3340";
+        testConvertClassification(archonClassificationIDtoTest, mapper);
 
     }
 }
