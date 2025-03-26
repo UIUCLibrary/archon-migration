@@ -639,24 +639,40 @@ public class ASpaceMapper {
         /* add linked records (extents, dates, rights statement)*/
 
         // add the extent array containing one object or many depending if we using multiple extents
-        if(record.has("ReceivedExtent") && record.getDouble("ReceivedExtent") != 0) {
+        if(record.has("ReceivedExtent") || record.has("UnprocessedExtent")) {
             JSONArray extentJA = new JSONArray();
-            JSONObject extentJS = new JSONObject();
 
-            extentJS.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ReceivedExtentUnitID")));
-            extentJS.put("number", record.getString("ReceivedExtent"));
-            extentJS.put("portion", "whole");
-            extentJS.put("container_summary", "Received Extent");
+            if(record.has("ReceivedExtent") && record.getDouble("ReceivedExtent") != 0){
+                JSONObject extentJS = new JSONObject();
 
-            extentJA.put(extentJS);
+                extentJS.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ReceivedExtentUnitID")));
+                extentJS.put("number", record.getString("ReceivedExtent"));
+                extentJS.put("portion", "whole");
+                extentJS.put("container_summary", "Received Extent");
+
+                extentJA.put(extentJS);
+            }
+
+            if(record.has("UnprocessedExtent")){
+                JSONObject unprocExtentJS = new JSONObject();
+
+                unprocExtentJS.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("UnprocessedExtentUnitID")));
+                unprocExtentJS.put("number", record.getString("UnprocessedExtent"));
+                unprocExtentJS.put("portion", "whole");
+                unprocExtentJS.put("container_summary", "Unprocessed Extent");
+
+                extentJA.put(unprocExtentJS);
+            }
+
             json.put("extents", extentJA);
         }
+
 
         // add the inclusive dates
         addDate(record.getString("InclusiveDates"), json, "inclusive", "other");
 
         // add the collection management record now
-        if(record.has("ExpectedCompletionDate") && !record.getString("ExpectedCompletionDate").isEmpty()) {
+        if((record.has("ExpectedCompletionDate") && !record.getString("ExpectedCompletionDate").isEmpty()) || (record.has("UnprocessedExtent") && record.getDouble("UnprocessedExtent")== 0) || record.has("ProcessingPriorityID")) {
             addCollectionManagementRecord(record, json);
         }
 
@@ -698,10 +714,16 @@ public class ASpaceMapper {
         // Main json object
         JSONObject json = new JSONObject();
 
-        json.put("processing_plan", "Expected Completion Date: " + record.get("ExpectedCompletionDate"));
+        if(record.has("ExpectedCompletionDate")){
+            json.put("processing_plan", "Expected Completion Date: " + record.get("ExpectedCompletionDate"));
+        }
 
         if (record.has("ProcessingPriorityID")) {
             json.put("processing_priority", enumUtil.getASpaceCollectionManagementRecordProcessingPriority(record.getInt("ProcessingPriorityID")));
+        }
+
+        if(record.has("UnprocessedExtent") && record.getDouble("UnprocessedExtent") == 0){
+            json.put("processing_status","completed");
         }
 
         recordJS.put("collection_management", json);
