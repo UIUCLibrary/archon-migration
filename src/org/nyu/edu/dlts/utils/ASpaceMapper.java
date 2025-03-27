@@ -701,7 +701,7 @@ public class ASpaceMapper {
 
 
         // add the inclusive dates
-        addDate(record.getString("InclusiveDates"), json, "inclusive", "other");
+        addDate(record.getString("InclusiveDates"), json, "inclusive", "creation");
 
         // add the collection management record now
         if((record.has("ExpectedCompletionDate") && !record.getString("ExpectedCompletionDate").isEmpty()) || (record.has("UnprocessedExtent") && record.getDouble("UnprocessedExtent")== 0) || record.has("ProcessingPriorityID")) {
