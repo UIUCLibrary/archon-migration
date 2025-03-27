@@ -1523,6 +1523,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
         int count = 0;
         int maxBatchLength = 0;
 
+        //counts for collection content
+        int countWithCollContent = 0;
+        int successWithCollContent = 0;
+        int countCollContent = 0;
+        int successCollContent = 0;
+
         // if we in debug mode, then set total to max
         if(debug && max < total) total = max;
 
@@ -1631,6 +1637,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 // add any archival objects here
                 JSONObject resourceComponents = archonClient.getCollectionContentRecords(dbId);
 
+                if(resourceComponents != null && resourceComponents.length()>0){
+                    countWithCollContent++;
+                }
+                //for tracking whether any content is added
+                Boolean addedCollContent = false;
+
                 // stores any component IDs that are referenced as parents but not actually in the database
                 HashSet<String> notFoundIDs = new HashSet<String>();
 
@@ -1661,6 +1673,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
                 Iterator<String> ckeys = resourceComponents.sortedKeys();
                 while (ckeys.hasNext()) {
+                    countCollContent++;
                     JSONObject component = resourceComponents.getJSONObject(ckeys.next());
                     String title = component.getString("Title");
 
@@ -1773,6 +1786,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
                             intellectualComponents.put(cid, componentJS);
 
                             print("Copied Resource Component: " + title + " :: " + cid + "\n");
+                            addedCollContent = true;
+                            successCollContent++;
                         } else {
                             print("Fail -- Resource Component to JSON: " + title);
                         }
@@ -1952,10 +1967,19 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     updateResourceURIMap(dbId, resourceURI);
                     incrementCopyCount();
 
+                    // update count for collections with collection content
+                    if(addedCollContent){
+                        successWithCollContent++;
+                    }
+
                     // update the copy message
                     updateRecordTotals("Instance Digital Objects", digitalObjectTotal, digitalObjectSuccess);
                     updateRecordTotals("Locations", locationTotal, locationSuccess);
                     updateRecordTotals("Collections", total, copyCount);
+
+                    // updates added for collection content
+                    updateRecordTotals("Collections with collection content", countWithCollContent, successWithCollContent);
+                    updateRecordTotals("Collection content", countCollContent, successCollContent);
 
                     print("Batch Copied Collection: " + collectionTitle + " :: " + resourceURI);
                 } else {
@@ -1976,6 +2000,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // update the number of resource actually copied
         updateRecordTotals("Collections", total, copyCount);
+
+        // update collections with collection content copied
+        updateRecordTotals("Collections with collection content", countWithCollContent, successWithCollContent);
+
+        // update collections with collection content copied
+        updateRecordTotals("Collection content", countCollContent, successCollContent);
     }
 
     /**

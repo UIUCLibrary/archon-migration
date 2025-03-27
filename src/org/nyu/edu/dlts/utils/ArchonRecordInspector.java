@@ -172,12 +172,15 @@ public class ArchonRecordInspector {
                 System.out.println("Found Record " + recordJS.get("Title"));
 
                 //print collection json
+                System.out.println("printing collection record json...");
                 System.out.println(recordJS.toString(2));
 
                 // get the collection content
                 JSONObject collectionContentsJS = archonClient.getCollectionContentRecords(archonID);
-
+                System.out.println("printing collection content json...");
                 System.out.println(collectionContentsJS.toString(2));
+                System.out.println("count of collection content in json:");
+                System.out.println(collectionContentsJS.length());
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -401,7 +404,7 @@ public class ArchonRecordInspector {
         testConvertCreator(archonCreatorIDtoTest, mapper);
         
         String archonDigitalIDtoTest = "188";
-        testConvertDigitalObject(archonDigitalIDtoTest, mapper);
+        //testConvertDigitalObject(archonDigitalIDtoTest, mapper);
 
     }
 }
