@@ -605,7 +605,9 @@ public class ASpaceMapper {
 
         json.put("identifier", record.get("ClassificationIdentifier"));
         json.put("title", record.get("Title"));
-        json.put("description", bbCodeToHtmlLinks(record.getString("Description")));
+        if(record.has("Description") && !record.isNull("Description")){
+            json.put("description", record.get("Description"));
+        }
 
         return json;
     }
