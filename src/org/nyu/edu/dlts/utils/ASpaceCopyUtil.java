@@ -123,8 +123,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private int locationTotal = 0;
     private int locationSuccess = 0;
 
-    // boolean to specify weather to save digital objects by themselves or with the resource records
+    // boolean to specify whether to save digital objects by themselves or with the resource records
     boolean saveDigitalObjectsWithResources = true;
+
+    //integers to keep track of digital objects for collections and collection content copied
+    private int collDigitalObjTotal = 0;
+    private int collDigitalObjSuccess = 0;
+    private int contentDigitalObjTotal = 0;
+    private int contentDigitalObjSuccess = 0;
 
     // These fields are used to track of the number of messages posted to the output console
     // in order to prevent memory usage errors
@@ -1481,6 +1487,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
         }
 
         digitalObjectList.add(batchJA);
+        
+        if(collectionID != 0){
+            if(contentID != 0){
+                contentDigitalObjTotal++;
+            } else {
+                collDigitalObjTotal++;
+            }
+        }
     }
 
     /**
@@ -2013,6 +2027,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
                     // update the copy message
                     updateRecordTotals("Instance Digital Objects", digitalObjectTotal, digitalObjectSuccess);
+                    updateRecordTotals("Instance Digital Objects at Collection level", collDigitalObjTotal, collDigitalObjSuccess);
+                    updateRecordTotals("Instance Digital Objects at Collection Content level", contentDigitalObjTotal, contentDigitalObjSuccess);
                     updateRecordTotals("Locations", locationTotal, locationSuccess);
                     updateRecordTotals("Collections", total, copyCount);
 
@@ -2033,6 +2049,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // update the number of digital records that were copied during processing of collection records
         updateRecordTotals("Instance Digital Objects", digitalObjectTotal, digitalObjectSuccess);
+        updateRecordTotals("Instance Digital Objects at Collection level", collDigitalObjTotal, collDigitalObjSuccess);
+        updateRecordTotals("Instance Digital Objects at Collection Content level", contentDigitalObjTotal, contentDigitalObjSuccess);
 
         // update the number of location records copied
         updateRecordTotals("Locations", locationTotal, locationSuccess);
@@ -2427,6 +2445,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 instancesJA.put(instanceJS);
 
                 if (debug) print("Added Digital Object Instance to " + recordTitle);
+
+                if(collectionID != 0){
+                    if(contentID != 0){
+                        contentDigitalObjSuccess++;
+                    } else {
+                        collDigitalObjSuccess++;
+                    }
+                }
             }
         }
 
@@ -2669,7 +2695,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
                                       HashMap<String, String> topContainerURIs, String repoURI) throws Exception {
         if (topContainerURIs == null) topContainerURIs = new HashMap<String, String>();
 
-        JSONArray instancesJA = new JSONArray();
+        JSONArray instancesJA;
+        //check if the recordJS already has instances added (e.g., from digital objects)
+        if(recordJS.has("instances")){
+            instancesJA = recordJS.getJSONArray("instances");
+        } else {
+            instancesJA = new JSONArray();
+        } 
 
         for (int i = 0; i < locations.length(); i++) {
 
@@ -3574,11 +3606,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         //limit collections for testing
         ArrayList<String> collectionsIDsList = new ArrayList<String>();
-        collectionsIDsList.add("54");
+        collectionsIDsList.add("72");
         //collectionsIDsList.add("84");
         aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
         
         archonClient.setDebugMode(false);
+        aspaceCopyUtil.mapper.setAppendTestIdentifier("0320test17");
 
         try {
             /*
@@ -3599,10 +3632,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.copyUserRecords();
             aspaceCopyUtil.copySubjectRecords();
             aspaceCopyUtil.copyCreatorRecords();
-            aspaceCopyUtil.copyClassificationRecords();*/
+            aspaceCopyUtil.copyClassificationRecords();
             aspaceCopyUtil.findAccessionRecordRepositories();
             aspaceCopyUtil.copyAccessionRecords();
-            aspaceCopyUtil.copyDigitalObjectRecords();
+            //aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
