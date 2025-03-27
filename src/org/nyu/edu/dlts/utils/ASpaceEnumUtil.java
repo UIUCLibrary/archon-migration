@@ -603,6 +603,23 @@ public class ASpaceEnumUtil {
     }
 
     /**
+     * Method to return an appropriate script code (ISO 15924), given the 3-letter language code
+     * Set only to work with English currently, but could be extended to more languages
+     * Returns "Zyyy" (code for undetermined script) if the script is unknown
+     *
+     * @param langaugeShort
+     * @return
+     */
+    public String getScriptCode(String languageShort) {
+        if(languageShort.equals("eng")){
+            return "Latn";
+        } else {
+            return "Zyyy";
+        }
+
+    }
+
+    /**
      * Method to return the long version of the language name
      *
      * @param langaugeShort

@@ -1102,8 +1102,9 @@ public class ASpaceMapper {
         }
 
         String findingLanguageCode = enumUtil.getASpaceLanguageCode(record.getString("FindingLanguageID"));
+        String findingScriptCode = enumUtil.getScriptCode(findingLanguageCode);
         String findingLanguageLong = enumUtil.getLanguageLong(findingLanguageCode);
-        String findingLanguageString = "<language langcode='" + findingLanguageCode +"'>" + findingLanguageLong + "</language>";
+        String findingLanguageString = "<language langcode='" + findingLanguageCode + "' scriptcode='" + findingScriptCode + "'>" + findingLanguageLong + "</language>";
         json.put("finding_aid_language", findingLanguageString);
         
         json.put("finding_aid_note", record.get("PublicationNote"));
