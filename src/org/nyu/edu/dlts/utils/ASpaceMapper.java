@@ -1000,7 +1000,6 @@ public class ASpaceMapper {
 
         // add fields for EAD
         json.put("ead_id", concatIdParts(idParts));
-        json.put("ead_location", "Archon Finding Aid location");
         String findingAidTitle = "Guide to the " + title;
         if(record.has("InclusiveDates")){
             findingAidTitle += ", " + record.getString("InclusiveDates");
