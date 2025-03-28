@@ -1351,8 +1351,16 @@ public class ASpaceMapper {
 
         String acquisitionDate = record.getString("AcquisitionDate");
         if(!acquisitionDate.isEmpty()) {
-            acquisitionDate = getHumanReadableDate(acquisitionDate);
-            addMultipartNote(notesJA, "acqinfo", "Date of Acquisition", acquisitionDate);
+            String readableAcquisitionDate = getHumanReadableDate(acquisitionDate);
+            String formattedAcquisitionDate = "";
+            String isoAcquisitionDate = getISODate(acquisitionDate);
+            if(isoAcquisitionDate != ""){
+                formattedAcquisitionDate += "<date normal=" + '"' + isoAcquisitionDate + '"' +">";
+            } else {
+                formattedAcquisitionDate += "<date>";
+            }
+            formattedAcquisitionDate += readableAcquisitionDate + "</date>";
+            addMultipartNote(notesJA, "acqinfo", "Date of Acquisition", formattedAcquisitionDate);
         }
 
         addMultipartNote(notesJA, "acqinfo", "Source of Acquisition", record.getString("AcquisitionSource"));
@@ -1847,6 +1855,23 @@ public class ASpaceMapper {
             return month + "/" + day + "/" + year;
         } catch (Exception e) {
             return dateString;
+        }
+    }
+
+    /**
+     * Method to return the iso date given a date string formatted as YYYYMMDD
+     *
+     * @param dateString
+     * @return
+     */
+    private String getISODate(String dateString) {
+        try {
+            String year = dateString.substring(0, 4);
+            String month = dateString.substring(4, 6);
+            String day = dateString.substring(6);
+            return year + "-" + month + "-" + day;
+        } catch (Exception e) {
+            return "";
         }
     }
 
