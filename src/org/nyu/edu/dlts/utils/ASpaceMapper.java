@@ -1852,7 +1852,21 @@ public class ASpaceMapper {
             String year = dateString.substring(0, 4);
             String month = dateString.substring(4, 6);
             String day = dateString.substring(6);
-            return month + "/" + day + "/" + year;
+            String readableDateString = "";
+            if(!month.equals("00")){
+                readableDateString += month + "/";
+                if(!day.equals("00")){
+                    //only add the day if it is not "00"
+                    readableDateString += day + "/";
+                }
+            } else {
+                if(!day.equals("00")){
+                    //if in the unlikely case that the day but not the month is filled out, use the full string with the zereos for the month
+                    readableDateString += month + "/" + day + "/";
+                }
+            }
+            readableDateString += year;
+            return readableDateString;
         } catch (Exception e) {
             return dateString;
         }
@@ -1869,7 +1883,20 @@ public class ASpaceMapper {
             String year = dateString.substring(0, 4);
             String month = dateString.substring(4, 6);
             String day = dateString.substring(6);
-            return year + "-" + month + "-" + day;
+            String isoDateString = year;
+            if(!month.equals("00")){
+                isoDateString += "-" + month;
+                if(!day.equals("00")){
+                    //only add the day if it is not "00"
+                    isoDateString += "-" + day;
+                }
+            } else {
+                if(!day.equals("00")){
+                    //if in the unlikely case that the day but not the month is filled out, use the full string with the zereos for the month
+                    isoDateString += "-" + month + "-" + day;
+                }
+            }
+            return isoDateString;
         } catch (Exception e) {
             return "";
         }
