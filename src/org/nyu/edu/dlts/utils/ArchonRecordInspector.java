@@ -190,7 +190,10 @@ public class ArchonRecordInspector {
      * as needed for testing
      * @param testArchonClient
      * @param mapper
+     * @param testArchonClient
+     * @param mapper
      */
+    private static void loadTestClassificationData(ArchonClient testArchonClient, ASpaceMapper mapper) throws Exception{
     private static void loadTestClassificationData(ArchonClient testArchonClient, ASpaceMapper mapper) throws Exception{
         
         JSONObject records = testArchonClient.getClassificationRecords();
@@ -237,7 +240,9 @@ public class ArchonRecordInspector {
      * Need to load test classification data first if using classifications in identifier
      * @param archonID
      * @param mapper
+     * @param mapper
      */
+    public static void testConvertCollection(String archonID, ASpaceMapper mapper) {
     public static void testConvertCollection(String archonID, ASpaceMapper mapper) {
         JSONObject collectionRecordsJS = archonClient.getCollectionRecords();
         if(collectionRecordsJS.has(archonID)){
