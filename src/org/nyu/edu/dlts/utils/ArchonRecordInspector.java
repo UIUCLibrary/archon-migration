@@ -194,7 +194,6 @@ public class ArchonRecordInspector {
      * @param mapper
      */
     private static void loadTestClassificationData(ArchonClient testArchonClient, ASpaceMapper mapper) throws Exception{
-    private static void loadTestClassificationData(ArchonClient testArchonClient, ASpaceMapper mapper) throws Exception{
         
         JSONObject records = testArchonClient.getClassificationRecords();
 
@@ -242,7 +241,6 @@ public class ArchonRecordInspector {
      * @param mapper
      * @param mapper
      */
-    public static void testConvertCollection(String archonID, ASpaceMapper mapper) {
     public static void testConvertCollection(String archonID, ASpaceMapper mapper) {
         JSONObject collectionRecordsJS = archonClient.getCollectionRecords();
         if(collectionRecordsJS.has(archonID)){
