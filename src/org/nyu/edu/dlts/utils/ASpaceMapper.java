@@ -612,6 +612,13 @@ public class ASpaceMapper {
         String id_0 = record.getString("Identifier");
         String id_1 = getUniqueID(ASpaceClient.ACCESSION_ENDPOINT, id_0, null, title);
 
+        String id_2 = "";
+        if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+            id_2 = id_1;
+            id_1 = id_0;
+            id_0 = identifierPrefix;
+        }
+
         if (makeUnique) {
             id_0 = randomStringLong.nextString();
         }
@@ -627,7 +634,11 @@ public class ASpaceMapper {
             date = getDate("99990101");
 
             // add an error message about this
-            String message = "Invalid Accession Date for" + id_0 + "\n";
+            String accessionIdentifier = id_0;
+            if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+                accessionIdentifier += "." + id_1;
+            }
+            String message = "Invalid Accession Date for" + accessionIdentifier + "\n";
             aspaceCopyUtil.addErrorMessage(message);
         }
 
@@ -636,7 +647,10 @@ public class ASpaceMapper {
         json.put("accession_date", date);
 
         json.put("id_0", id_0);
-        json.put("id_1", id_1); // This is only used to make sure the ids are unique
+        json.put("id_1", id_1); // This is only used to make sure the ids are unique (when identifier prefix is not used)
+        if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+            json.put("id_2", id_2); // This is only used to make sure the ids are unique (when identifier prefix is used)
+        }
 
         json.put("content_description", record.get("ScopeContent"));
 
