@@ -233,6 +233,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Method to set the identifer prefix to differentiate between multiple instances of archon
+     * @param prefix
+     */
+    public void setIdentifierPrefix(String prefix) {
+        mapper.setIdentifierPrefix(prefix);
+    }
+
+    /**
      * Method to set the output console
      *
      * @param outputConsole
@@ -3367,6 +3375,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.setSimulateRESTCalls(false);
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
+
+        String identiferPrefix = null;
+        if (UIUCPropertiesReader.getUIUCProperties() != null) {
+            identiferPrefix = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.prefix");
+        }
+        aspaceCopyUtil.setIdentifierPrefix(identiferPrefix);
 
         //limit collections for testing
         ArrayList<String> collectionsIDsList = new ArrayList<String>();
