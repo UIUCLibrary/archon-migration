@@ -1143,8 +1143,18 @@ public class ASpaceMapper {
     private void addResourceExtent(JSONObject record, JSONObject json) throws Exception {
         JSONArray extentJA = new JSONArray();
         JSONObject extentJS = new JSONObject();
+        String altExtent = record.getString("AltExtentStatement");
 
-        extentJS.put("portion", "whole");
+        //TODO: add some additional parsing to tell if the alt extent is a true alt extent
+        //in which case the alt extent should be added as container_summary and portion 
+        //should be se as whole
+        if (!altExtent.isEmpty()){
+            extentJS.put("portion", "part");
+
+        } else {
+            extentJS.put("portion", "whole");
+        }
+        
         extentJS.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ExtentUnitID")));
 
         if (!record.getString("Extent").isEmpty()) {
@@ -1156,7 +1166,6 @@ public class ASpaceMapper {
         extentJA.put(extentJS);
 
         // add the alternative extent statement
-        String altExtent = record.getString("AltExtentStatement");
         if(!altExtent.isEmpty()) {
             extentJS = new JSONObject();
 
