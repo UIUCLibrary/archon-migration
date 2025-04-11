@@ -5,10 +5,16 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.apache.commons.text.similarity.JaroWinklerSimilarity;
+
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Created by IntelliJ IDEA.
@@ -1043,6 +1049,69 @@ public class ASpaceMapper {
         addResourceNotes(record, json);
 
         return json;
+    }
+
+    /**
+     * Takes a natural language alternative extent statement that may 
+     * containt many individual extent statments seperated by an "and"
+     * a "," or a "." and splits them into individual statements
+     * 
+     * @param alternativeExtent string containing list of extent statements
+     * @return an array of extent statements
+     */
+    public String[] splitAlternativeExtent(String alternativeExtent)
+    {
+        alternativeExtent = alternativeExtent.replaceAll("^and ", "");
+        String regex = "\\s?and\\s|\\.\\s|,\\s";
+        return alternativeExtent.split(regex);
+
+    }
+
+    /**
+     * This takes a natural langauge extent statement that is expected to have
+     * a single unit expressed a digits or decimal number followed by a single
+     *  unpunctuated string which is the unit. If match fails, error key is true
+     * 
+     * @param extent a natural language extent statement 
+     * @return parsed extent as JSONObject with keys for unit, value, and error
+     * @throws JSONException
+     */
+    public JSONObject parseExtentStatement(String extent) throws JSONException
+    {
+
+        JSONObject structuredExtent = new JSONObject();
+
+        // String[] availableUnits = enumUtil.getAllASpaceExtentTypes();
+        // String unitsRegex = String.join("|", availableUnits);
+        // unitsRegex = unitsRegex.replace("_", " ");
+
+        // String[] stringUnitValues = {"a single","one","two","three","four","five","six","seven","eight","nine","ten"};
+        String regex = "(\\d+|\\d+\\.\\d+)\\s([A-z\s]+)";
+
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher  = pattern.matcher(extent);
+        String unitValue;
+        String unit;
+        Boolean error;
+        if (matcher.find()) {
+            unitValue = matcher.group(1);
+            unit = matcher.group(2);
+            error = false;
+        } else {
+            unitValue = "";
+            unit = "";
+            error = true;
+        }
+
+        structuredExtent.put("unit", unit);
+        structuredExtent.put("value", unitValue);
+        structuredExtent.put("error", error);
+        return structuredExtent;
+    }
+
+    public String mapExtentType(String inputExtent) {
+        String[] aSpaceExtents = enumUtil.getAllASpaceExtentTypes();
+
     }
 
     /**
