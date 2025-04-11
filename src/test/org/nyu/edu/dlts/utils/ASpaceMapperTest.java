@@ -73,15 +73,37 @@ public class ASpaceMapperTest {
         assertEquals("the units are not equal", "", parsedExtentTest4.get("unit"));
         assertEquals("the values are not equal", "", parsedExtentTest4.get("value"));
         assertEquals("the errors are not equal", true, parsedExtentTest4.get("error"));
-
     }
 
     @Test
-    public void enumValueTest() {
-        ASpaceEnumUtil enumUtil = new ASpaceEnumUtil();
-        String[] extentTypes = enumUtil.getAllASpaceExtentTypes();
-        // String extentType  = enumUtil.getASpaceExtentType(12);
-        String extentType = enumUtil.getASpaceExtentType("gigabyte");
-        assertTrue("the extent type is actually: " + extentType, "." == "");
+    public void mapExtentTypeTest() throws JSONException {
+        ASpaceMapper aSpaceMapper = new ASpaceMapper();
+        String[] inputExtents = {"items","transcript", "microfilm copy", "including photostats of 1934 book", "box artifacts"};
+
+        JSONObject mappedExtent0 = aSpaceMapper.mapExtentType(inputExtents[0]);
+        assertEquals("the mapping is not expected: " + mappedExtent0.get("mapping"),"item", mappedExtent0.get("mapping"));
+
+        JSONObject mappedExtent1 = aSpaceMapper.mapExtentType(inputExtents[1]);
+        assertEquals("the mapping is not expected: " + mappedExtent1.get("mapping"),"transcript", mappedExtent1.get("mapping"));
+
+        JSONObject mappedExtent2 = aSpaceMapper.mapExtentType(inputExtents[2]);
+        assertEquals("the mapping is not expected: " + mappedExtent2.get("mapping"),"microfilm", mappedExtent2.get("mapping"));
+
+        JSONObject mappedExtent3 = aSpaceMapper.mapExtentType(inputExtents[3]);
+        assertEquals("the mapping is not expected: " + mappedExtent3.get("mapping"),"photostats", mappedExtent3.get("mapping"));
+
+        JSONObject mappedExtent4 = aSpaceMapper.mapExtentType(inputExtents[4]);
+        assertEquals("the mapping is not expected: " + mappedExtent4.get("mapping"),"box", mappedExtent4.get("mapping"));
+
     }
+
+    //using this a convenience to test the behavior of the enumUtil
+    // @Test
+    // public void enumValueTest() {
+    //     ASpaceEnumUtil enumUtil = new ASpaceEnumUtil();
+    //     String[] extentTypes = enumUtil.getAllASpaceExtentTypes();
+    //     // String extentType  = enumUtil.getASpaceExtentType(12);
+    //     String extentType = enumUtil.getASpaceExtentType("gigabyte");
+    //     assertTrue("the extent type is actually: " + extentType, false);
+    // }
 }
