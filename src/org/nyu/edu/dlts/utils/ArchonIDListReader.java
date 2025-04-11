@@ -107,7 +107,7 @@ public class ArchonIDListReader {
      *
      * @param args
      */
-    public static void main(String[] args) throws JSONException {
+    public static void main(String[] args) {
         ArchonIDListReader subsetReader = new ArchonIDListReader("ALA");
         String code = subsetReader.getSubsetCode();
         if(code != null){
@@ -116,17 +116,13 @@ public class ArchonIDListReader {
             System.out.println("code is null");
         }
 
-        try {
-            ArrayList<String> subsetList  = subsetReader.getRecordSubset();
-            if(subsetList != null && !subsetList.isEmpty()){
-                System.out.println("subset list is not null or empty!");
-                System.out.println(subsetList);
-            }else{
-                System.out.println("subset list is null or empty");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        ArrayList<String> subsetList  = subsetReader.getRecordSubset();
+        if(subsetList != null && !subsetList.isEmpty()){
+            System.out.println("subset list is set");
+            System.out.println(subsetList);
+        }else{
+            System.out.println("subset list is null or empty");
         }
     }
+
 }
