@@ -367,6 +367,10 @@ public class ASpaceEnumUtil {
         }
     }
 
+    public String[] getAllASpaceExtentTypes() {
+        return ASpaceExtentTypes;
+    }
+
     /**
      * Method init ASpace the array the hold information on dates
      */
