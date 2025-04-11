@@ -1109,8 +1109,27 @@ public class ASpaceMapper {
         return structuredExtent;
     }
 
-    public String mapExtentType(String inputExtent) {
+    /**
+     * This takes a natural language string and tries to find a good 
+     * match among the existing extent types. It returns a JSONObject
+     * with the best match and a score to indicate how good of a match
+     *  
+     * @param inputExtent a natural langugae expression of extent type
+     * @return
+     * @throws JSONException 
+     */
+    public JSONObject mapExtentType(String inputExtent) throws JSONException {
         String[] aSpaceExtents = enumUtil.getAllASpaceExtentTypes();
+
+        JSONObject match  = new JSONObject();
+
+        //TODO: conduct the matching. Need to know a bit more about
+        //how we can access a complete list of all the ASpace extents
+        //and what we need to pass to the ingest record (id? string?)
+        match.put("mapping", "");
+        match.put("score","");
+
+        return match;
 
     }
 
