@@ -658,7 +658,7 @@ public class ASpaceMapper {
             id_0 = randomStringLong.nextString();
         }
 
-        if(appendTestIdentifier != ""){
+        if(!appendTestIdentifier.isEmpty()){
             id_0 += appendTestIdentifier;
         }
 
@@ -929,7 +929,7 @@ public class ASpaceMapper {
 
         json.put("position", record.getInt("DisplayOrder"));
 
-        if(appendTestIdentifier == ""){
+        if(appendTestIdentifier.isEmpty()){
             json.put("component_id", fixEmptyString(record.getString("ID"), "ID_" + randomString.nextString()));
         } else {
             json.put("component_id", fixEmptyString(record.getString("ID") + appendTestIdentifier, "ID_" + randomString.nextString() + appendTestIdentifier));
@@ -1110,7 +1110,7 @@ public class ASpaceMapper {
             idParts[3] = randomString.nextString();
         }
 
-        if(appendTestIdentifier != ""){
+        if(!appendTestIdentifier.isEmpty()){
             idParts[0] += appendTestIdentifier;
         }
 
@@ -1836,7 +1836,7 @@ public class ASpaceMapper {
                 id = "Digital Object ID ##"+ randomStringLong.nextString();
             }
             
-            if(appendTestIdentifier != ""){
+            if(!appendTestIdentifier.isEmpty()){
                 id += appendTestIdentifier;
             }
 
@@ -1851,7 +1851,7 @@ public class ASpaceMapper {
         } else if(endpoint.equals(ASpaceClient.ACCESSION_ENDPOINT)) {
             String message;
 
-            if(appendTestIdentifier != ""){
+            if(!appendTestIdentifier.isEmpty()){
                 id += appendTestIdentifier;
             }
 
@@ -1865,7 +1865,7 @@ public class ASpaceMapper {
                     nid = "##" + randomStringLong.nextString();
                 } while (accessionIDs.contains(nid));
 
-                if(appendTestIdentifier != ""){
+                if(!appendTestIdentifier.isEmpty()){
                     nid += appendTestIdentifier;
                 }
 
@@ -1907,7 +1907,7 @@ public class ASpaceMapper {
                 return "";
             }
 
-            if(appendTestIdentifier != ""){
+            if(!appendTestIdentifier.isEmpty()){
                 id += appendTestIdentifier;
             }
 
@@ -1920,7 +1920,7 @@ public class ASpaceMapper {
                     nid = id + " ##" + randomString.nextString();
                 } while(eadIDs.contains(nid));
 
-                if(appendTestIdentifier != ""){
+                if(!appendTestIdentifier.isEmpty()){
                     nid += appendTestIdentifier;
                 }
 
