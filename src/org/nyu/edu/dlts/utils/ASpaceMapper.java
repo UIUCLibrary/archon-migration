@@ -62,6 +62,9 @@ public class ASpaceMapper {
     // boolean to specify whether to publish the notes
     private Boolean publishRecord = false;
 
+    // boolean to specify whether processed accessions should be unpublished
+    private Boolean unpublishProcessedAccessions = true;
+
     // variable to store the base uri for digital objects
     private String digitalObjectBaseURI = "";
 
@@ -728,6 +731,10 @@ public class ASpaceMapper {
         // add the collection management record now
         if((record.has("ExpectedCompletionDate") && !record.getString("ExpectedCompletionDate").isEmpty()) || (record.has("UnprocessedExtent") && record.getDouble("UnprocessedExtent")== 0) || record.has("ProcessingPriorityID")) {
             addCollectionManagementRecord(record, json);
+        }
+
+        if(unpublishProcessedAccessions && (record.has("UnprocessedExtent") && record.getDouble("UnprocessedExtent")== 0)){
+            json.put("publish", false);
         }
 
         /*
