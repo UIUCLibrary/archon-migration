@@ -779,7 +779,7 @@ public class ASpaceMapper {
             json.put("processing_plan", "Expected Completion Date: " + record.get("ExpectedCompletionDate"));
         }
 
-        if (record.has("ProcessingPriorityID")) {
+        if (record.has("ProcessingPriorityID") && record.getInt("ProcessingPriorityID") != 0) {
             json.put("processing_priority", enumUtil.getASpaceCollectionManagementRecordProcessingPriority(record.getInt("ProcessingPriorityID")));
         }
 
