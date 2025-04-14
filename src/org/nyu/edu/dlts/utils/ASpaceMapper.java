@@ -521,6 +521,26 @@ public class ASpaceMapper {
             namesJA.put(namesVariantJS);
         }
 
+        // check corporate and family names for additional variants in the fuller name field
+        if(creatorTypeId == 20 || creatorTypeId == 22){
+            if(record.has("NameFullerForm") && !record.getString("NameFullerForm").isEmpty()) {
+                String nameFuller = record.getString("NameFullerForm");
+
+                JSONObject nameFullerJS = new JSONObject();
+
+                nameFullerJS.put("name_order", "direct");
+                nameFullerJS.put("sort_name", nameFuller);
+
+                if(namesJS.has("primary_name")) {
+                    nameFullerJS.put("primary_name", nameFuller);
+                } else {
+                    nameFullerJS.put("family_name", nameFuller);
+                }
+
+                namesJA.put(nameFullerJS);
+            }
+        }
+
         agentJS.put("names", namesJA);
 
         return agentJS;
