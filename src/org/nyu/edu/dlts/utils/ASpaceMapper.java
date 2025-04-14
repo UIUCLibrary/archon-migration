@@ -1834,6 +1834,9 @@ public class ASpaceMapper {
             // if id is empty add text
             if(id.isEmpty()) {
                 id = "Digital Object ID ##"+ randomStringLong.nextString();
+                String message = "Empty Digital Object Identifier for " + title +  ", added as " + id + "\n";
+                System.out.println(message);
+                aspaceCopyUtil.addErrorMessage(message);
             }
             
             if(!appendTestIdentifier.isEmpty()){
@@ -1843,8 +1846,11 @@ public class ASpaceMapper {
             if(!digitalObjectIDs.contains(id)) {
                 digitalObjectIDs.add(id);
             } else {
-                id += " ##" + randomStringLong.nextString();
-                digitalObjectIDs.add(id);
+                String nid = id + " ##" + randomStringLong.nextString();
+                digitalObjectIDs.add(nid);
+                String message = "Duplicate Digital Object (" + title +  ") Id: "  + id  + " Added: " + nid + "\n";
+                System.out.println(message);
+                aspaceCopyUtil.addErrorMessage(message);
             }
 
             return id;
