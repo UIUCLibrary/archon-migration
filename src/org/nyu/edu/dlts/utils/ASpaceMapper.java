@@ -73,12 +73,11 @@ public class ASpaceMapper {
     // boolean to determine whether the sources field on admin history for corporate creators should be set as a note type of "abstract" instead of the default of "citation"
     private Boolean setCorpCreatorHistSourceAsAbstract = false;
 
+    //for appending to ids to aid in testing
+    private String appendTestIdentifier = "";
     //prefix to add before identifier to make unique when combining multiple instances of Archon
     //todo: add option to set in GUI rather than hardcoding here
     private String identifierPrefix = "";
-
-    //for appending to ids to aid in testing
-    private String appendTestIdentifier = "";
 
     /**
      *  Main constructor
@@ -680,6 +679,13 @@ public class ASpaceMapper {
         String id_0 = record.getString("Identifier");
         String id_1 = getUniqueID(ASpaceClient.ACCESSION_ENDPOINT, id_0, null, title);
 
+        String id_2 = "";
+        if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+            id_2 = id_1;
+            id_1 = id_0;
+            id_0 = identifierPrefix;
+        }
+
         if (makeUnique) {
             id_0 = randomStringLong.nextString();
         }
@@ -695,7 +701,11 @@ public class ASpaceMapper {
             date = getDate("99990101");
 
             // add an error message about this
-            String message = "Invalid Accession Date for" + id_0 + "\n";
+            String accessionIdentifier = id_0;
+            if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+                accessionIdentifier += "." + id_1;
+            }
+            String message = "Invalid Accession Date for" + accessionIdentifier + "\n";
             aspaceCopyUtil.addErrorMessage(message);
         }
 
@@ -704,7 +714,10 @@ public class ASpaceMapper {
         json.put("accession_date", date);
 
         json.put("id_0", id_0);
-        json.put("id_1", id_1); // This is only used to make sure the ids are unique
+        json.put("id_1", id_1); // This is only used to make sure the ids are unique (when identifier prefix is not used)
+        if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+            json.put("id_2", id_2); // This is only used to make sure the ids are unique (when identifier prefix is used)
+        }
 
         json.put("content_description", record.get("ScopeContent"));
 
