@@ -68,6 +68,9 @@ public class ASpaceMapper {
     // variable to store the base uri for digital objects
     private String digitalObjectBaseURI = "";
 
+    // boolean to determine whether the sources field on admin history for corporate creators should be set as a note type of "abstract" instead of the default of "citation"
+    private Boolean setCorpCreatorHistSourceAsAbstract = false;
+
     //prefix to add before identifier to make unique when combining multiple instances of Archon
     //todo: add option to set in GUI rather than hardcoding here
     private String identifierPrefix = "";
@@ -846,7 +849,7 @@ public class ASpaceMapper {
         // add the subnote which hold the source information
         if(!record.getString("Sources").isEmpty()) {
             String noteType = "note_citation";
-            if(creatorTypeId == 22) {
+            if(creatorTypeId ==  22 && setCorpCreatorHistSourceAsAbstract) {
                 noteType = "note_abstract";
             }
 
