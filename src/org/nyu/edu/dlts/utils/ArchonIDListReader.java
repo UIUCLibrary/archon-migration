@@ -17,6 +17,7 @@ public class ArchonIDListReader {
     private ArrayList<String> archonIDList;
     private String recordSubsetFileName = "";
     private String recordSubsetCode = "";
+    private String suffixForTesting = "";
 
     /**
      * Default constructor 
@@ -55,6 +56,7 @@ public class ArchonIDListReader {
                 JSONObject optionCodeJS = customInfo.getJSONObject(optionCode);
                 if(optionCodeJS.has("FileName")) recordSubsetFileName = optionCodeJS.getString("FileName");
                 if(optionCodeJS.has("SubsetCode")) recordSubsetCode = optionCodeJS.getString("SubsetCode");
+                if(optionCodeJS.has("IdentifierSuffixForTesting")) suffixForTesting = optionCodeJS.getString("IdentifierSuffixForTesting");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -95,11 +97,19 @@ public class ArchonIDListReader {
     }
 
     /**
-     * Method to get the section shelf separator
+     * Method to get the subset code
      * @return
      */
     public String getSubsetCode(){
         return recordSubsetCode;
+    }
+
+    /**
+     * Method to return a string to use for testing
+     * @return
+     */
+    public String getSuffixForTesting(){
+        return suffixForTesting;
     }
 
     /**
@@ -114,6 +124,13 @@ public class ArchonIDListReader {
             System.out.println("subset code: " + code);
         }else{
             System.out.println("code is null");
+        }
+
+        String testString = subsetReader.getSuffixForTesting();
+        if(testString != null){
+            System.out.println("suffix for testing: " + testString);
+        }else{
+            System.out.println("suffix is null");
         }
 
         ArrayList<String> subsetList  = subsetReader.getRecordSubset();

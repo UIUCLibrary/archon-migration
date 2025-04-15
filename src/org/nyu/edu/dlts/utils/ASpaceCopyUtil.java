@@ -3393,9 +3393,11 @@ public class ASpaceCopyUtil implements  PrintConsole {
         //collectionsIDsList.add("84");
         //aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
 
-
         archonClient.setDebugMode(false);
-        aspaceCopyUtil.mapper.setAppendTestIdentifier("0320test17");
+        String testString = archonIDListReader.getSuffixForTesting();
+        if(testString != null && !testString.isEmpty()){
+            aspaceCopyUtil.mapper.setAppendTestIdentifier(testString);
+        }
 
         try {
             /*
@@ -3412,7 +3414,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.copyClassificationRecords();*/
             aspaceCopyUtil.findAccessionRecordRepositories();
             aspaceCopyUtil.copyAccessionRecords();
-            //aspaceCopyUtil.copyDigitalObjectRecords();
+            aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
