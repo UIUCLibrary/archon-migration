@@ -47,6 +47,7 @@ public class ASpaceEnumUtil {
     private String[] ASpaceDateEnums = null;
     private String[] ASpaceCollectionManagementRecordEnums = null;
     private String[] ASpaceDigitalObjectTypes = null;
+    private String[] ASpaceFileTypeEnums = null;
     private String[] ASpaceNoteTypes = null;
     private String[] ASpaceResourceLevels = null;
     private String[] ASpaceFindingAidDescriptionRules = null;
@@ -75,6 +76,7 @@ public class ASpaceEnumUtil {
         initASpaceCollectionManagementRecordEnums();
         initASpaceLinkedAgentRole();
         initASpaceDigitalObjectType();
+        initASpaceFileTypeEnums();
         initASpaceFileVersionUseStatements();
         initASpaceNoteTypes();
         initASpaceResourceLevels();
@@ -614,6 +616,53 @@ public class ASpaceEnumUtil {
             return atValue;
         } else {
             return UNMAPPED;
+        }
+    }
+
+    /**
+     * Method to initASpaceialize array that holds enums of file types
+     */
+    private void initASpaceFileTypeEnums() {
+        ASpaceFileTypeEnums = new String[] {
+                "aiff",  // 0
+                "avi",   // 1
+                "gif",   // 2
+                "jpeg",  // 3
+                "mp3",   // 4
+                "pdf",   // 5
+                "tiff",  // 6
+                "txt",   // 7
+        };
+    }
+
+    /**
+     * Map an AR value to a file type record enum
+     *
+     * @param arID
+     * @return
+     */
+    public String getASpaceFileType(int arID) {
+        String key = "file_type_" + arID;
+        String arValue = getEnumValueForID(key, UNMAPPED);
+        //use existing aspace enum if available
+        if (arValue.contains("aiff")) {
+            return ASpaceFileTypeEnums[0];
+        } else if(arValue.contains("avi")) {
+            return ASpaceFileTypeEnums[1];
+        } else if(arValue.contains("gif")) {
+            return ASpaceFileTypeEnums[2];
+        } else if(arValue.contains("jpeg") || arValue.contains("jpg")) {
+            return ASpaceFileTypeEnums[3];
+        } else if(arValue.contains("mp3")) {
+            return ASpaceFileTypeEnums[4];
+        } else if(arValue.contains("pdf")) {
+            return ASpaceFileTypeEnums[5];
+        } else if(arValue.contains("tiff")) {
+            return ASpaceFileTypeEnums[6];
+        } else if(arValue.contains("txt")) {
+            return ASpaceFileTypeEnums[7];
+        } else {
+            return arValue;
         }
     }
 
