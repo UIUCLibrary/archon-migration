@@ -1108,7 +1108,6 @@ public class ASpaceMapper {
         structuredExtent.put("error", error);
         structuredExtent.put("confound", confound);
 
-
         return structuredExtent;
     }
 
@@ -1123,13 +1122,23 @@ public class ASpaceMapper {
      */
     public JSONObject mapExtentType(String inputExtent) throws JSONException {
         String[] aSpaceExtents = enumUtil.getAllASpaceExtentTypes();
+        ArrayList<String> allExtents = enumUtil.getAllArchonExtents();
+
+        for (String aSpaceExtent : aSpaceExtents ) {
+            allExtents.add(aSpaceExtent);
+        }
 
         JSONObject match  = new JSONObject();
+        String mapping = "";
 
-        //TODO: conduct the matching. Need to know a bit more about
-        //how we can access a complete list of all the ASpace extents
-        //and what we need to pass to the ingest record (id? string?)
-        match.put("mapping", "");
+        for (String extent : allExtents) {
+            if (inputExtent.toLowerCase() == extent.toLowerCase()) {
+                mapping = extent;
+            }
+
+        }
+        //TODO: conduct the fuzzy matching and generate matching score
+        match.put("mapping", mapping);
         match.put("score","");
 
         return match;
