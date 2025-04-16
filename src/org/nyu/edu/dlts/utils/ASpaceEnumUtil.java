@@ -1318,6 +1318,7 @@ public class ASpaceEnumUtil {
      */
     public void addIdAndValueToEnumList(String id, String value) {
         enumListIDsToValues.put(id, value);
+        lookupListValuesToCodes.put(value, id);
     }
 
     /**
