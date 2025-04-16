@@ -1336,6 +1336,23 @@ public class ASpaceEnumUtil {
         }
     }
 
+    /**
+     * Takes an string value and returns the Archon ID from the enum list. If no match is found
+     * returns an empty string.
+     * 
+     *
+     * @param key
+     * @param defaultValue
+     * @return
+     */
+    public String getIDValueForEnumString(String key) {
+        if(lookupListValuesToCodes.containsKey(key)) {
+            return lookupListValuesToCodes.get(key);
+        } else {
+            return "";
+        }
+    }
+
     // used for testing
     public static void main(String[] args) {
         ASpaceEnumUtil enumUtil = new ASpaceEnumUtil();
