@@ -371,6 +371,10 @@ public class ASpaceEnumUtil {
         return ASpaceExtentTypes;
     }
 
+    /**
+     * Get all of the extent types stored from Archon and retrn as an ArrayList
+     * @return
+     */
     public ArrayList<String> getAllArchonExtents() {
 
        ArrayList<String> archonExtentStrings = new ArrayList<>();
@@ -382,12 +386,6 @@ public class ASpaceEnumUtil {
         return archonExtentStrings;
 
     }
-
-    // public String[] getAllArchonExtentTypes() {
-    //     for (String string : ASpaceAccessionResourceTypes) {
-            
-    //     }
-    // }
 
     /**
      * Method init ASpace the array the hold information on dates
