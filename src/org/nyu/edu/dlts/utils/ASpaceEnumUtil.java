@@ -371,6 +371,24 @@ public class ASpaceEnumUtil {
         return ASpaceExtentTypes;
     }
 
+    public ArrayList<String> getAllArchonExtents() {
+
+       ArrayList<String> archonExtentStrings = new ArrayList<>();
+        for (String string : lookupListValuesToCodes.keySet()) {
+            if (string.startsWith("extent_type_"))
+            archonExtentStrings.add(string);
+        }
+
+        return archonExtentStrings;
+
+    }
+
+    // public String[] getAllArchonExtentTypes() {
+    //     for (String string : ASpaceAccessionResourceTypes) {
+            
+    //     }
+    // }
+
     /**
      * Method init ASpace the array the hold information on dates
      */
