@@ -65,6 +65,9 @@ public class ASpaceMapper {
     // variable to store the base uri for digital objects
     private String digitalObjectBaseURI = "";
 
+    // boolean to specify whether the digital file name should be the digital component title
+    private Boolean useFileNameAsDigitalComponentTitle = true;
+
     //for appending to ids to aid in testing
     private String appendTestIdentifier = "";
 
@@ -112,6 +115,15 @@ public class ASpaceMapper {
      */
     public void setDigitalObjectBaseURI(String baseURI) {
         digitalObjectBaseURI = baseURI;
+    }
+
+    /**
+     * Method to set whether the digital object component title should be the file name
+     *
+     * @param option
+     */
+    public void setUseFileNameAsDigitalComponentTitle(Boolean option) {
+        useFileNameAsDigitalComponentTitle = option;
     }
 
     /**
@@ -817,17 +829,26 @@ public class ASpaceMapper {
 
         json.put("publish", publishRecord);
 
+        String archonFileTitle = record.getString("Title");
+        String archonFileName = record.getString("Filename");
+
         /* add the fields required for abstract_archival_object.rb */
-        String title = record.getString("Title");
-        json.put("title", fixEmptyString(title));
+        if(useFileNameAsDigitalComponentTitle){
+            json.put("title", fixEmptyString(archonFileName));
+        } else {
+            json.put("title", fixEmptyString(archonFileTitle));
+        }
 
         /* add fields required for digital object component*/
         JSONArray fileVersionsJA = new JSONArray();
         addFileVersion(fileVersionsJA, record, "Digital Object Component");
         json.put("file_versions", fileVersionsJA);
 
-        String label = title;
-        json.put("label", label);
+        if(useFileNameAsDigitalComponentTitle && !archonFileTitle.equalsIgnoreCase(archonFileName)){
+            json.put("label", archonFileTitle);
+        } else {
+            json.put("label", "");
+        }
 
         json.put("position", record.getInt("DisplayOrder"));
 
