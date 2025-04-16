@@ -45,34 +45,59 @@ public class ASpaceMapperTest {
     @Test
     public void parseExtentStatementTest() throws JSONException{
         ASpaceMapper aSpaceMapper = new ASpaceMapper();
-        String[] extents = {"1.84 megabytes","6 microfilm reels","12 items","1 oversize folder","a big folder"};
+        String[] extentsPass = {"1.84 megabytes","6 microfilm reels","12 items","1 oversize folder","a big folder", "three cassettes"};
+        String[] extentsFail = { "", "including photostats of 1934 book", "transcript and microfilm copy"};
 
-        JSONObject parsedExtentTest0 = aSpaceMapper.parseExtentStatement(extents[0]);
+        JSONObject parsedExtentTest0 = aSpaceMapper.parseExtentStatement(extentsPass[0]);
         assertEquals("the units are not equal", "megabytes", parsedExtentTest0.get("unit"));
         assertEquals("the values are not equal", "1.84", parsedExtentTest0.get("value"));
         assertEquals("the errors are not equal", false, parsedExtentTest0.get("error"));
 
-        JSONObject parsedExtentTest1 = aSpaceMapper.parseExtentStatement(extents[1]);
+        JSONObject parsedExtentTest1 = aSpaceMapper.parseExtentStatement(extentsPass[1]);
         assertEquals("the units are not equal", "microfilm reels", parsedExtentTest1.get("unit"));
         assertEquals("the values are not equal", "6", parsedExtentTest1.get("value"));
         assertEquals("the errors are not equal", false, parsedExtentTest1.get("error"));
 
 
-        JSONObject parsedExtentTest2 = aSpaceMapper.parseExtentStatement(extents[2]);
+        JSONObject parsedExtentTest2 = aSpaceMapper.parseExtentStatement(extentsPass[2]);
         assertEquals("the units are not equal", "items", parsedExtentTest2.get("unit"));
         assertEquals("the values are not equal", "12", parsedExtentTest2.get("value"));
         assertEquals("the errors are not equal", false, parsedExtentTest2.get("error"));
 
 
-        JSONObject parsedExtentTest3 = aSpaceMapper.parseExtentStatement(extents[3]);
+        JSONObject parsedExtentTest3 = aSpaceMapper.parseExtentStatement(extentsPass[3]);
         assertEquals("the units are not equal", "oversize folder", parsedExtentTest3.get("unit"));
         assertEquals("the values are not equal", "1", parsedExtentTest3.get("value"));
         assertEquals("the errors are not equal", false, parsedExtentTest3.get("error"));
 
-        JSONObject parsedExtentTest4 = aSpaceMapper.parseExtentStatement(extents[4]);
-        assertEquals("the units are not equal", "", parsedExtentTest4.get("unit"));
-        assertEquals("the values are not equal", "", parsedExtentTest4.get("value"));
-        assertEquals("the errors are not equal", true, parsedExtentTest4.get("error"));
+        JSONObject parsedExtentTest4 = aSpaceMapper.parseExtentStatement(extentsPass[4]);
+        assertEquals("the units are not equal", "big folder", parsedExtentTest4.get("unit"));
+        assertEquals("the values are not equal", "a", parsedExtentTest4.get("value"));
+        assertEquals("the errors are not equal", false, parsedExtentTest4.get("error"));
+
+        JSONObject parsedExtentTest5 = aSpaceMapper.parseExtentStatement(extentsPass[5]);
+        assertEquals("the units are not equal", "cassettes", parsedExtentTest5.get("unit"));
+        assertEquals("the values are not equal", "three", parsedExtentTest5.get("value"));
+        assertEquals("the errors are not equal", false, parsedExtentTest5.get("error"));
+
+        JSONObject parsedExtentTest6 = aSpaceMapper.parseExtentStatement(extentsFail[0]);
+        assertEquals("the units are not equal", "", parsedExtentTest6.get("unit"));
+        assertEquals("the values are not equal", "", parsedExtentTest6.get("value"));
+        assertEquals("the errors are not equal", true, parsedExtentTest6.get("error"));
+        assertEquals("the confound values are not equal", "", parsedExtentTest6.get("confound"));
+
+        JSONObject parsedExtentTest7 = aSpaceMapper.parseExtentStatement(extentsFail[1]);
+        assertEquals("the units are not equal", "", parsedExtentTest7.get("unit"));
+        assertEquals("the values are not equal", "", parsedExtentTest7.get("value"));
+        assertEquals("the errors are not equal", true, parsedExtentTest7.get("error"));
+        assertEquals("the confound values are not equal", "including photostats of 1934 book", parsedExtentTest7.get("confound"));
+
+        JSONObject parsedExtentTest8 = aSpaceMapper.parseExtentStatement(extentsFail[2]);
+        assertEquals("the units are not equal", "", parsedExtentTest8.get("unit"));
+        assertEquals("the values are not equal", "", parsedExtentTest8.get("value"));
+        assertEquals("the errors are not equal", true, parsedExtentTest8.get("error"));
+        assertEquals("the confound values are not equal", "transcript and microfilm copy", parsedExtentTest8.get("confound"));
+
     }
 
     @Test
