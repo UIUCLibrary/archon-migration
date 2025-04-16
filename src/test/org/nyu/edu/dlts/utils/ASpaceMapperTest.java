@@ -101,26 +101,32 @@ public class ASpaceMapperTest {
     }
 
     @Test
-    public void mapExtentTypeTest() throws JSONException {
+    public void mapExtentTypeTest() throws Exception {
         ASpaceMapper aSpaceMapper = new ASpaceMapper();
-        String[] inputExtents = {"items","transcript", "microfilm copy", "including photostats of 1934 book", "box artifacts"};
+        String[] inputExtents = {"cassettes","cubic feet","files","gigabytes","leaves","linear feet", "items","transcript", "microfilm copy", "including photostats of 1934 book", "box artifacts"};
 
         JSONObject mappedExtent0 = aSpaceMapper.mapExtentType(inputExtents[0]);
-        assertEquals("the mapping is not expected: " + mappedExtent0.get("mapping"),"item", mappedExtent0.get("mapping"));
+        assertEquals("the cleaned extent: " + mappedExtent0.get("clean_input"),"cassettes", mappedExtent0.get("mapping"));
 
         JSONObject mappedExtent1 = aSpaceMapper.mapExtentType(inputExtents[1]);
-        assertEquals("the mapping is not expected: " + mappedExtent1.get("mapping"),"transcript", mappedExtent1.get("mapping"));
+        assertEquals("the cleaned extent:" + mappedExtent1.get("clean_input"),"cubic_feet", mappedExtent1.get("mapping"));
 
         JSONObject mappedExtent2 = aSpaceMapper.mapExtentType(inputExtents[2]);
-        assertEquals("the mapping is not expected: " + mappedExtent2.get("mapping"),"microfilm", mappedExtent2.get("mapping"));
+        assertEquals("the cleaned extent:" + mappedExtent2.get("clean_input"),"files", mappedExtent2.get("mapping"));
 
         JSONObject mappedExtent3 = aSpaceMapper.mapExtentType(inputExtents[3]);
-        assertEquals("the mapping is not expected: " + mappedExtent3.get("mapping"),"photostats", mappedExtent3.get("mapping"));
+        assertEquals("the cleaned extent:" + mappedExtent3.get("clean_input"),"gigabytes", mappedExtent3.get("mapping"));
 
         JSONObject mappedExtent4 = aSpaceMapper.mapExtentType(inputExtents[4]);
-        assertEquals("the mapping is not expected: " + mappedExtent4.get("mapping"),"box", mappedExtent4.get("mapping"));
+        assertEquals("the cleaned extent: " + mappedExtent4.get("clean_input"),"leaves", mappedExtent4.get("mapping"));
+
+        JSONObject mappedExtent5 = aSpaceMapper.mapExtentType(inputExtents[5]);
+        assertEquals("the cleaned extent: " + mappedExtent4.get("clean_input"),"linear_feet", mappedExtent5.get("mapping"));
+
 
     }
+
+
 
     //using this a convenience to test the behavior of the enumUtil
     // @Test
