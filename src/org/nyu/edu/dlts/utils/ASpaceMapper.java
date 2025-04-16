@@ -1069,8 +1069,10 @@ public class ASpaceMapper {
 
     /**
      * This takes a natural langauge extent statement that is expected to have
-     * a single unit expressed a digits or decimal number followed by a single
-     *  unpunctuated string which is the unit. If match fails, error key is true
+     * a single unit expressed a digits, decimal number, indefinate article, or 
+     * written number followed by a single unpunctuated string which is the unit. 
+     * If matching fails, error key is set to true and the failing string is
+     * added
      * 
      * @param extent a natural language extent statement 
      * @return parsed extent as JSONObject with keys for unit, value, and error
@@ -1081,31 +1083,32 @@ public class ASpaceMapper {
 
         JSONObject structuredExtent = new JSONObject();
 
-        // String[] availableUnits = enumUtil.getAllASpaceExtentTypes();
-        // String unitsRegex = String.join("|", availableUnits);
-        // unitsRegex = unitsRegex.replace("_", " ");
-
-        // String[] stringUnitValues = {"a single","one","two","three","four","five","six","seven","eight","nine","ten"};
-        String regex = "(\\d+|\\d+\\.\\d+)\\s([A-z\s]+)";
+        String regex = "(\\d+|\\d+\\.\\d+|a|an|a single|one|two|three|four|five|six|seven|eight|nine|ten)\\s([A-z\s]+)";
 
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher  = pattern.matcher(extent);
         String unitValue;
         String unit;
         Boolean error;
+        String confound;
         if (matcher.find()) {
             unitValue = matcher.group(1);
             unit = matcher.group(2);
             error = false;
+            confound = "";
         } else {
             unitValue = "";
             unit = "";
             error = true;
+            confound = extent;
         }
 
         structuredExtent.put("unit", unit);
         structuredExtent.put("value", unitValue);
         structuredExtent.put("error", error);
+        structuredExtent.put("confound", confound);
+
+
         return structuredExtent;
     }
 
