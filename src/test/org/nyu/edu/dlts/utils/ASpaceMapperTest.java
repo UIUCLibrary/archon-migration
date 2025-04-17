@@ -126,6 +126,75 @@ public class ASpaceMapperTest {
 
     }
 
+    @Test
+    public void processAlternativeExtent() {
+        ASpaceMapper aSpaceMapper = new ASpaceMapper();
+        String[] inputExtents = {
+            "1.84 megabytes",
+            "6 microfilm reels",
+            "12 items",
+            "1 oversize folder",
+            "2 folders and 24 items",
+            "1 folder. 14 items",
+            "6 volumes, 54 items",
+            "1 item, transcript and microfilm copy",
+            "1 folder, including photostats of 1934 book",
+            "1 volume and 3 items in 1 folder",
+            "1 box artifacts",
+            "4 typescripts",
+            "113 letters"
+        };
+
+        JSONObject extenJsonObject0 = aSpaceMapper.processAlternativeExtent(inputExtents[0]);
+        assertEquals("The count is not the same","1", extenJsonObject0.get("count"));
+
+        JSONObject extenJsonObject1 = aSpaceMapper.processAlternativeExtent(inputExtents[1]);
+        assertEquals("The count is not the same","1", extenJsonObject1.get("count"));
+        
+        JSONObject extenJsonObject2 = aSpaceMapper.processAlternativeExtent(inputExtents[2]);
+        assertEquals("The count is not the same","1", extenJsonObject2.get("count"));
+
+        JSONObject extenJsonObject3 = aSpaceMapper.processAlternativeExtent(inputExtents[3]);
+        assertEquals("The count is not the same","1", extenJsonObject3.get("count"));
+
+        JSONObject extenJsonObject4 = aSpaceMapper.processAlternativeExtent(inputExtents[4]);
+        assertEquals("The count is not the same","2", extenJsonObject4.get("count"));
+
+        JSONObject extenJsonObject5 = aSpaceMapper.processAlternativeExtent(inputExtents[5]);
+        assertEquals("The count is not the same","2", extenJsonObject5.get("count"));
+
+        JSONObject extenJsonObject6 = aSpaceMapper.processAlternativeExtent(inputExtents[6]);
+        assertEquals("The count is not the same","2", extenJsonObject6.get("count"));
+
+        JSONObject extenJsonObject7 = aSpaceMapper.processAlternativeExtent(inputExtents[7]);
+        assertEquals("The count is not the same","3", extenJsonObject7.get("count"));
+
+        JSONObject extenJsonObject8 = aSpaceMapper.processAlternativeExtent(inputExtents[8]);
+        assertEquals("The count is not the same","1", extenJsonObject8.get("count"));
+
+        JSONObject extenJsonObject9 = aSpaceMapper.processAlternativeExtent(inputExtents[9]);
+        assertEquals("The count is not the same","2", extenJsonObject9.get("count"));
+
+        JSONObject extenJsonObject10 = aSpaceMapper.processAlternativeExtent(inputExtents[10]);
+        assertEquals("The count is not the same","1", extenJsonObject10.get("count"));
+
+        JSONObject extenJsonObject11 = aSpaceMapper.processAlternativeExtent(inputExtents[11]);
+        assertEquals("The count is not the same","1", extenJsonObject11.get("count"));
+
+        JSONObject extenJsonObject12 = aSpaceMapper.processAlternativeExtent(inputExtents[12]);
+        assertEquals("The count is not the same","1", extenJsonObject12.get("count"));
+
+        JSONObject extenJsonObject13 = aSpaceMapper.processAlternativeExtent(inputExtents[13]);
+        assertEquals("The count is not the same","1", extenJsonObject13.get("count"));
+        //TODO: refactor with JSONAssert
+
+        assertEquals()
+
+
+
+
+    }
+
 
 
     //using this a convenience to test the behavior of the enumUtil
