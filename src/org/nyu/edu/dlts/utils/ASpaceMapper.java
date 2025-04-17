@@ -1123,7 +1123,7 @@ public class ASpaceMapper {
     public JSONObject mapExtentType(String inputExtent) throws JSONException {
         String[] aSpaceExtents = enumUtil.getAllASpaceExtentTypes();
         ArrayList<String> allExtents = enumUtil.getAllArchonExtents();
-            String cleanInput = inputExtent.toLowerCase().replace(" ", "_");
+        String cleanInput = inputExtent.toLowerCase().replace(" ", "_");
 
         for (String aSpaceExtent : aSpaceExtents ) {
             allExtents.add(aSpaceExtent);
@@ -1134,15 +1134,14 @@ public class ASpaceMapper {
 
         for (String extent : allExtents) {
             match.put("clean_input", cleanInput);
-            if (cleanInput.equals(extent)) {
+            if (cleanInput.contains(extent)) {
                 mapping = extent;
-                match.put("mapping", mapping);
-
             }
 
         }
         //TODO: conduct the fuzzy matching and generate matching score
         match.put("score","");
+        match.put("mapping", mapping);
         match.put("all", allExtents);
 
         return match;
