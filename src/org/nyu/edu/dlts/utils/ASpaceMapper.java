@@ -1138,6 +1138,7 @@ public class ASpaceMapper {
             confound = extent;
         }
 
+        //get a digit form of unit values like "an" or "five"
         if (!getNumber(unitValue).isEmpty()) {
             unitValue = getNumber(unitValue);
         };
@@ -1247,6 +1248,7 @@ public class ASpaceMapper {
 
         extentJA.put(extentJS);
 
+        //TODO: this should be refactored into processAlternativeExtent to make it more testable
         // add the alternative extent statement
         if(!altExtent.isEmpty()) {
             extentJS = new JSONObject();
@@ -1260,21 +1262,26 @@ public class ASpaceMapper {
                 //TODO: output an error message
             }
 
+            //proccess the alternative extent statement into structured extents and add to extentJA
             JSONArray structuredExtents = structuredExtentsWrapper.getJSONArray("processedExtents");
             for (int i=0; i < structuredExtents.length(); i++) { 
                 JSONObject structuredExtent = structuredExtents.getJSONObject(i);
                 if (!structuredExtent.getString("unit").isEmpty()) {
                     //TODO: implement score checking
                     extentJS.put("extent_type", structuredExtent.getString("unit"));
+                    extentJS.put("number", structuredExtent.getString("unitValue"));
+                    extentJA.put(extentJS);
+                } else {
+                    String collectionIdentifier = record.getString("CollectionIdentifier");
+
+
+                    String debugMessage = 
+                        "Collection: " + collectionIdentifier + "has an alternative extent statement that didn't map cleanly\n" + 
+                        "Structured Alt Extent:\n" +
+                        structuredExtentsWrapper.getJSONArray("processedExtents").toString();                    ;
+                    //TODO: emit error message 
                 }
             }
-
-
- 
-            extentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
-            extentJS.put("number", altExtent);
-
-            extentJA.put(extentJS);
         }
 
         json.put("extents", extentJA);
