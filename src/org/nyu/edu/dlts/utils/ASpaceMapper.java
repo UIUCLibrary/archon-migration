@@ -1273,13 +1273,11 @@ public class ASpaceMapper {
                     extentJA.put(extentJS);
                 } else {
                     String collectionIdentifier = record.getString("CollectionIdentifier");
-
-
-                    String debugMessage = 
-                        "Collection: " + collectionIdentifier + "has an alternative extent statement that didn't map cleanly\n" + 
-                        "Structured Alt Extent:\n" +
-                        structuredExtentsWrapper.getJSONArray("processedExtents").toString();                    ;
-                    //TODO: emit error message 
+                    String debugMessage = "Collection: " + collectionIdentifier + "has an alternative extent statement that didn't map cleanly\n"
+                                        + "Structured Alt Extent:\n"
+                                        + structuredExtentsWrapper.getJSONArray("processedExtents").toString();
+                    
+                    aspaceCopyUtil.addErrorMessage(debugMessage);
                 }
             }
         }
