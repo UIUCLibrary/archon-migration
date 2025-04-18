@@ -1192,7 +1192,7 @@ public class ASpaceMapper {
         
         JSONObject extentsWrapper = new JSONObject();
         extentsWrapper.put("errors", "false");
-        JSONArray proccessedExtents = new JSONArray();
+        JSONArray processedExtents = new JSONArray();
         
         //get an array of all the extents listed in the alternative extent statement
         String[] extents = splitAlternativeExtent(alternativeExtent);
@@ -1201,7 +1201,7 @@ public class ASpaceMapper {
         //parse each of the extent statements into a structure extent JSONObject 
         for (String extent : extents) {
             JSONObject parsedExtent = parseExtentStatement(extent);
-            proccessedExtents.put(parsedExtent);
+            processedExtents.put(parsedExtent);
             if (parsedExtent.getString("error").equalsIgnoreCase("true")) {
                 extentsWrapper.put("errors", "true");
             }
@@ -1209,7 +1209,7 @@ public class ASpaceMapper {
 
         //if we have anything that didn't cleanly map to an extent, put the entire alt extent statement into a comment
         //for the collection 
-        extentsWrapper.put("processedExtents", proccessedExtents);
+        extentsWrapper.put("processedExtents", processedExtents);
         return extentsWrapper;
 
     }
