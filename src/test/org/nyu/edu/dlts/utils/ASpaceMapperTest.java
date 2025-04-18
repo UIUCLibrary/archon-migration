@@ -43,6 +43,18 @@ public class ASpaceMapperTest {
     }
 
     @Test
+    public void getNumber() {
+        ASpaceMapper aSpaceMapper = new ASpaceMapper();
+        assertEquals("1", aSpaceMapper.getNumber("a"));
+        assertEquals("1", aSpaceMapper.getNumber("a single"));
+        assertEquals("1", aSpaceMapper.getNumber("an"));
+        assertEquals("3", aSpaceMapper.getNumber("three"));
+
+
+
+    }
+
+    @Test
     public void parseExtentStatementTest() throws JSONException{
         ASpaceMapper aSpaceMapper = new ASpaceMapper();
         String[] extentsPass = {"1.84 megabytes","6 microfilm reels","12 items","1 oversize folder","a big folder", "three cassettes"};
@@ -72,12 +84,12 @@ public class ASpaceMapperTest {
 
         JSONObject parsedExtentTest4 = aSpaceMapper.parseExtentStatement(extentsPass[4]);
         assertEquals("the units are not equal", "big folder", parsedExtentTest4.get("unit"));
-        assertEquals("the values are not equal", "a", parsedExtentTest4.get("value"));
+        assertEquals("the values are not equal", "1", parsedExtentTest4.get("value"));
         assertEquals("the errors are not equal", false, parsedExtentTest4.get("error"));
 
         JSONObject parsedExtentTest5 = aSpaceMapper.parseExtentStatement(extentsPass[5]);
         assertEquals("the units are not equal", "cassettes", parsedExtentTest5.get("unit"));
-        assertEquals("the values are not equal", "three", parsedExtentTest5.get("value"));
+        assertEquals("the values are not equal", "3", parsedExtentTest5.get("value"));
         assertEquals("the errors are not equal", false, parsedExtentTest5.get("error"));
 
         JSONObject parsedExtentTest6 = aSpaceMapper.parseExtentStatement(extentsFail[0]);
