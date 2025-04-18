@@ -41,6 +41,8 @@ public class ASpaceMapper {
     private HashSet<String> resourceIDs = new HashSet<String>();
     private HashSet<String> eadIDs = new HashSet<String>();
 
+    private final String[] aSpaceExtents = enumUtil.getAllASpaceExtentTypes();
+
     // variable to keep track of filenames and their ids to make sure we have unique names
     private HashSet<String> digitalObjectFilenames = new HashSet<String>();
     private HashMap<String, String> fileIDsToFilenamesMap = new HashMap<String, String>();
@@ -1068,6 +1070,39 @@ public class ASpaceMapper {
     }
 
     /**
+     * Takes a written value and returns the corresponding number as a string
+     * Examples: 
+     *  input: an => output: 1
+     *  input: seven => output: 7
+     *  input: a single => output: 1
+     * @param writtenValue
+     * @return
+     */
+    public String getNumber(String writtenValue) {
+        HashMap<String, String> numberTranslator = new HashMap<String, String>();
+        numberTranslator.put("a", "1");
+        numberTranslator.put("an", "1");
+        numberTranslator.put("a single", "1");
+        numberTranslator.put("one", "1");
+        numberTranslator.put("two", "2");
+        numberTranslator.put("three", "3");
+        numberTranslator.put("four", "4");
+        numberTranslator.put("five", "5");
+        numberTranslator.put("six", "6");
+        numberTranslator.put("seven", "7");
+        numberTranslator.put("eight", "8");
+        numberTranslator.put("nine", "9");
+        numberTranslator.put("ten", "10");
+
+        if (numberTranslator.containsKey(writtenValue)) {
+            return numberTranslator.get(writtenValue);
+        } else {
+            return "";
+        }
+        
+    }
+
+    /**
      * This takes a natural langauge extent statement that is expected to have
      * a single unit expressed a digits, decimal number, indefinate article, or 
      * written number followed by a single unpunctuated string which is the unit. 
@@ -1103,6 +1138,10 @@ public class ASpaceMapper {
             confound = extent;
         }
 
+        if (!getNumber(unitValue).isEmpty()) {
+            unitValue = getNumber(unitValue);
+        };
+
         structuredExtent.put("unit", unit);
         structuredExtent.put("value", unitValue);
         structuredExtent.put("error", error);
@@ -1121,18 +1160,19 @@ public class ASpaceMapper {
      * @throws JSONException 
      */
     public JSONObject mapExtentType(String inputExtent) throws JSONException {
-        String[] aSpaceExtents = enumUtil.getAllASpaceExtentTypes();
-        ArrayList<String> allExtents = enumUtil.getAllArchonExtents();
         String cleanInput = inputExtent.toLowerCase().replace(" ", "_");
+        //all of the archon extents should have already been added to ASpace. Keeping this 
+        //here for now in case we want to test
+        // ArrayList<String> allExtents = enumUtil.getAllArchonExtents();
 
-        for (String aSpaceExtent : aSpaceExtents ) {
-            allExtents.add(aSpaceExtent);
-        }
+        // for (String aSpaceExtent : aSpaceExtents ) {
+        //     allExtents.add(aSpaceExtent);
+        // }
 
         JSONObject match  = new JSONObject();
         String mapping = "";
 
-        for (String extent : allExtents) {
+        for (String extent : aSpaceExtents) {
             match.put("clean_input", cleanInput);
             if (cleanInput.contains(extent)) {
                 mapping = extent;
@@ -1142,9 +1182,36 @@ public class ASpaceMapper {
         //TODO: conduct the fuzzy matching and generate matching score
         match.put("score","");
         match.put("mapping", mapping);
-        match.put("all", allExtents);
-
         return match;
+
+    }
+
+    public JSONObject processAlternativeExtent(String alternativeExtent) throws JSONException {
+
+        
+        JSONObject extentsWrapper = new JSONObject();
+        extentsWrapper.put("errors", "false");
+        JSONArray proccessedExtents = new JSONArray();
+        
+        //get an array of all the extents listed in the alternative extent statement
+        String[] extents = splitAlternativeExtent(alternativeExtent);
+        
+        
+        //parse each of the extent statements into a structure extent JSONObject 
+        for (String extent : extents) {
+            JSONObject parsedExtent = parseExtentStatement(extent);
+            proccessedExtents.put(parsedExtent);
+            if (parsedExtent.getString("error").equalsIgnoreCase("true")) {
+                extentsWrapper.put("errors", "true");
+            }
+        }
+
+        //if we have anything that didn't cleanly map to an extent, put the entire alt extent statement into a comment
+        //for the collection 
+
+        extentsWrapper.put("proccessedExtents", proccessedExtents);
+
+        return extentsWrapper;
 
     }
 
@@ -1183,8 +1250,27 @@ public class ASpaceMapper {
         // add the alternative extent statement
         if(!altExtent.isEmpty()) {
             extentJS = new JSONObject();
+            JSONObject structuredExtentsWrapper = processAlternativeExtent(altExtent);
 
-            extentJS.put("portion", "whole");
+            extentJS.put("portion", "part");
+
+            //if any of the extents had an error, add the whole alt extent to the statement
+            if (structuredExtentsWrapper.getString("errors").equalsIgnoreCase("true")) {
+                extentJS.put("container_summary", altExtent);    
+                //TODO: output an error message
+            }
+
+            JSONArray structuredExtents = structuredExtentsWrapper.getJSONArray("processedExtents");
+            for (int i=0; i < structuredExtents.length(); i++) { 
+                JSONObject structuredExtent = structuredExtents.getJSONObject(i);
+                if (!structuredExtent.getString("unit").isEmpty()) {
+                    //TODO: implement score checking
+                    extentJS.put("extent_type", structuredExtent.getString("unit"));
+                }
+            }
+
+
+ 
             extentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
             extentJS.put("number", altExtent);
 
