@@ -1209,9 +1209,7 @@ public class ASpaceMapper {
 
         //if we have anything that didn't cleanly map to an extent, put the entire alt extent statement into a comment
         //for the collection 
-
-        extentsWrapper.put("proccessedExtents", proccessedExtents);
-
+        extentsWrapper.put("processedExtents", proccessedExtents);
         return extentsWrapper;
 
     }
