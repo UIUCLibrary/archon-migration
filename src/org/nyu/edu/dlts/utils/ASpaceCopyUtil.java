@@ -3410,9 +3410,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            /**aspaceCopyUtil.copyRepositoryRecords();
+            aspaceCopyUtil.copyRepositoryRecords();
             aspaceCopyUtil.mapRepositoryGroups();
-            aspaceCopyUtil.copyUserRecords();
+            /**aspaceCopyUtil.copyUserRecords();
             aspaceCopyUtil.copySubjectRecords();
             aspaceCopyUtil.copyCreatorRecords();
             aspaceCopyUtil.copyClassificationRecords();*/
