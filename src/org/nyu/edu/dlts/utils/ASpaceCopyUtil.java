@@ -349,6 +349,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // A hashmap to map the short name to the repository URI to prevent duplications
         HashMap<String, String> shortNamesToURIMap = new HashMap<String, String>();
 
+        //load the repositories already in ASpace, if applicable
+        HashMap<String, String> currentRepos = aspaceClient.loadRepositories();
+        if(currentRepos != null) shortNamesToURIMap = currentRepos;
+
         // these are used to update the progress bar
         int total = records.length();
         int count = 0;
