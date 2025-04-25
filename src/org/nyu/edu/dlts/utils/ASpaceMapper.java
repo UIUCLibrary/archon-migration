@@ -55,6 +55,11 @@ public class ASpaceMapper {
     // date formatter used to convert date string to date object
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
 
+    //default date string for use when there is no other date to use for the collection record
+    private String defaultDateExpression = "Dummy Date";
+    //default date type
+    private String defaultDateLabel = "other";
+
     // booleans used to convert some bbcode to html or blanks
     private boolean bbcodeToHTML = false;
     private boolean bbcodeToBlank = true;
@@ -103,6 +108,17 @@ public class ASpaceMapper {
      */
     public void setASpaceDynamicEnums(HashMap<String, JSONObject> dynamicEnums) {
         enumUtil.setASpaceDynamicEnums(dynamicEnums);
+    }
+
+    /**
+     * Method to set the default date expression and label (for when there is no date)
+     *
+     * @param defaultDateExpression
+     * @param defaultDateLabel
+     */
+    public void setDefaultDateOptions(String dateExpression, String dateLabel) {
+        if(!defaultDateExpression.isEmpty()) defaultDateExpression = dateExpression;
+        if(!defaultDateLabel.isEmpty()) defaultDateLabel = dateLabel;
     }
 
     /**
@@ -1160,17 +1176,16 @@ public class ASpaceMapper {
             dateJA.put(dateJS);
         }
 
-        // it is still possible to get to this point without any dates so just hard a dummy
+        // it is still possible to get to this point without any dates so just add a dummy
         // date so that the record can be saved.
         if(dateJA.length() == 0) {
             dateJS = new JSONObject();
 
             dateJS.put("date_type", "single");
 
-            dateJS.put("label", "other");
+            dateJS.put("label", defaultDateLabel);
 
-            dateExpression = "Dummy Date";
-            dateJS.put("expression", dateExpression);
+            dateJS.put("expression", defaultDateExpression);
 
             dateJA.put(dateJS);
         }
