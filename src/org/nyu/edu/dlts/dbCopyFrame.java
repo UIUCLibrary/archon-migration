@@ -182,8 +182,10 @@ public class dbCopyFrame extends JFrame {
                     ascopy.setProgressIndicators(copyProgressBar, errorCountLabel);
                     ascopy.setCopying(true);
 
-                    // set the base uri for digital objects
-                    ascopy.setDigitalObjectBaseURI(doURLTextField.getText().trim());
+                    // set the base uri for digital objects if downloading the files from Archon
+                    if(downloadCheckBox.isSelected()) {
+                        ascopy.setDigitalObjectBaseURI(doURLTextField.getText().trim());
+                    }
 
                     //set identifier prefix if indicated in properties file
                     ascopy.setIdentifierPrefix(collectionPrefix);
