@@ -2639,6 +2639,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     } catch (NumberFormatException e) {
                         containerIndicators.add(str.trim());
                     }
+                } else if(bounds.length == 1 && str.endsWith("-")){
+                    containerIndicators.add(bounds[0].trim());
+                } else {
+                    containerIndicators.add(str.trim());
                 }
             } else {
                 containerIndicators.add(str.trim());
