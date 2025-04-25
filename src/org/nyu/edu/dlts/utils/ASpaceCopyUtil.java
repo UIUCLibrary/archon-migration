@@ -409,6 +409,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // A hashmap to map the short name to the repository URI to prevent duplications
         HashMap<String, String> shortNamesToURIMap = new HashMap<String, String>();
 
+        //load the repositories already in ASpace, if applicable
+        HashMap<String, String> currentRepos = aspaceClient.loadRepositories();
+        if(currentRepos != null) shortNamesToURIMap = currentRepos;
+
         // these are used to update the progress bar
         int total = records.length();
         int count = 0;
@@ -3642,16 +3646,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            aspaceCopyUtil.printEnumIDList("accession_type");
-            aspaceCopyUtil.printEnumIDList("resource_type");
-            aspaceCopyUtil.printEnumIDList("extent_type");
-            aspaceCopyUtil.printEnumIDList("container_type");
-            aspaceCopyUtil.printEnumIDList("processing_priority");
-            aspaceCopyUtil.printEnumIDList("subject_source");
-            /* 
             aspaceCopyUtil.copyRepositoryRecords();
             aspaceCopyUtil.mapRepositoryGroups();
-            aspaceCopyUtil.copyUserRecords();
+            /**aspaceCopyUtil.copyUserRecords();
             aspaceCopyUtil.copySubjectRecords();
             aspaceCopyUtil.copyCreatorRecords();
             aspaceCopyUtil.copyClassificationRecords();
