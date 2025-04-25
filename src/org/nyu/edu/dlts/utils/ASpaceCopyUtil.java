@@ -3604,14 +3604,36 @@ public class ASpaceCopyUtil implements  PrintConsole {
         }
         aspaceCopyUtil.setIdentifierPrefix(identiferPrefix);
 
+        String archonInstance = "";
+        if (UIUCPropertiesReader.getUIUCProperties() != null) {
+            archonInstance = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.prefix");
+        }
+
+        ArchonIDListReader archonIDListReader = new ArchonIDListReader(archonInstance);
+        ArrayList<String> archonIDList = archonIDListReader.getRecordSubset();
+        if(archonIDList != null && !archonIDList.isEmpty()){
+            aspaceCopyUtil.setCollArchonIDToCopyList(archonIDList);
+        }else {
+            //limit collections for testing by archon collection ID
+            ArrayList<String> collArchonIDsList = new ArrayList<String>();
+            collArchonIDsList.add("8434");
+            collArchonIDsList.add("8457");
+            collArchonIDsList.add("8020");
+            collArchonIDsList.add("8734");
+            aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
+        }
+
         //limit collections for testing
         ArrayList<String> collectionsIDsList = new ArrayList<String>();
-        collectionsIDsList.add("72");
+        collectionsIDsList.add("54");
         //collectionsIDsList.add("84");
-        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
-        
+        //aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+
         archonClient.setDebugMode(false);
-        aspaceCopyUtil.mapper.setAppendTestIdentifier("0320test17");
+        String testString = archonIDListReader.getSuffixForTesting();
+        if(testString != null && !testString.isEmpty()){
+            aspaceCopyUtil.mapper.setAppendTestIdentifier(testString);
+        }
 
         try {
             /*
@@ -3635,7 +3657,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.copyClassificationRecords();
             aspaceCopyUtil.findAccessionRecordRepositories();
             aspaceCopyUtil.copyAccessionRecords();
-            //aspaceCopyUtil.copyDigitalObjectRecords();
+            aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
