@@ -1271,7 +1271,9 @@ public class ASpaceMapper {
                     extentJA.put(extentJS);
                 } else {
                     String collectionIdentifier = record.getString("CollectionIdentifier");
+                    String archonID = record.getString("ID");
                     String debugMessage = "Collection: " + collectionIdentifier + "has an alternative extent statement that didn't map cleanly\n"
+                                        + "Archon ID: " + archonID + "\n"
                                         + "Structured Alt Extent:\n"
                                         + structuredExtentsWrapper.getJSONArray("processedExtents").toString();
                     
