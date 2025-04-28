@@ -1122,7 +1122,7 @@ public class ASpaceMapper {
 
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher  = pattern.matcher(extent);
-        String unitValue;
+        String unitValue = "";
         String unit;
         Boolean error;
         String confound;
@@ -1144,7 +1144,7 @@ public class ASpaceMapper {
         };
 
         structuredExtent.put("unit", unit);
-        structuredExtent.put("value", unitValue);
+        structuredExtent.put("unitValue", unitValue);
         structuredExtent.put("error", error);
         structuredExtent.put("confound", confound);
 
@@ -1250,9 +1250,10 @@ public class ASpaceMapper {
         // add the alternative extent statement
         if(!altExtent.isEmpty()) {
             extentJS = new JSONObject();
+            extentJS.put("portion", "part");
             JSONObject structuredExtentsWrapper = processAlternativeExtent(altExtent);
 
-            extentJS.put("portion", "part");
+
 
             //if any of the extents had an error, add the whole alt extent to the statement
             if (structuredExtentsWrapper.getString("errors").equalsIgnoreCase("true")) {
