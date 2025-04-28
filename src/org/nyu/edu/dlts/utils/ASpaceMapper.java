@@ -1138,7 +1138,7 @@ public class ASpaceMapper {
             confound = extent;
         }
 
-        //get a digit form of unit values like "an" or "five"
+        //if a non-digit was used for unit value, get a digit version
         if (!getNumber(unitValue).isEmpty()) {
             unitValue = getNumber(unitValue);
         };
@@ -1249,27 +1249,27 @@ public class ASpaceMapper {
         //TODO: this should be refactored into processAlternativeExtent to make it more testable
         // add the alternative extent statement
         if(!altExtent.isEmpty()) {
-            extentJS = new JSONObject();
-            extentJS.put("portion", "part");
+            JSONObject altExtentJS = new JSONObject();
+            altExtentJS.put("portion", "part");
             JSONObject structuredExtentsWrapper = processAlternativeExtent(altExtent);
 
 
 
             //if any of the extents had an error, add the whole alt extent to the statement
             if (structuredExtentsWrapper.getString("errors").equalsIgnoreCase("true")) {
-                extentJS.put("container_summary", altExtent);    
+                altExtentJS.put("container_summary", altExtent);    
                 //TODO: output an error message
             }
 
-            //proccess the alternative extent statement into structured extents and add to extentJA
+            //proccess the alternative extent statement into structured extents and add to altExtentJA
             JSONArray structuredExtents = structuredExtentsWrapper.getJSONArray("processedExtents");
             for (int i=0; i < structuredExtents.length(); i++) { 
                 JSONObject structuredExtent = structuredExtents.getJSONObject(i);
-                if (!structuredExtent.getString("unit").isEmpty()) {
+                if ( ! structuredExtent.getString("unit").isEmpty()) {
                     //TODO: implement score checking
-                    extentJS.put("extent_type", structuredExtent.getString("unit"));
-                    extentJS.put("number", structuredExtent.getString("unitValue"));
-                    extentJA.put(extentJS);
+                    altExtentJS.put("extent_type", structuredExtent.getString("unit"));
+                    altExtentJS.put("number", structuredExtent.getString("unitValue"));
+                    extentJA.put(altExtentJS);
                 } else {
                     String collectionIdentifier = record.getString("CollectionIdentifier");
                     String archonID = record.getString("ID");
