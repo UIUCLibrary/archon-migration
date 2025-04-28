@@ -1261,12 +1261,7 @@ public class ASpaceMapper {
         // add the alternative extent statement
         if(!altExtent.isEmpty()) {
             JSONObject structuredExtentsWrapper = processAlternativeExtent(altExtent);
-
             //if any of the extents had an error, add the whole alt extent to the statement
-            if (structuredExtentsWrapper.getString("errors").equalsIgnoreCase("true")) {
-                altExtentJS.put("container_summary", altExtent);    
-                //TODO: output an error message
-            }
 
             //proccess the alternative extent statement into structured extents and add to altExtentJA
             JSONArray structuredExtents = structuredExtentsWrapper.getJSONArray("processedExtents");
@@ -1275,6 +1270,11 @@ public class ASpaceMapper {
                 altExtentJS.put("portion", "part");
 
                 JSONObject structuredExtent = structuredExtents.getJSONObject(i);
+                if (structuredExtentsWrapper.getString("errors").equalsIgnoreCase("true")) {
+                    altExtentJS.put("container_summary", altExtent);    
+                    //TODO: output an error message
+                }
+                
                 if ( ! structuredExtent.getString("unit").isEmpty()) {
                     //TODO: implement score checking
                     altExtentJS.put("extent_type", structuredExtent.getString("unit"));
