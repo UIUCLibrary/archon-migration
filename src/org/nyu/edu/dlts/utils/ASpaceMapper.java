@@ -1123,12 +1123,15 @@ public class ASpaceMapper {
 
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher  = pattern.matcher(extent);
-        String unitValue = "";
+        String unitValue;
         String unit;
         Boolean error;
         String confound;
+
+
         if (matcher.find()) {
-            unitValue = matcher.group(1);
+            //use the digit form of the unit value (e.g., convert a/an/one to digits)
+            unitValue = getNumber(matcher.group(1)).isEmpty() ? matcher.group(1) : getNumber(matcher.group(1)) ;
             unit = matcher.group(2);
             error = false;
             confound = "";
@@ -1274,7 +1277,7 @@ public class ASpaceMapper {
                     altExtentJS.put("container_summary", altExtent);    
                     //TODO: output an error message
                 }
-                
+
                 if ( ! structuredExtent.getString("unit").isEmpty()) {
                     //TODO: implement score checking
                     altExtentJS.put("extent_type", structuredExtent.getString("unit"));
