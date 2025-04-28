@@ -1124,22 +1124,24 @@ public class ASpaceMapper {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher  = pattern.matcher(extent);
         String unitValue;
+        JSONObject matchOJsonObject;
         String unit;
-        Boolean error;
-        String confound;
+        Boolean exactMatch;
 
 
         if (matcher.find()) {
             //use the digit form of the unit value (e.g., convert a/an/one to digits)
             unitValue = getNumber(matcher.group(1)).isEmpty() ? matcher.group(1) : getNumber(matcher.group(1)) ;
-            unit = matcher.group(2);
-            error = false;
-            confound = "";
+            
+            //get the closest matching unit and indicate if not an exact match
+            matchOJsonObject = mapExtentType(matcher.group(2));
+            unit = matchOJsonObject.getString("mapping");
+            exactMatch = matchOJsonObject.getBoolean("exactMatch");
+            
         } else {
             unitValue = "";
             unit = "";
-            error = true;
-            confound = extent;
+            exactMatch = false;
         }
 
         //if a non-digit was used for unit value, get a digit version
@@ -1149,8 +1151,8 @@ public class ASpaceMapper {
 
         structuredExtent.put("unit", unit);
         structuredExtent.put("unitValue", unitValue);
-        structuredExtent.put("error", error);
-        structuredExtent.put("confound", confound);
+        structuredExtent.put("exactMatch", exactMatch);
+        structuredExtent.put("altExtentStatement", extent);
 
         return structuredExtent;
     }
@@ -1216,7 +1218,7 @@ public class ASpaceMapper {
         for (String extent : extents) {
             JSONObject parsedExtent = parseExtentStatement(extent);
             processedExtents.put(parsedExtent);
-            if (parsedExtent.getString("error").equalsIgnoreCase("true")) {
+            if (! parsedExtent.getBoolean("exactMatch")) {
                 extentsWrapper.put("errors", "true");
             }
         }
@@ -1273,9 +1275,8 @@ public class ASpaceMapper {
                 altExtentJS.put("portion", "part");
 
                 JSONObject structuredExtent = structuredExtents.getJSONObject(i);
-                if (structuredExtentsWrapper.getString("errors").equalsIgnoreCase("true")) {
+                if ( ! structuredExtent.getBoolean("exactMatch")) {
                     altExtentJS.put("container_summary", altExtent);    
-                    //TODO: output an error message
                 }
 
                 if ( ! structuredExtent.getString("unit").isEmpty()) {
