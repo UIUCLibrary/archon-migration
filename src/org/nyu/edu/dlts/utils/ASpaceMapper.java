@@ -1172,16 +1172,26 @@ public class ASpaceMapper {
 
         JSONObject match  = new JSONObject();
         String mapping = "";
+        Boolean exactMatch = true;
 
+        //this is fine, but we need to flag non-exact matches
         for (String extent : aSpaceExtents) {
+
+            //just for debugging, know for sure what the inputs are
             match.put("clean_input", cleanInput);
-            if (cleanInput.contains(extent)) {
+
+            if (cleanInput.equals(extent)){
                 mapping = extent;
+            }
+            else if (cleanInput.contains(extent)) {
+                mapping = extent;
+                exactMatch = false;
             }
 
         }
         //TODO: conduct the fuzzy matching and generate matching score
         match.put("score","");
+        match.put("exactMatch", exactMatch);
         match.put("mapping", mapping);
         return match;
 
@@ -1252,8 +1262,6 @@ public class ASpaceMapper {
             JSONObject altExtentJS = new JSONObject();
             altExtentJS.put("portion", "part");
             JSONObject structuredExtentsWrapper = processAlternativeExtent(altExtent);
-
-
 
             //if any of the extents had an error, add the whole alt extent to the statement
             if (structuredExtentsWrapper.getString("errors").equalsIgnoreCase("true")) {
