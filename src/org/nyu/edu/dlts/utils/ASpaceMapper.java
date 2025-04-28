@@ -1116,6 +1116,7 @@ public class ASpaceMapper {
     public JSONObject parseExtentStatement(String extent) throws JSONException
     {
 
+        //TODO: Add test where there is a non-matching string statments in the beginning, middle and at the end
         JSONObject structuredExtent = new JSONObject();
 
         String regex = "(^\\d+|\\d+\\.\\d+|a|an|a single|one|two|three|four|five|six|seven|eight|nine|ten)\\s([A-z\s]+)";
@@ -1259,8 +1260,6 @@ public class ASpaceMapper {
         //TODO: this should be refactored into processAlternativeExtent to make it more testable
         // add the alternative extent statement
         if(!altExtent.isEmpty()) {
-            JSONObject altExtentJS = new JSONObject();
-            altExtentJS.put("portion", "part");
             JSONObject structuredExtentsWrapper = processAlternativeExtent(altExtent);
 
             //if any of the extents had an error, add the whole alt extent to the statement
@@ -1272,6 +1271,9 @@ public class ASpaceMapper {
             //proccess the alternative extent statement into structured extents and add to altExtentJA
             JSONArray structuredExtents = structuredExtentsWrapper.getJSONArray("processedExtents");
             for (int i=0; i < structuredExtents.length(); i++) { 
+                JSONObject altExtentJS = new JSONObject();
+                altExtentJS.put("portion", "part");
+
                 JSONObject structuredExtent = structuredExtents.getJSONObject(i);
                 if ( ! structuredExtent.getString("unit").isEmpty()) {
                     //TODO: implement score checking
