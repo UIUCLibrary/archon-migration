@@ -1186,7 +1186,9 @@ public class ASpaceMapper {
                 mapping = extent;
                 exactMatch = true;
             }
-            else if (cleanInput.contains(cleanExtent)) {
+
+            //this should catch most common pluralizations, e.g. one has s/es and the other doesn't
+            else if (cleanInput.contains(cleanExtent) || cleanExtent.contains(cleanInput)) {
                 mapping = extent;
             }
 
