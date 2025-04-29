@@ -55,7 +55,7 @@ public class ASpaceMapper {
     private RandomString randomStringLong = new RandomString(6);
 
     // used to store errors
-    private ASpaceCopyUtil aspaceCopyUtil;
+    public ASpaceCopyUtil aspaceCopyUtil;
 
     // used when generating errors
     private String currentCollectionRecordIdentifier;
@@ -1203,31 +1203,19 @@ public class ASpaceMapper {
 
     }
 
-    public JSONObject processAlternativeExtent(String alternativeExtent) throws JSONException {
-
-        
-        JSONObject extentsWrapper = new JSONObject();
-        extentsWrapper.put("errors", "false");
+    public JSONArray getParsedAltExtents(String alternativeExtent) throws JSONException {
         JSONArray processedExtents = new JSONArray();
         
         //get an array of all the extents listed in the alternative extent statement
         String[] extents = splitAlternativeExtent(alternativeExtent);
-        
-        
+
         //parse each of the extent statements into a structure extent JSONObject 
         for (String extent : extents) {
             JSONObject parsedExtent = parseExtentStatement(extent);
             processedExtents.put(parsedExtent);
-            if (! parsedExtent.getBoolean("exactMatch")) {
-                extentsWrapper.put("errors", "true");
-            }
         }
 
-        //if we have anything that didn't cleanly map to an extent, put the entire alt extent statement into a comment
-        //for the collection 
-        extentsWrapper.put("processedExtents", processedExtents);
-        return extentsWrapper;
-
+        return processedExtents;
     }
 
     /**
@@ -1237,7 +1225,7 @@ public class ASpaceMapper {
      * @param json
      * @throws Exception
      */
-    private void addResourceExtent(JSONObject record, JSONObject json) throws Exception {
+    public void addResourceExtent(JSONObject record, JSONObject json) throws Exception {
         JSONArray extentJA = new JSONArray();
         JSONObject extentJS = new JSONObject();
         String altExtent = record.getString("AltExtentStatement");
@@ -1251,9 +1239,7 @@ public class ASpaceMapper {
         } else {
             extentJS.put("portion", "whole");
         }
-        
         extentJS.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ExtentUnitID")));
-
         if (!record.getString("Extent").isEmpty()) {
             extentJS.put("number", record.getString("Extent"));
         } else {
@@ -1265,11 +1251,10 @@ public class ASpaceMapper {
         //TODO: this should be refactored into processAlternativeExtent to make it more testable
         // add the alternative extent statement
         if(!altExtent.isEmpty()) {
-            JSONObject structuredExtentsWrapper = processAlternativeExtent(altExtent);
+            JSONArray structuredExtents = getParsedAltExtents(altExtent);
             //if any of the extents had an error, add the whole alt extent to the statement
 
             //proccess the alternative extent statement into structured extents and add to altExtentJA
-            JSONArray structuredExtents = structuredExtentsWrapper.getJSONArray("processedExtents");
             for (int i=0; i < structuredExtents.length(); i++) { 
                 JSONObject altExtentJS = new JSONObject();
                 altExtentJS.put("portion", "part");
@@ -1290,9 +1275,9 @@ public class ASpaceMapper {
                     String debugMessage = "Collection: " + collectionIdentifier + "has an alternative extent statement that didn't map cleanly\n"
                                         + "Archon ID: " + archonID + "\n"
                                         + "Structured Alt Extent:\n"
-                                        + structuredExtentsWrapper.getJSONArray("processedExtents").toString();
+                                        + structuredExtents.toString();
                     
-                    aspaceCopyUtil.addErrorMessage(debugMessage);
+                    // aspaceCopyUtil.addErrorMessage(debugMessage);
                 }
             }
         }
