@@ -1036,7 +1036,7 @@ public class ASpaceMapper {
             json.put("finding_aid_description_rules", enumUtil.getASpaceFindingAidDescriptionRule(descriptiveRulesID));
         }
 
-        json.put("finding_aid_language", enumUtil.getASpaceLanguageCode(record.getString("FindingLanguageID")));
+        json.put("finding_aid_language", enumUtil.getASpaceLanguageCodeForArchonID(record.getString("FindingLanguageID")));
         json.put("finding_aid_note", record.get("PublicationNote"));
 
         // add any reversion statements
@@ -1380,10 +1380,11 @@ public class ASpaceMapper {
             for (int i = 0; i < languageIds.length(); i++) {
                 String languageCode = languageIds.getString(i);
                 String languageLong = enumUtil.getLanguageLong(languageCode);
+                String aspaceLangCode = enumUtil.getASpaceLanguageCodeForArchonCode(languageCode);
                 String separator = (i > 0) ? ", " :  "";
 
                 //should produce "<language langcode='eng'>English</language>" for English, as an example
-                langNoteContent += separator + "<language langcode='" + languageCode +"'>" + languageLong + "</language>";
+                langNoteContent += separator + "<language langcode='" + aspaceLangCode +"'>" + languageLong + "</language>";
             }
             addSinglePartNote(notesJA, "langmaterial", "Language of Materials", langNoteContent);
         }
