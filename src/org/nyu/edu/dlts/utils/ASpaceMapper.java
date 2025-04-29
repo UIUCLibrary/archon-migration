@@ -1162,7 +1162,7 @@ public class ASpaceMapper {
      * @throws JSONException 
      */
     public JSONObject mapExtentType(String inputExtent) throws JSONException {
-        String cleanInput = inputExtent.toLowerCase().replace(" ", "_");
+        String cleanInput = inputExtent.toLowerCase().replace("_", " ");
         //all of the archon extents should have already been added to ASpace. Keeping this 
         //here for now in case we want to test
         // ArrayList<String> allExtents = enumUtil.getAllArchonExtents();
@@ -1177,6 +1177,7 @@ public class ASpaceMapper {
 
         //this is fine, but we need to flag non-exact matches
         for (String extent : aSpaceExtents) {
+            String cleanExtent = extent.toLowerCase().replace("_", " ");
 
             //just for debugging, know for sure what the inputs are
             match.put("clean_input", cleanInput);
