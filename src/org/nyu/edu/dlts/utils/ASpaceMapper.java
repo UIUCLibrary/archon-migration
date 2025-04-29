@@ -1182,11 +1182,11 @@ public class ASpaceMapper {
             //just for debugging, know for sure what the inputs are
             match.put("clean_input", cleanInput);
 
-            if (cleanInput.equals(extent)){
+            if (cleanInput.equals(cleanExtent)){
                 mapping = extent;
                 exactMatch = true;
             }
-            else if (cleanInput.contains(extent)) {
+            else if (cleanInput.contains(cleanExtent)) {
                 mapping = extent;
             }
 
