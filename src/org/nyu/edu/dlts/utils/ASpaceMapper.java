@@ -55,7 +55,7 @@ public class ASpaceMapper {
     private RandomString randomStringLong = new RandomString(6);
 
     // used to store errors
-    public ASpaceCopyUtil aspaceCopyUtil;
+    private ASpaceCopyUtil aspaceCopyUtil;
 
     // used when generating errors
     private String currentCollectionRecordIdentifier;
@@ -1124,7 +1124,7 @@ public class ASpaceMapper {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher  = pattern.matcher(extent);
         String unitValue;
-        JSONObject matchOJsonObject;
+        JSONObject matchJsonObject;
         String unit;
         Boolean exactMatch;
 
@@ -1134,20 +1134,15 @@ public class ASpaceMapper {
             unitValue = getNumber(matcher.group(1)).isEmpty() ? matcher.group(1) : getNumber(matcher.group(1)) ;
             
             //get the closest matching unit and indicate if not an exact match
-            matchOJsonObject = mapExtentType(matcher.group(2));
-            unit = matchOJsonObject.getString("mapping");
-            exactMatch = matchOJsonObject.getBoolean("exactMatch");
+            matchJsonObject = mapExtentType(matcher.group(2));
+            unit = matchJsonObject.getString("mapping");
+            exactMatch = matchJsonObject.getBoolean("exactMatch");
             
         } else {
             unitValue = "";
             unit = "";
             exactMatch = false;
         }
-
-        //if a non-digit was used for unit value, get a digit version
-        if (!getNumber(unitValue).isEmpty()) {
-            unitValue = getNumber(unitValue);
-        };
 
         structuredExtent.put("unit", unit);
         structuredExtent.put("unitValue", unitValue);
@@ -1178,7 +1173,7 @@ public class ASpaceMapper {
 
         JSONObject match  = new JSONObject();
         String mapping = "";
-        Boolean exactMatch = true;
+        Boolean exactMatch = false;
 
         //this is fine, but we need to flag non-exact matches
         for (String extent : aSpaceExtents) {
@@ -1188,10 +1183,10 @@ public class ASpaceMapper {
 
             if (cleanInput.equals(extent)){
                 mapping = extent;
+                exactMatch = true;
             }
             else if (cleanInput.contains(extent)) {
                 mapping = extent;
-                exactMatch = false;
             }
 
         }
@@ -1268,8 +1263,9 @@ public class ASpaceMapper {
                     //TODO: implement score checking
                     altExtentJS.put("extent_type", structuredExtent.getString("unit"));
                     altExtentJS.put("number", structuredExtent.getString("unitValue"));
-                    extentJA.put(altExtentJS);
                 } else {
+                    altExtentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
+                    altExtentJS.put("number", structuredExtent.getString("unitValue"));
                     String collectionIdentifier = record.getString("CollectionIdentifier");
                     String archonID = record.getString("ID");
                     String debugMessage = "Collection: " + collectionIdentifier + "has an alternative extent statement that didn't map cleanly\n"
@@ -1279,6 +1275,7 @@ public class ASpaceMapper {
                     
                     // aspaceCopyUtil.addErrorMessage(debugMessage);
                 }
+                extentJA.put(altExtentJS);
             }
         }
 
