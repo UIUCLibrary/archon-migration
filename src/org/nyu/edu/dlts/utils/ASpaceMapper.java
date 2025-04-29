@@ -1189,7 +1189,8 @@ public class ASpaceMapper {
 
             //this should catch most common pluralizations, e.g. one has s/es and the other doesn't
             else if (cleanInput.contains(cleanExtent) || cleanExtent.contains(cleanInput)) {
-                mapping = extent;
+                //prefer the longest match, e.g. don't match "microfilm_reels" to "reel" just because "reel" comes after "microfilm_reel"
+                mapping = mapping.length() < cleanExtent.length() ? extent : mapping;
             }
 
         }
