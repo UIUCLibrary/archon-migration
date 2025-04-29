@@ -566,7 +566,7 @@ public class ASpaceEnumUtil {
      * @param arId
      * @return
      */
-    public String getASpaceLanguageCodeForArchonID(String arId) {
+    public String getASpaceLanguageCode(String arId) {
         if(arId.isEmpty()) return "und";
 
         if(languagesJS.has(arId)) {

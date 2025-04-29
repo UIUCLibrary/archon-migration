@@ -1036,7 +1036,7 @@ public class ASpaceMapper {
             json.put("finding_aid_description_rules", enumUtil.getASpaceFindingAidDescriptionRule(descriptiveRulesID));
         }
 
-        json.put("finding_aid_language", enumUtil.getASpaceLanguageCodeForArchonID(record.getString("FindingLanguageID")));
+        json.put("finding_aid_language", enumUtil.getASpaceLanguageCode(record.getString("FindingLanguageID")));
         json.put("finding_aid_note", record.get("PublicationNote"));
 
         // add any reversion statements
