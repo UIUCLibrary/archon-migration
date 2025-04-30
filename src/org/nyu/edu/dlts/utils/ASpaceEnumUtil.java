@@ -379,7 +379,7 @@ public class ASpaceEnumUtil {
 
        ArrayList<String> archonExtentStrings = new ArrayList<>();
         for (String string : lookupListValuesToCodes.keySet()) {
-            if (string.startsWith("extent_type_"))
+            if (lookupListValuesToCodes.get(string).startsWith("extent_type_"))
             archonExtentStrings.add(string);
         }
 
