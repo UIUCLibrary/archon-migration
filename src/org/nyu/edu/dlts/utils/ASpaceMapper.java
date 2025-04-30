@@ -1115,8 +1115,7 @@ public class ASpaceMapper {
      */
     public JSONObject parseExtentStatement(String extent) throws JSONException
     {
-
-        //TODO: Add test where there is a non-matching string statments in the beginning, middle and at the end
+     
         JSONObject structuredExtent = new JSONObject();
 
         String regex = "(^\\d+|\\d+\\.\\d+|a|an|a single|one|two|three|four|five|six|seven|eight|nine|ten)\\s([A-z\s]+)";
@@ -1126,9 +1125,11 @@ public class ASpaceMapper {
         String unitValue;
         JSONObject matchJsonObject;
         String unit;
-        Boolean exactMatch;
+        Boolean exactMatch = false;
+        Boolean cantParsePart = false;
 
 
+        //if there is a match, map the components 
         if (matcher.find()) {
             //use the digit form of the unit value (e.g., convert a/an/one to digits)
             unitValue = getNumber(matcher.group(1)).isEmpty() ? matcher.group(1) : getNumber(matcher.group(1)) ;
@@ -1141,13 +1142,14 @@ public class ASpaceMapper {
         } else {
             unitValue = "";
             unit = "";
-            exactMatch = false;
+            cantParsePart = true;
         }
 
         structuredExtent.put("unit", unit);
         structuredExtent.put("unitValue", unitValue);
         structuredExtent.put("exactMatch", exactMatch);
-        structuredExtent.put("altExtentStatement", extent);
+        structuredExtent.put("extent", extent);
+        structuredExtent.put("cantParse", cantParsePart);
 
         return structuredExtent;
     }
@@ -1195,27 +1197,40 @@ public class ASpaceMapper {
             }
 
         }
-        //TODO: conduct the fuzzy matching and generate matching score
-        match.put("score","");
+
         match.put("exactMatch", exactMatch);
         match.put("mapping", mapping);
         return match;
 
     }
 
-    public JSONArray getParsedAltExtents(String alternativeExtent) throws JSONException {
+    public JSONObject annotateParsedAltExtents(String alternativeExtent) throws JSONException {
+
+        Boolean cantParseAny = true;
         JSONArray processedExtents = new JSONArray();
+        JSONObject altExtentJsonObject = new JSONObject();
         
         //get an array of all the extents listed in the alternative extent statement
         String[] extents = splitAlternativeExtent(alternativeExtent);
+
 
         //parse each of the extent statements into a structure extent JSONObject 
         for (String extent : extents) {
             JSONObject parsedExtent = parseExtentStatement(extent);
             processedExtents.put(parsedExtent);
+
+            //update flag if the extent statement will parse
+            if ( ! parsedExtent.getBoolean("cantParse") ) {
+                cantParseAny = false;
+            }
+            
         }
 
-        return processedExtents;
+        altExtentJsonObject.put("processedExtents", processedExtents);
+        altExtentJsonObject.put("cantParseAny", cantParseAny);
+
+
+        return altExtentJsonObject;
     }
 
     /**
@@ -1226,65 +1241,79 @@ public class ASpaceMapper {
      * @throws Exception
      */
     public void addResourceExtent(JSONObject record, JSONObject json) throws Exception {
-        JSONArray extentJA = new JSONArray();
-        JSONObject extentJS = new JSONObject();
+        JSONArray allExtents = new JSONArray();
+        JSONObject mainExtent = new JSONObject();
+        JSONObject parsedAltExtent = new JSONObject();
+        
+        String collectionIdentifier = record.getString("CollectionIdentifier");
+        String archonID = record.getString("ID");
         String altExtent = record.getString("AltExtentStatement");
 
-        //TODO: add some additional parsing to tell if the alt extent is a true alt extent
-        //in which case the alt extent should be added as container_summary and portion 
-        //should be se as whole
-        if (!altExtent.isEmpty()){
-            extentJS.put("portion", "part");
+        if( ! altExtent.isEmpty()) {
+            parsedAltExtent = annotateParsedAltExtents(altExtent);
+            JSONArray structuredExtents = parsedAltExtent.getJSONArray("processedExtents");
 
-        } else {
-            extentJS.put("portion", "whole");
-        }
-        extentJS.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ExtentUnitID")));
-        if (!record.getString("Extent").isEmpty()) {
-            extentJS.put("number", record.getString("Extent"));
-        } else {
-            extentJS.put("number", "0");
-        }
+            ArrayList<String> errors = new ArrayList<>();
 
-        extentJA.put(extentJS);
+            //case 1: couldn't parse the alt extent, so add it as a container summary to the main extent
+            if (parsedAltExtent.getBoolean("cantParseAny")) {
+                mainExtent.put("portion", "whole");
+                mainExtent.put("container_summary", altExtent);
+                errors.add( "the entire alt extent couldn't be parsed at all and was added to the main extent container_summary.");
+            } else {
+                mainExtent.put("portion", "part");
 
-        //TODO: this should be refactored into processAlternativeExtent to make it more testable
-        // add the alternative extent statement
-        if(!altExtent.isEmpty()) {
-            JSONArray structuredExtents = getParsedAltExtents(altExtent);
-            //if any of the extents had an error, add the whole alt extent to the statement
+                for (int i=0; i < structuredExtents.length(); i++) { 
+                    JSONObject altExtentJS = new JSONObject();
+                    altExtentJS.put("portion", "part");
 
-            //proccess the alternative extent statement into structured extents and add to altExtentJA
-            for (int i=0; i < structuredExtents.length(); i++) { 
-                JSONObject altExtentJS = new JSONObject();
-                altExtentJS.put("portion", "part");
+                    JSONObject structuredExtent = structuredExtents.getJSONObject(i);
 
-                JSONObject structuredExtent = structuredExtents.getJSONObject(i);
-                if ( ! structuredExtent.getBoolean("exactMatch")) {
-                    altExtentJS.put("container_summary", altExtent);    
-                }
-
-                if ( ! structuredExtent.getString("unit").isEmpty()) {
-                    //TODO: implement score checking
-                    altExtentJS.put("extent_type", structuredExtent.getString("unit"));
-                    altExtentJS.put("number", structuredExtent.getString("unitValue"));
-                } else {
-                    altExtentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
-                    altExtentJS.put("number", structuredExtent.getString("unitValue"));
-                    String collectionIdentifier = record.getString("CollectionIdentifier");
-                    String archonID = record.getString("ID");
-                    String debugMessage = "Collection: " + collectionIdentifier + "has an alternative extent statement that didn't map cleanly\n"
-                                        + "Archon ID: " + archonID + "\n"
-                                        + "Structured Alt Extent:\n"
-                                        + structuredExtents.toString();
+                    if ( ! structuredExtent.getString("unit").isEmpty() && ! structuredExtent.getString("unitValue").isEmpty()) {
+                        altExtentJS.put("extent_type", structuredExtent.getString("unit"));
+                        altExtentJS.put("number", structuredExtent.getString("unitValue"));
+                        
+                        //case 2: it matches through "includes" matching
+                        if ( ! structuredExtent.getBoolean("exactMatch")) {
+                            altExtentJS.put("container_summary", structuredExtent.getString("extent")); //if we don't want to include the number, use key "unit"
+                            errors.add("there was a partial match for an alt extent unit using the 'includes' method");
+                        }
                     
-                    // aspaceCopyUtil.addErrorMessage(debugMessage);
+                    //case 3: the extent unit didn't match anything    
+                    } else if (structuredExtent.getString("unit").isEmpty()) {
+                        altExtentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
+                        altExtentJS.put("number", structuredExtent.getString("unitValue"));
+                        altExtentJS.put("container_summary", structuredExtent.getString("extent")); //if we don't want to include the number, use key "unit"
+                        errors.add("there was no match for an alt extent unit");
+
+                    //case 4: one of the alt extent statements couldn't be parsed into 'unit + text' format
+                    } else {
+                        altExtentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
+                        altExtentJS.put("number", "0");
+                        altExtentJS.put("container_summary", structuredExtent.getString("extent")); 
+                        errors.add("there was an alt extent statment that couldn't be parsed into 'number + unit' format: " + structuredExtent.getString("extent"));
+                    }
+                    allExtents.put(altExtentJS);
                 }
-                extentJA.put(altExtentJS);
+            }
+            if ( ! errors.isEmpty()){
+                for (String error : errors){
+                    String message = String.format("Alt Extent error: %s. Collection %s, Archon ID %s", error, collectionIdentifier, archonID);
+                    aspaceCopyUtil.addErrorMessage(message); 
+                }
             }
         }
 
-        json.put("extents", extentJA);
+        mainExtent.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ExtentUnitID")));
+        if (!record.getString("Extent").isEmpty()) {
+            mainExtent.put("number", record.getString("Extent"));
+        } else {
+            mainExtent.put("number", "0");
+        }
+
+        allExtents.put(mainExtent);
+
+        json.put("extents", allExtents);
     }
 
     /**
