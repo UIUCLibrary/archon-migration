@@ -1165,18 +1165,18 @@ public class ASpaceMapper {
         String cleanInput = inputExtent.toLowerCase().replace("_", " ");
         //all of the archon extents should have already been added to ASpace. Keeping this 
         //here for now in case we want to test
-        // ArrayList<String> allExtents = enumUtil.getAllArchonExtents();
+        ArrayList<String> allExtents = enumUtil.getAllArchonExtents();
 
-        // for (String aSpaceExtent : aSpaceExtents ) {
-        //     allExtents.add(aSpaceExtent);
-        // }
+        for (String aSpaceExtent : aSpaceExtents ) {
+            allExtents.add(aSpaceExtent);
+        }
 
         JSONObject match  = new JSONObject();
         String mapping = "";
         Boolean exactMatch = false;
 
         //this is fine, but we need to flag non-exact matches
-        for (String extent : aSpaceExtents) {
+        for (String extent : allExtents) {
             String cleanExtent = extent.toLowerCase().replace("_", " ");
 
             //just for debugging, know for sure what the inputs are
@@ -1188,7 +1188,7 @@ public class ASpaceMapper {
                 break;
             }
 
-            //this should catch most common pluralizations, e.g. one has s/es and the other doesn't
+            //this should catch most common pluralizations,
             else if (cleanInput.contains(cleanExtent) || cleanExtent.contains(cleanInput)) {
                 //prefer the longest match, e.g. don't match "microfilm_reels" to "reel" just because "reel" comes after "microfilm_reel"
                 mapping = mapping.length() < cleanExtent.length() ? extent : mapping;
