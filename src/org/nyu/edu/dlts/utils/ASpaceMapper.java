@@ -1296,7 +1296,7 @@ public class ASpaceMapper {
                     allExtents.put(altExtentJS);
                 }
             }
-            if ( ! errors.isEmpty())
+            if ( ! errors.isEmpty()){
                 for (String error : errors){
                     String message = String.format("Alt Extent error: %s. Collection %s, Archon ID %s", error, collectionIdentifier, archonID);
                     aspaceCopyUtil.addErrorMessage(message); 
