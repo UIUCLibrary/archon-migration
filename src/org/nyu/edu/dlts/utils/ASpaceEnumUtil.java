@@ -1334,7 +1334,6 @@ public class ASpaceEnumUtil {
      */
     public void addIdAndValueToEnumList(String id, String value) {
         enumListIDsToValues.put(id, value);
-        lookupListValuesToCodes.put(value, id);
     }
 
     /**
@@ -1349,23 +1348,6 @@ public class ASpaceEnumUtil {
             return enumListIDsToValues.get(key);
         } else {
             return defaultValue;
-        }
-    }
-
-    /**
-     * Takes an string value and returns the Archon ID from the enum list. If no match is found
-     * returns an empty string.
-     * 
-     *
-     * @param key
-     * @param defaultValue
-     * @return
-     */
-    public String getIDValueForEnumString(String key) {
-        if(lookupListValuesToCodes.containsKey(key)) {
-            return lookupListValuesToCodes.get(key);
-        } else {
-            return "";
         }
     }
 
