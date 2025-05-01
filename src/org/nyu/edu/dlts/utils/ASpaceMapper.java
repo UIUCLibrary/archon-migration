@@ -1280,7 +1280,7 @@ public class ASpaceMapper {
                         }
                     
                     //case 3: the extent unit didn't match anything    
-                    } else if (structuredExtent.getString("unit").isEmpty()) {
+                    } else if (structuredExtent.getString("unit").isEmpty() && ! structuredExtent.getString("unitValue").isEmpty()) {
                         altExtentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
                         altExtentJS.put("number", structuredExtent.getString("unitValue"));
                         altExtentJS.put("container_summary", structuredExtent.getString("extent")); //if we don't want to include the number, use key "unit"
@@ -1296,7 +1296,7 @@ public class ASpaceMapper {
                     allExtents.put(altExtentJS);
                 }
             }
-            if ( ! errors.isEmpty()){
+            if ( ! errors.isEmpty())
                 for (String error : errors){
                     String message = String.format("Alt Extent error: %s. Collection %s, Archon ID %s", error, collectionIdentifier, archonID);
                     aspaceCopyUtil.addErrorMessage(message); 
