@@ -1190,7 +1190,13 @@ public class ASpaceMapper {
         if(revisionHistory.isEmpty()) return;
 
         JSONObject revisionStatementJS = new JSONObject();
-        revisionStatementJS.put("date", "09099999");
+        String revisionDate = "Undated";
+        //find the normal dates (year only) from the revision statement, if any, and use the latest one as the revision date
+        HashMap<String, Integer> revisionDates = getNormalDate(revisionHistory);
+        if(!revisionDates.isEmpty()){
+            revisionDate = revisionDates.get("end").toString();
+        }
+        revisionStatementJS.put("date", revisionDate);
         revisionStatementJS.put("description", revisionHistory);
 
         JSONArray revisionStatementsJA = new JSONArray();
