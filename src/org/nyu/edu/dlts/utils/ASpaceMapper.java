@@ -852,6 +852,7 @@ public class ASpaceMapper {
             fileVersionJS.put("use_statement", "image-master");
             fileVersionJS.put("xlink_actuate_attribute", "none");
             fileVersionJS.put("xlink_show_attribute", "none");
+            fileVersionJS.put("publish", publishRecord);
 
             fileVersionsJA.put(fileVersionJS);
         } else if(record.has("Filename") && !record.getString("Filename").isEmpty()) {
@@ -864,6 +865,12 @@ public class ASpaceMapper {
             fileVersionJS.put("xlink_show_attribute", "none");
             fileVersionJS.put("file_format_name", record.get("FileTypeID"));
             fileVersionJS.put("file_size_bytes", NumberUtils.toInt((String) record.get("Bytes"), 0));
+            if(record.has("AccessLevel") && record.getInt("AccessLevel") == 0){
+                //if AccessLevel in archon is 0, then there is no access to the file
+                fileVersionJS.put("publish", false);
+            } else {
+                fileVersionJS.put("publish", publishRecord);
+            }
 
             fileVersionsJA.put(fileVersionJS);
         } else {
