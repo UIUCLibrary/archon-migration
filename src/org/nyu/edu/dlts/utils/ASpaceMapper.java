@@ -56,7 +56,7 @@ public class ASpaceMapper {
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
 
     //default date string for use when there is no other date to use for the collection record
-    private String defaultDateExpression = "Dummy Date";
+    private String defaultDateExpression = "Unidentified date";
     //default date type
     private String defaultDateLabel = "other";
 
