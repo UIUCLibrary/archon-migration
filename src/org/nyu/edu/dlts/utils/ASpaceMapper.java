@@ -849,7 +849,7 @@ public class ASpaceMapper {
             JSONObject fileVersionJS = new JSONObject();
 
             fileVersionJS.put("file_uri", record.getString("ContentURL"));
-            fileVersionJS.put("use_statement", "image-master");
+            //fileVersionJS.put("use_statement", "image-master");
             fileVersionJS.put("xlink_actuate_attribute", "none");
             fileVersionJS.put("xlink_show_attribute", "none");
 
@@ -859,7 +859,7 @@ public class ASpaceMapper {
 
             JSONObject fileVersionJS = new JSONObject();
             fileVersionJS.put("file_uri", digitalObjectBaseURI + filename);
-            fileVersionJS.put("use_statement", "image-master");
+            //fileVersionJS.put("use_statement", "image-master");
             fileVersionJS.put("xlink_actuate_attribute", "none");
             fileVersionJS.put("xlink_show_attribute", "none");
             fileVersionJS.put("file_format_name", record.get("FileTypeID"));
