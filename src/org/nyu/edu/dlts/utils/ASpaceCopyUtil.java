@@ -2556,7 +2556,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
                 topContainerURI = topContainerURIs.get(containerKey);
 
-                //if top container isn't found, try looking for 1 or 2 leading zeroes to remove from the indicator
+                //if top container isn't found, try looking for 1 or 2 leading zeroes to remove from the indicator (don't convert to int because an indicator could be 043A or something similiar)
                 if(topContainerURI == null && !topContainerURIs.isEmpty() && containerIndicator.charAt(0)=='0'){
                     String modifiedIndicator = "";
                     if(containerIndicator.charAt(1)=='0'){
@@ -2568,6 +2568,25 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     }
                     String modifiedContainerKey = containerType + " " + modifiedIndicator;
                     topContainerURI = topContainerURIs.get(modifiedContainerKey);
+                }
+
+                //try adding in leading zeroes if it resulted from splitting up a longer indicator string
+                if(topContainerURI == null && !topContainerURIs.isEmpty() && containerIndicators.size()>1){
+                    Boolean indicatorIsInteger = false;
+                    try {
+                        Integer indicatorInt = Integer.parseInt(containerIndicator);
+                        if(indicatorInt > 0 ) indicatorIsInteger = true;
+                    } catch (NumberFormatException e) {
+                        indicatorIsInteger = false;
+                    }
+                    if(indicatorIsInteger){
+                        String paddedContainerKey = containerType + " 0" + containerIndicator;
+                        topContainerURI = topContainerURIs.get(paddedContainerKey);
+                        if(topContainerURI == null){
+                            paddedContainerKey = containerType + " 00" + containerIndicator;
+                            topContainerURI = topContainerURIs.get(paddedContainerKey);
+                        }
+                    }
                 }
 
                 if (topContainerURI == null) {
