@@ -2218,19 +2218,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
             //check whether the container already has location info
             if(containerJS.has("container_locations")){
                 JSONArray existingLocationJA = containerJS.getJSONArray("container_locations");
-                JSONObject existingLocationJS = existingLocationJA.getJSONObject(0);
-                if(existingLocationJS.has("note")){
-                    String combinedExtentNote = existingLocationJS.getString("note");
-                    if(!extentNote.isEmpty()){
-                        combinedExtentNote += "; " + extentNote;
+                if(existingLocationJA.length()>0){
+                    JSONObject existingLocationJS = existingLocationJA.getJSONObject(0);
+                    if(existingLocationJS.has("note")){
+                        String combinedExtentNote = existingLocationJS.getString("note");
+                        if(!extentNote.isEmpty()){
+                            combinedExtentNote += "; " + extentNote;
+                        }
+                        locationJS.put("note", combinedExtentNote);
                     }
-                    locationJS.put("note", combinedExtentNote);
-                }
-                if(existingLocationJS.has("ref")){
-                    if(!existingLocationJS.getString("ref").equals(locationURI)){
-                        //prefer the existing location if there is nothing in the shelf field
-                        if(location.getString("Shelf").isEmpty()||location.getString("Shelf").equals("null")){
-                            locationJS.put("ref", existingLocationJS.getString("ref"));
+                    if(existingLocationJS.has("ref")){
+                        if(!existingLocationJS.getString("ref").equals(locationURI)){
+                            //prefer the existing location if there is nothing in the shelf field
+                            if(location.getString("Shelf").isEmpty()||location.getString("Shelf").equals("null")){
+                                locationJS.put("ref", existingLocationJS.getString("ref"));
+                            }
                         }
                     }
                 }
