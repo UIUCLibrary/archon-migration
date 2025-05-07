@@ -2181,7 +2181,11 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         if(location.has("Extent")) {
             extentString += location.getString("Extent") + " ";
-            extentString += enumUtil.getASpaceExtentType(location.getInt("ExtentUnitID"));
+            String extentNoteUnit = enumUtil.getASpaceExtentType(location.getInt("ExtentUnitID"), ASpaceEnumUtil.UNMAPPED);
+            if(!extentNoteUnit.equals(ASpaceEnumUtil.UNMAPPED)){
+                extentNoteUnit = extentNoteUnit.replace("_"," ");
+            }
+            extentString += extentNoteUnit;
         }
         extentNote = "Described as content " + location.getString("Content") + " with extent "+ extentString + " in Archon";
 
