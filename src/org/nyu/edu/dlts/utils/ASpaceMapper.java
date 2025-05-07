@@ -1118,7 +1118,7 @@ public class ASpaceMapper {
      
         JSONObject structuredExtent = new JSONObject();
 
-        String regex = "(^\\d+|\\d+\\.\\d+|a|an|a single|one|two|three|four|five|six|seven|eight|nine|ten)\\s([A-z\s]+)";
+        String regex = "(^\\.\\d+|\\d+|\\d+\\.\\d+|a|an|a single|one|two|three|four|five|six|seven|eight|nine|ten)\\s([A-z\s]+)";
 
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher  = pattern.matcher(extent);
@@ -1302,6 +1302,8 @@ public class ASpaceMapper {
                     aspaceCopyUtil.addErrorMessage(message); 
                 }
             }
+        } else {
+            mainExtent.put("portion", "whole");
         }
 
         mainExtent.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ExtentUnitID")));
