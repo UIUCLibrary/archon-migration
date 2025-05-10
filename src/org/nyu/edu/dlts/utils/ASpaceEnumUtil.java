@@ -247,6 +247,18 @@ public class ASpaceEnumUtil {
     }
 
     /**
+     * Map the name source specifying a default value for extent.
+     * If nothing is matched using the archon extent id, use the default provided
+     *
+     * @param arID the id of the archon extent type
+     * @return
+     */
+    public String getASpaceExtentType(int arID, String defaultExtentType) {
+        String key = "extent_type_" + arID;
+        return getEnumValueForID(key, defaultExtentType);
+    }
+
+    /**
      * Map the aspace resource type
      *
      * @param arID
