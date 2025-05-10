@@ -601,18 +601,39 @@ public class ASpaceEnumUtil {
      * @return
      */
     public String getASpaceLanguageCode(String arId) {
-        String defaultLanguageCode = "eng";
-        if(arId.isEmpty()) return defaultLanguageCode;
+        if(arId.isEmpty()) return "und";
 
         if(languagesJS.has(arId)) {
             try {
                 JSONObject languageJS = languagesJS.getJSONObject(arId);
-                return languageJS.getString("LanguageShort");
+                return languageJS.getString("ASpaceCode");
             } catch (JSONException e) {
                 return "und";
             }
         } else {
-            return defaultLanguageCode;
+            return "und";
+        }
+    }
+
+    /**
+     * Method to return the ASpace language code when given the Archon 3 letter code.
+     * For most language codes this is the same code for each, but not for all.
+     *
+     * @param languageShort
+     * @return
+     */
+    public String getASpaceLanguageCodeForArchonCode(String languageShort) {
+        if(languageShort.isEmpty()) return "und";
+
+        if(textLanguagesJS.has(languageShort)) {
+            try {
+                JSONObject languageJS = textLanguagesJS.getJSONObject(languageShort);
+                return languageJS.getString("ASpaceCode");
+            } catch (JSONException e) {
+                return "und";
+            }
+        } else {
+            return "und";
         }
     }
 
@@ -631,27 +652,6 @@ public class ASpaceEnumUtil {
             return "Zyyy";
         }
 
-    }
-
-    /**
-     * Method to return the long version of the language name
-     *
-     * @param langaugeShort
-     * @return
-     */
-    public String getLanguageLong(String languageShort) {
-        if(languageShort.isEmpty())  return "undefined";
-
-        if(textLanguagesJS.has(languageShort)) {
-            try {
-                JSONObject languageJS = textLanguagesJS.getJSONObject(languageShort);
-                return languageJS.getString("LanguageLong");
-            } catch (JSONException e) {
-                return "undedfined";
-            }
-        } else {
-            return "undefined";
-        }
     }
 
     /**

@@ -1600,10 +1600,11 @@ public class ASpaceMapper {
             for (int i = 0; i < languageIds.length(); i++) {
                 String languageCode = languageIds.getString(i);
                 String languageLong = enumUtil.getLanguageLong(languageCode);
+                String aspaceLangCode = enumUtil.getASpaceLanguageCodeForArchonCode(languageCode);
                 String separator = (i > 0) ? ", " :  "";
 
                 //should produce "<language langcode='eng'>English</language>" for English, as an example
-                langNoteContent += separator + "<language langcode='" + languageCode +"'>" + languageLong + "</language>";
+                langNoteContent += separator + "<language langcode='" + aspaceLangCode +"'>" + languageLong + "</language>";
             }
             addSinglePartNote(notesJA, "langmaterial", "Language of Materials", langNoteContent);
         }

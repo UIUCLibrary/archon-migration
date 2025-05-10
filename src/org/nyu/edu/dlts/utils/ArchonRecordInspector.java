@@ -466,11 +466,12 @@ public class ArchonRecordInspector {
         System.out.println("Classification hashmap size: " + testClassificationIdentifiers.size() + "\n\n");
         System.out.println("Classification parents hashmap size: " + testClassificationParents.size() + "\n\n");
 
-        String archonIDtoTest = "7394";//"8753";
+        
+        String archonIDtoTest = "8753";//"7394";
         loadCollectionByArchonID(archonIDtoTest);
         testConvertCollection(archonIDtoTest, mapper);
-         
-        String archonCreatorIDtoTest = "3473";
+
+/*         String archonCreatorIDtoTest = "3473";
         loadCreatorByArchonID(archonCreatorIDtoTest);
         testConvertCreator(archonCreatorIDtoTest, mapper);
         
@@ -481,7 +482,7 @@ public class ArchonRecordInspector {
         testConvertAccession(archonAccesionIDtoTest, mapper);
 
         String archonClassificationIDtoTest = "3340";
-        testConvertClassification(archonClassificationIDtoTest, mapper);
+        testConvertClassification(archonClassificationIDtoTest, mapper); */
 
     }
 }
