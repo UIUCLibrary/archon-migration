@@ -2848,6 +2848,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             // a dash probably indicates a range
             // if the items on either side are numbers use these numbers and if so add these and all in between
             if (str.contains("-")) {
+                Boolean convertOpenRange = false;
                 String[] bounds = str.split("-");
                 if (bounds.length == 2) {
                     try {
@@ -2860,6 +2861,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     } catch (NumberFormatException e) {
                         containerIndicators.add(str.trim());
                     }
+                } else if(convertOpenRange && bounds.length == 1 && str.endsWith("-")){
+                    containerIndicators.add(bounds[0].trim());
+                } else {
+                    containerIndicators.add(str.trim());
                 }
             } else {
                 containerIndicators.add(str.trim());
@@ -3648,42 +3653,22 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
 
-        String identiferPrefix = null;
-        if (UIUCPropertiesReader.getUIUCProperties() != null) {
-            identiferPrefix = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.prefix");
-        }
-        aspaceCopyUtil.setIdentifierPrefix(identiferPrefix);
-
-        String archonInstance = "";
-        if (UIUCPropertiesReader.getUIUCProperties() != null) {
-            archonInstance = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.prefix");
-        }
-
-        ArchonIDListReader archonIDListReader = new ArchonIDListReader(archonInstance);
-        ArrayList<String> archonIDList = archonIDListReader.getRecordSubset();
-        if(archonIDList != null && !archonIDList.isEmpty()){
-            aspaceCopyUtil.setCollArchonIDToCopyList(archonIDList);
-        }else {
-            //limit collections for testing by archon collection ID
-            ArrayList<String> collArchonIDsList = new ArrayList<String>();
-            collArchonIDsList.add("8434");
-            collArchonIDsList.add("8457");
-            collArchonIDsList.add("8020");
-            collArchonIDsList.add("8734");
-            aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
-        }
-
         //limit collections for testing
         ArrayList<String> collectionsIDsList = new ArrayList<String>();
         collectionsIDsList.add("54");
         //collectionsIDsList.add("84");
         //aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
 
+        //limit collections for testing by archon collection ID
+        ArrayList<String> collArchonIDsList = new ArrayList<String>();
+        collArchonIDsList.add("7226");
+        collArchonIDsList.add("8302");
+        collArchonIDsList.add("7853");
+        collArchonIDsList.add("8734");
+        aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
+        
         archonClient.setDebugMode(false);
-        String testString = archonIDListReader.getSuffixForTesting();
-        if(testString != null && !testString.isEmpty()){
-            aspaceCopyUtil.mapper.setAppendTestIdentifier(testString);
-        }
+        aspaceCopyUtil.mapper.setAppendTestIdentifier("0502test16");
 
         try {
             /*
@@ -3692,22 +3677,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            aspaceCopyUtil.copyRepositoryRecords();
+            /**aspaceCopyUtil.copyRepositoryRecords();
             aspaceCopyUtil.mapRepositoryGroups();
-            /**aspaceCopyUtil.copyUserRecords();
+            aspaceCopyUtil.copyUserRecords();
             aspaceCopyUtil.copySubjectRecords();
             aspaceCopyUtil.copyCreatorRecords();
-            aspaceCopyUtil.copyClassificationRecords();
+            aspaceCopyUtil.copyClassificationRecords();*/
             aspaceCopyUtil.findAccessionRecordRepositories();
             aspaceCopyUtil.copyAccessionRecords();
-            aspaceCopyUtil.copyDigitalObjectRecords();
+            //aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            aspaceCopyUtil.deleteUnlinkedClassifications();
-            */
+            //aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }
