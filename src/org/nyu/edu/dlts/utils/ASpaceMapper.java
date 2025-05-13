@@ -9,8 +9,6 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -1394,8 +1392,19 @@ public class ASpaceMapper {
 
         addMultipartNote(notesJA, "prefercite", "Preferred Citation", record.getString("PreferredCitation"));
 
-        String otherNote = cleanNote(record.getString("OtherNote"), "OtherNote");
-        addMultipartNote(notesJA, "odd", "Other Descriptive Information", otherNote);
+        if(!record.getString("OtherNote").isEmpty()){
+            String otherNote = cleanNote(record.getString("OtherNote"), "OtherNote");
+            if(otherNote.isEmpty()){
+                String message = "Other note '" + record.getString("OtherNote") + "' removed from record with Archon ID " + record.getString("ID") + "\n";
+                if(aspaceCopyUtil != null){
+                    aspaceCopyUtil.addErrorMessage(message);
+                } else {
+                    System.out.println(message);
+                }
+            } else {
+                addMultipartNote(notesJA, "odd", "Other Descriptive Information", otherNote);
+            }
+        }
 
         addMultipartNote(notesJA, "processinfo", "Processing Information", record.getString("ProcessingInfo"));
 
