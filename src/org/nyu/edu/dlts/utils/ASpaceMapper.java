@@ -1539,6 +1539,19 @@ public class ASpaceMapper {
     }
 
     /**
+     * Method to check a note text against patterns of data not to copy to ASpace
+     * Need to customize by institution
+     *
+     * @param existingNote
+     * @param noteType
+     */
+    private String cleanNote(String existingNote, String noteType){
+        String cleanNote ="";
+
+        return cleanNote;
+    }
+
+    /**
      * Method to add the AT internal database ID as an external ID for the ASpace object
      *
      * @param record
