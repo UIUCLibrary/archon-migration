@@ -9,6 +9,8 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -1392,7 +1394,8 @@ public class ASpaceMapper {
 
         addMultipartNote(notesJA, "prefercite", "Preferred Citation", record.getString("PreferredCitation"));
 
-        addMultipartNote(notesJA, "odd", "Other Descriptive Information", record.getString("OtherNote"));
+        String otherNote = cleanNote(record.getString("OtherNote"), "OtherNote");
+        addMultipartNote(notesJA, "odd", "Other Descriptive Information", otherNote);
 
         addMultipartNote(notesJA, "processinfo", "Processing Information", record.getString("ProcessingInfo"));
 
@@ -1546,8 +1549,14 @@ public class ASpaceMapper {
      * @param noteType
      */
     private String cleanNote(String existingNote, String noteType){
-        String cleanNote ="";
-
+        String cleanNote = existingNote;
+        String regex = "";
+        if(noteType.equals("OtherNote")){
+            regex = "(\\d+ )(Pages|Page|pages|page)";
+        }
+        if(!regex.isEmpty() && existingNote.matches(regex)){
+            cleanNote = "";
+        }
         return cleanNote;
     }
 
