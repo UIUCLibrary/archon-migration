@@ -1397,7 +1397,7 @@ public class ASpaceMapper {
             if(otherNote.isEmpty()){
                 String message = "Other note '" + record.getString("OtherNote") + "' removed from record with Archon ID " + record.getString("ID") + "\n";
                 if(aspaceCopyUtil != null){
-                    aspaceCopyUtil.addErrorMessage(message);
+                    aspaceCopyUtil.addChangeMessage(message);
                 } else {
                     System.out.println(message);
                 }
