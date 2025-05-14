@@ -1392,21 +1392,11 @@ public class ASpaceMapper {
 
         addMultipartNote(notesJA, "prefercite", "Preferred Citation", record.getString("PreferredCitation"));
 
-        if(!record.getString("OtherNote").isEmpty()){
-            String otherNote = cleanNote(record.getString("OtherNote"), "OtherNote");
-            if(otherNote.isEmpty()){
-                String message = "Other note '" + record.getString("OtherNote") + "' removed from record with Archon ID " + record.getString("ID") + "\n";
-                if(aspaceCopyUtil != null){
-                    aspaceCopyUtil.addChangeMessage(message);
-                } else {
-                    System.out.println(message);
-                }
-            } else {
-                addMultipartNote(notesJA, "odd", "Other Descriptive Information", otherNote);
-            }
-        }
+        String otherNote = cleanNote(record, "OtherNote");
+        addMultipartNote(notesJA, "odd", "Other Descriptive Information", otherNote);
 
-        addMultipartNote(notesJA, "processinfo", "Processing Information", record.getString("ProcessingInfo"));
+        String processingInfo = cleanNote(record, "ProcessingInfo");
+        addMultipartNote(notesJA, "processinfo", "Processing Information", processingInfo);
 
         noteContent = record.getString("BiogHist") + "\n\nNote written by " + record.get("BiogHistAuthor");
         if(!noteContent.trim().equals("Note written by")) {
@@ -1554,17 +1544,37 @@ public class ASpaceMapper {
      * Method to check a note text against patterns of data not to copy to ASpace
      * Need to customize by institution
      *
-     * @param existingNote
+     * @param record
      * @param noteType
+     * @throws JSONException 
      */
-    private String cleanNote(String existingNote, String noteType){
-        String cleanNote = existingNote;
+    private String cleanNote(JSONObject record, String noteType) throws JSONException{
+        String existingNote = "";
+        String cleanNote = "";
+        if(record.has(noteType)){
+            existingNote = record.getString(noteType);
+        }
         String regex = "";
+        String message = "";
+
         if(noteType.equals("OtherNote")){
             regex = "(\\d+ )(Pages|Page|pages|page)";
+            message = "Other note";
+        }
+        if(noteType.equals("ProcessingInfo")){
+            regex = "uiuc";
+            message = "Processing info";
         }
         if(!regex.isEmpty() && existingNote.matches(regex)){
             cleanNote = "";
+            message += " '" + existingNote + "' removed from record with Archon ID " + record.getString("ID");
+            if(aspaceCopyUtil != null){
+                aspaceCopyUtil.addChangeMessage(message);
+            } else {
+                System.out.println(message);
+            }
+        } else {
+            cleanNote = existingNote;
         }
         return cleanNote;
     }
