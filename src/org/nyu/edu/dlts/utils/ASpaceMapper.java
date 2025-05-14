@@ -1562,7 +1562,7 @@ public class ASpaceMapper {
             message = "Other note";
         }
         if(noteType.equals("ProcessingInfo")){
-            regex = "uiuc";
+            regex = "\\[url=https:\\/\\/wiki\\.cites\\.uiuc\\.edu\\/wiki\\/display\\/librare\\/Home\\]https:\\/\\/wiki\\.cites\\.uiuc\\.edu\\/wiki\\/display\\/librare\\/Home\\[\\/url\\]";
             message = "Processing info";
         }
         if(!regex.isEmpty() && existingNote.matches(regex)){
