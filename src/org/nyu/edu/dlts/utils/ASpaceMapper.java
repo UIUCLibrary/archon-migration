@@ -572,17 +572,20 @@ public class ASpaceMapper {
     public JSONObject convertClassification(JSONObject record) throws Exception {
         // Main json object
         JSONObject json = new JSONObject();
+        String classificationIdentifier = record.getString("ClassificationIdentifier");
 
         // set the model type
         if(record.getString("ParentID").equals("0")) {
             json.put("jsonmodel_type", "classification");
+            //add identifier prefix for the parent classification
+            classificationIdentifier = identifierPrefix + " " + classificationIdentifier;
         } else {
             json.put("jsonmodel_type", "classification_term");
             /*TODO 10/8/2015 Below code causes bug in ASpace v1.4.0*/
             //json.put("position", record.getInt("Position"));
         }
 
-        json.put("identifier", record.get("ClassificationIdentifier"));
+        json.put("identifier", classificationIdentifier);
         json.put("title", record.get("Title"));
         json.put("description", record.get("Description"));
 
