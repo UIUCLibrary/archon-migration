@@ -1504,7 +1504,13 @@ public class ASpaceMapper {
         if(revisionHistory.isEmpty()) return;
 
         JSONObject revisionStatementJS = new JSONObject();
-        revisionStatementJS.put("date", "09099999");
+        String revisionDate = "Undated";
+        //find the normal dates (year only) from the revision statement, if any, and use the latest one as the revision date
+        HashMap<String, Integer> revisionDates = getNormalDate(revisionHistory);
+        if(!revisionDates.isEmpty()){
+            revisionDate = revisionDates.get("end").toString();
+        }
+        revisionStatementJS.put("date", revisionDate);
         revisionStatementJS.put("description", revisionHistory);
 
         JSONArray revisionStatementsJA = new JSONArray();
@@ -2281,6 +2287,100 @@ public class ASpaceMapper {
         } catch (Exception e) {
             return "";
         }
+    }
+    
+    /**
+     * Method to return the normal date (start and end year) from a date string
+     * 
+     * Example formats accepted:
+     * 1890, 1899, and undated
+     * circa 1960s and 1970s
+     * 1884-98 (interpreted as 1884-1898)
+     * 1903-5 (interpreted as 1903-1905)
+     * May 9, 1923
+     * 
+     * Does not work with dates formatted as:
+     * 8/4/89
+     * 12-03-37
+     * 
+     * Returns an empty HashMap if no years are found.
+     * 
+     * @param dateString
+     * @return      
+     */
+    private HashMap<String,Integer> getNormalDate(String dateString) {
+        HashMap<String, Integer> normalDate = new HashMap<>();
+
+        List<Integer> years = new ArrayList<>();
+        Integer lastFullYear = null;
+
+        // Find all full years and partial year ranges
+        Pattern pattern = Pattern.compile("\\b(\\d{4})(?:-(\\d{1,2}))?\\b");
+        Matcher matcher = pattern.matcher(dateString);
+
+        while (matcher.find()) {
+            int fullYear = Integer.parseInt(matcher.group(1));
+            lastFullYear = fullYear;
+            years.add(fullYear);
+            String partialYear = matcher.group(2);
+            if (partialYear != null) {
+                int endYear;
+                if (partialYear.length() == 1) {
+                    endYear = (fullYear / 10) * 10 + Integer.parseInt(partialYear);
+                    if (endYear < fullYear) {
+                        endYear += 10;
+                    }
+                } else {
+                    endYear = (fullYear / 100) * 100 + Integer.parseInt(partialYear);
+                    if (endYear < fullYear) {
+                        endYear += 100;
+                    }
+                }
+                years.add(endYear);
+            }
+        }
+
+        // Look for decades
+        Pattern decadePattern = Pattern.compile("\\b(\\d{4}'?s|\\d{2}'?s)\\b");
+        Matcher decadeMatcher = decadePattern.matcher(dateString);
+
+        while (decadeMatcher.find()) {
+            String match = decadeMatcher.group().replace("'", "");
+            int yearStart;
+            if (match.length() == 5) {
+                yearStart = Integer.parseInt(match.substring(0, 4));
+                lastFullYear = yearStart;
+            } else {
+                if (lastFullYear != null) {
+                    int century = (lastFullYear / 100) * 100;
+                    yearStart = century + Integer.parseInt(match.substring(0, 2));
+                    if (yearStart < lastFullYear) {
+                        yearStart += 100;
+                    }
+                } else {
+                    Boolean assume20thCentury = false;
+                    if(assume20thCentury){
+                        yearStart = Integer.parseInt("19" + match.substring(0, 2));
+                    } else {
+                        yearStart = 0;
+                    }
+                }
+            }
+            if (yearStart != 0){
+                int yearEnd = yearStart + 9;
+                years.add(yearStart);
+                years.add(yearEnd);
+            }
+        }
+
+        if (!years.isEmpty()) {
+            int minYear = Collections.min(years);
+            int maxYear = Collections.max(years);
+            normalDate.put("start",minYear);
+            normalDate.put("end",maxYear);
+        }
+
+        return normalDate;
     }
 
     /**
