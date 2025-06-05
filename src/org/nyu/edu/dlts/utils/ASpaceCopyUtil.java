@@ -4,6 +4,7 @@ import org.apache.commons.httpclient.NameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.nyu.edu.dlts.utils.uiuc.UIUCPropertiesReader;
 
 import javax.swing.*;
 import java.io.File;
@@ -171,6 +172,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // the default repository id
     private String defaultRepositoryId;
 
+    // variable to set the default instance type
+    // todo: set using the GUI
+    private String defaultInstanceType = "mixed_materials";
+
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
 
@@ -226,6 +231,17 @@ public class ASpaceCopyUtil implements  PrintConsole {
             baseURI = baseURI + "/";
         }
         mapper.setDigitalObjectBaseURI(baseURI);
+    }
+
+    
+    /**
+     * Method to set the default instance type
+     *
+     * @param instanceType
+     */
+    public void setDefaultInstanceType(String instanceType) {
+        //todo: check that the string is a valid instance type for aspace
+        defaultInstanceType = instanceType;
     }
 
     /**
@@ -1829,7 +1845,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
                 // add an instance that holds the location information
                 if(collection.has("Locations")) {
-                    addLocationInstances(resourceJS, collection.getJSONArray("Locations"), "text",
+                    addLocationInstances(resourceJS, collection.getJSONArray("Locations"), defaultInstanceType,
                             topContainerURIs, repoURI);
                 }
 
@@ -2076,7 +2092,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // create a json object for the instance
         JSONObject json = new JSONObject();
 
-        json.put("instance_type", "text");
+        json.put("instance_type", defaultInstanceType);
 
         // json object for the sub container
         JSONObject containerJS = new JSONObject();
@@ -3287,14 +3303,40 @@ public class ASpaceCopyUtil implements  PrintConsole {
     public static void main(String[] args) throws JSONException {
         //String host = "http://archives-dev.library.illinois.edu/archondev/tracer";
         String host = "http://localhost/~nathan/archon";
-        ArchonClient archonClient = new ArchonClient(host, "admin", "admin");
+        String username = "admin";
+        String password = "admin";
+        if (UIUCPropertiesReader.getUIUCProperties() != null) {
+            host = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.source");
+            username = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.user");
+            password = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.password");
+        }
+        
+        ArchonClient archonClient = new ArchonClient(host, username, password);
 
         archonClient.getSession();
 
-        ASpaceCopyUtil aspaceCopyUtil  = new ASpaceCopyUtil(archonClient, "http://54.227.35.51:8089", "admin", "admin");
+        String aspaceHost = "http://54.227.35.51:8089";
+        String aspaceAdminUser = "admin";
+        String aspacePassword = "admin";
+
+        if (UIUCPropertiesReader.getUIUCProperties() != null) {
+            aspaceHost = UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.host");
+            aspaceAdminUser = UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.admin");
+            aspacePassword = UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.password");
+        }
+
+        ASpaceCopyUtil aspaceCopyUtil  = new ASpaceCopyUtil(archonClient, aspaceHost, aspaceAdminUser, aspacePassword);
         aspaceCopyUtil.setSimulateRESTCalls(false);
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
+
+        //limit collections for testing
+        ArrayList<String> collectionsIDsList = new ArrayList<String>();
+        //collectionsIDsList.add("9");
+        collectionsIDsList.add("59");
+        aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
+        
+        //archonClient.setDebugMode(false);
 
         try {
             /*
@@ -3303,21 +3345,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            aspaceCopyUtil.copyRepositoryRecords();
-            aspaceCopyUtil.mapRepositoryGroups();
-            aspaceCopyUtil.copyUserRecords();
-            aspaceCopyUtil.copySubjectRecords();
-            aspaceCopyUtil.copyCreatorRecords();
-            aspaceCopyUtil.copyClassificationRecords();
-            aspaceCopyUtil.findAccessionRecordRepositories();
-            aspaceCopyUtil.copyAccessionRecords();
-            aspaceCopyUtil.copyDigitalObjectRecords();
+            //aspaceCopyUtil.copyRepositoryRecords();
+            //aspaceCopyUtil.mapRepositoryGroups();
+            //aspaceCopyUtil.copyUserRecords();
+            //aspaceCopyUtil.copySubjectRecords();
+            //aspaceCopyUtil.copyCreatorRecords();
+            //aspaceCopyUtil.copyClassificationRecords();
+            //aspaceCopyUtil.findAccessionRecordRepositories();
+            //aspaceCopyUtil.copyAccessionRecords();
+            //aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
-            aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
+            //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            aspaceCopyUtil.deleteUnlinkedClassifications();
+            ///aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }
