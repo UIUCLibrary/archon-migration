@@ -1580,7 +1580,7 @@ public class ASpaceMapper {
         if(noteContent.trim().isEmpty() || noteType.isEmpty()) return;
 
         // these note types don't exist in ASpace
-        if (noteType.equals("unitid") || noteType.equals("origination") || noteType.equals("note")) noteType = "odd";
+        if (noteType.equals("unitid") || noteType.equals("origination") || noteType.equals("note") || noteType.equals("null")) noteType = "odd";
 
         // these note types should be single part
         if (noteType.equals("physfacet") || noteType.equals("physdesc") || noteType.equals("langmaterial") ||
