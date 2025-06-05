@@ -1026,7 +1026,7 @@ public class ASpaceMapper {
         json.put("finding_aid_author", record.get("FindingAidAuthor"));
 
         Integer descriptiveRulesID = record.getInt("DescriptiveRulesID");
-        if(descriptiveRulesID != null) {
+        if(descriptiveRulesID != null && descriptiveRulesID != 0) {
             json.put("finding_aid_description_rules", enumUtil.getASpaceFindingAidDescriptionRule(descriptiveRulesID));
         }
 
