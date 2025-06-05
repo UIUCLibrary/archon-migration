@@ -561,7 +561,9 @@ public class ASpaceMapper {
 
         json.put("identifier", record.get("ClassificationIdentifier"));
         json.put("title", record.get("Title"));
-        json.put("description", record.get("Description"));
+        if(record.has("Description") && !record.isNull("Description")){
+            json.put("description", record.get("Description"));
+        }
 
         return json;
     }
