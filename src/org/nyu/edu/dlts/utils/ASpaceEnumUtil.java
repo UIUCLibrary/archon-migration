@@ -227,6 +227,18 @@ public class ASpaceEnumUtil {
     }
 
     /**
+     * Map the name source specifying a default value for extent.
+     * If nothing is matched using the archon extent id, use the default provided
+     *
+     * @param arID the id of the archon extent type
+     * @return
+     */
+    public String getASpaceExtentType(int arID, String defaultExtentType) {
+        String key = "extent_type_" + arID;
+        return getEnumValueForID(key, defaultExtentType);
+    }
+
+    /**
      * Map the aspace resource type
      *
      * @param arID
@@ -364,6 +376,26 @@ public class ASpaceEnumUtil {
         } else {
             return UNMAPPED;
         }
+    }
+
+    public String[] getAllASpaceExtentTypes() {
+        return ASpaceExtentTypes;
+    }
+
+    /**
+     * Get all of the extent types stored from Archon and retrn as an ArrayList
+     * @return
+     */
+    public ArrayList<String> getAllArchonExtents() {
+
+       ArrayList<String> archonExtentStrings = new ArrayList<>();
+        for (String key : enumListIDsToValues.keySet()) {
+            if (key.startsWith("extent_type_"))
+            archonExtentStrings.add(enumListIDsToValues.get(key));
+        }
+
+        return archonExtentStrings;
+
     }
 
     /**

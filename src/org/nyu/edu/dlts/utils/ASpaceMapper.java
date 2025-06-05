@@ -1,6 +1,5 @@
 package org.nyu.edu.dlts.utils;
 
-import org.apache.commons.lang.WordUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -9,6 +8,8 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,6 +35,8 @@ public class ASpaceMapper {
     private HashSet<String> accessionIDs = new HashSet<String>();
     private HashSet<String> resourceIDs = new HashSet<String>();
     private HashSet<String> eadIDs = new HashSet<String>();
+
+    private final String[] aSpaceExtents = enumUtil.getAllASpaceExtentTypes();
 
     // variable to keep track of filenames and their ids to make sure we have unique names
     private HashSet<String> digitalObjectFilenames = new HashSet<String>();
@@ -1129,40 +1132,268 @@ public class ASpaceMapper {
     }
 
     /**
+     * Takes a natural language alternative extent statement that may 
+     * containt many individual extent statments seperated by an "and"
+     * a "," or a "." and splits them into individual statements
+     * 
+     * @param alternativeExtent string containing list of extent statements
+     * @return an array of extent statements
+     */
+    public String[] splitAlternativeExtent(String alternativeExtent)
+    {
+        alternativeExtent = alternativeExtent.replaceAll("^and ", "");
+        String regex = "\\s?and\\s|\\.\\s|,\\s";
+        return alternativeExtent.split(regex);
+
+    }
+
+    /**
+     * Takes a written value and returns the corresponding number as a string
+     * Examples: 
+     *  input: an => output: 1
+     *  input: seven => output: 7
+     *  input: a single => output: 1
+     * @param writtenValue
+     * @return
+     */
+    public String getNumber(String writtenValue) {
+        HashMap<String, String> numberTranslator = new HashMap<String, String>();
+        numberTranslator.put("a", "1");
+        numberTranslator.put("an", "1");
+        numberTranslator.put("a single", "1");
+        numberTranslator.put("one", "1");
+        numberTranslator.put("two", "2");
+        numberTranslator.put("three", "3");
+        numberTranslator.put("four", "4");
+        numberTranslator.put("five", "5");
+        numberTranslator.put("six", "6");
+        numberTranslator.put("seven", "7");
+        numberTranslator.put("eight", "8");
+        numberTranslator.put("nine", "9");
+        numberTranslator.put("ten", "10");
+
+        if (numberTranslator.containsKey(writtenValue)) {
+            return numberTranslator.get(writtenValue);
+        } else {
+            return "";
+        }
+        
+    }
+
+    /**
+     * This takes a natural langauge extent statement that is expected to have
+     * a single unit expressed a digits, decimal number, indefinate article, or 
+     * written number followed by a single unpunctuated string which is the unit. 
+     * If matching fails, error key is set to true and the failing string is
+     * added
+     * 
+     * @param extent a natural language extent statement 
+     * @return parsed extent as JSONObject with keys for unit, value, and error
+     * @throws JSONException
+     */
+    public JSONObject parseExtentStatement(String extent) throws JSONException
+    {
+     
+        JSONObject structuredExtent = new JSONObject();
+
+        String regex = "(^\\.\\d+|\\d+|\\d+\\.\\d+|a|an|a single|one|two|three|four|five|six|seven|eight|nine|ten)\\s([A-z\s]+)";
+
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher  = pattern.matcher(extent);
+        String unitValue;
+        JSONObject matchJsonObject;
+        String unit;
+        Boolean exactMatch = false;
+        Boolean cantParsePart = false;
+
+
+        //if there is a match, map the components 
+        if (matcher.find()) {
+            //use the digit form of the unit value (e.g., convert a/an/one to digits)
+            unitValue = getNumber(matcher.group(1)).isEmpty() ? matcher.group(1) : getNumber(matcher.group(1)) ;
+            
+            //get the closest matching unit and indicate if not an exact match
+            matchJsonObject = mapExtentType(matcher.group(2));
+            unit = matchJsonObject.getString("mapping");
+            exactMatch = matchJsonObject.getBoolean("exactMatch");
+            
+        } else {
+            unitValue = "";
+            unit = "";
+            cantParsePart = true;
+        }
+
+        structuredExtent.put("unit", unit);
+        structuredExtent.put("unitValue", unitValue);
+        structuredExtent.put("exactMatch", exactMatch);
+        structuredExtent.put("extent", extent);
+        structuredExtent.put("cantParse", cantParsePart);
+
+        return structuredExtent;
+    }
+
+    /**
+     * This takes a natural language string and tries to find a good 
+     * match among the existing extent types. It returns a JSONObject
+     * with the best match and a score to indicate how good of a match
+     *  
+     * @param inputExtent a natural langugae expression of extent type
+     * @return
+     * @throws JSONException 
+     */
+    public JSONObject mapExtentType(String inputExtent) throws JSONException {
+        String cleanInput = inputExtent.toLowerCase().replace("_", " ");
+        //all of the archon extents should have already been added to ASpace. Keeping this 
+        //here for now in case we want to test
+        ArrayList<String> allExtents = enumUtil.getAllArchonExtents();
+
+        for (String aSpaceExtent : aSpaceExtents ) {
+            allExtents.add(aSpaceExtent);
+        }
+
+        JSONObject match  = new JSONObject();
+        String mapping = "";
+        Boolean exactMatch = false;
+
+        //this is fine, but we need to flag non-exact matches
+        for (String extent : allExtents) {
+            String cleanExtent = extent.toLowerCase().replace("_", " ");
+
+            //just for debugging, know for sure what the inputs are
+            match.put("clean_input", cleanInput);
+
+            if (cleanInput.equals(cleanExtent)){
+                mapping = extent;
+                exactMatch = true;
+                break;
+            }
+
+            //this should catch most common pluralizations,
+            else if (cleanInput.contains(cleanExtent) || cleanExtent.contains(cleanInput)) {
+                //prefer the longest match, e.g. don't match "microfilm_reels" to "reel" just because "reel" comes after "microfilm_reel"
+                mapping = mapping.length() < cleanExtent.length() ? extent : mapping;
+            }
+
+        }
+
+        match.put("exactMatch", exactMatch);
+        match.put("mapping", mapping);
+        return match;
+
+    }
+
+    public JSONObject annotateParsedAltExtents(String alternativeExtent) throws JSONException {
+
+        Boolean cantParseAny = true;
+        JSONArray processedExtents = new JSONArray();
+        JSONObject altExtentJsonObject = new JSONObject();
+        
+        //get an array of all the extents listed in the alternative extent statement
+        String[] extents = splitAlternativeExtent(alternativeExtent);
+
+
+        //parse each of the extent statements into a structure extent JSONObject 
+        for (String extent : extents) {
+            JSONObject parsedExtent = parseExtentStatement(extent);
+            processedExtents.put(parsedExtent);
+
+            //update flag if the extent statement will parse
+            if ( ! parsedExtent.getBoolean("cantParse") ) {
+                cantParseAny = false;
+            }
+            
+        }
+
+        altExtentJsonObject.put("processedExtents", processedExtents);
+        altExtentJsonObject.put("cantParseAny", cantParseAny);
+
+
+        return altExtentJsonObject;
+    }
+
+    /**
      * Method to add extent information
      *
      * @param record
      * @param json
      * @throws Exception
      */
-    private void addResourceExtent(JSONObject record, JSONObject json) throws Exception {
-        JSONArray extentJA = new JSONArray();
-        JSONObject extentJS = new JSONObject();
-
-        extentJS.put("portion", "whole");
-        extentJS.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ExtentUnitID")));
-
-        if (!record.getString("Extent").isEmpty()) {
-            extentJS.put("number", record.getString("Extent"));
-        } else {
-            extentJS.put("number", "0");
-        }
-
-        extentJA.put(extentJS);
-
-        // add the alternative extent statement
+    public void addResourceExtent(JSONObject record, JSONObject json) throws Exception {
+        JSONArray allExtents = new JSONArray();
+        JSONObject mainExtent = new JSONObject();
+        JSONObject parsedAltExtent = new JSONObject();
+        
+        String collectionIdentifier = record.getString("CollectionIdentifier");
+        String archonID = record.getString("ID");
         String altExtent = record.getString("AltExtentStatement");
-        if(!altExtent.isEmpty()) {
-            extentJS = new JSONObject();
 
-            extentJS.put("portion", "whole");
-            extentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
-            extentJS.put("number", altExtent);
+        if( ! altExtent.isEmpty()) {
+            parsedAltExtent = annotateParsedAltExtents(altExtent);
+            JSONArray structuredExtents = parsedAltExtent.getJSONArray("processedExtents");
 
-            extentJA.put(extentJS);
+            ArrayList<String> errors = new ArrayList<>();
+
+            //case 1: couldn't parse the alt extent, so add it as a container summary to the main extent
+            if (parsedAltExtent.getBoolean("cantParseAny")) {
+                mainExtent.put("portion", "whole");
+                mainExtent.put("container_summary", altExtent);
+                errors.add( "the entire alt extent couldn't be parsed at all and was added to the main extent container_summary.");
+            } else {
+                mainExtent.put("portion", "part");
+
+                for (int i=0; i < structuredExtents.length(); i++) { 
+                    JSONObject altExtentJS = new JSONObject();
+                    altExtentJS.put("portion", "part");
+
+                    JSONObject structuredExtent = structuredExtents.getJSONObject(i);
+
+                    if ( ! structuredExtent.getString("unit").isEmpty() && ! structuredExtent.getString("unitValue").isEmpty()) {
+                        altExtentJS.put("extent_type", structuredExtent.getString("unit"));
+                        altExtentJS.put("number", structuredExtent.getString("unitValue"));
+                        
+                        //case 2: it matches through "includes" matching
+                        if ( ! structuredExtent.getBoolean("exactMatch")) {
+                            altExtentJS.put("container_summary", structuredExtent.getString("extent")); //if we don't want to include the number, use key "unit"
+                            errors.add("there was a partial match for an alt extent unit using the 'includes' method");
+                        }
+                    
+                    //case 3: the extent unit didn't match anything    
+                    } else if (structuredExtent.getString("unit").isEmpty() && ! structuredExtent.getString("unitValue").isEmpty()) {
+                        altExtentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
+                        altExtentJS.put("number", structuredExtent.getString("unitValue"));
+                        altExtentJS.put("container_summary", structuredExtent.getString("extent")); //if we don't want to include the number, use key "unit"
+                        errors.add("there was no match for an alt extent unit");
+
+                    //case 4: one of the alt extent statements couldn't be parsed into 'unit + text' format
+                    } else {
+                        altExtentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
+                        altExtentJS.put("number", "0");
+                        altExtentJS.put("container_summary", structuredExtent.getString("extent")); 
+                        errors.add("there was an alt extent statment that couldn't be parsed into 'number + unit' format: " + structuredExtent.getString("extent"));
+                    }
+                    allExtents.put(altExtentJS);
+                }
+            }
+            if ( ! errors.isEmpty()){
+                for (String error : errors){
+                    String message = String.format("Alt Extent error: %s. Collection %s, Archon ID %s", error, collectionIdentifier, archonID);
+                    aspaceCopyUtil.addErrorMessage(message); 
+                }
+            }
+        } else {
+            mainExtent.put("portion", "whole");
         }
 
-        json.put("extents", extentJA);
+        mainExtent.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ExtentUnitID")));
+        if (!record.getString("Extent").isEmpty()) {
+            mainExtent.put("number", record.getString("Extent"));
+        } else {
+            mainExtent.put("number", "0");
+        }
+
+        allExtents.put(mainExtent);
+
+        json.put("extents", allExtents);
     }
 
     /**
