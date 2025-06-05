@@ -3476,4 +3476,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
         archonValuesToIDs.put(value.toLowerCase().trim(), id);
     }
 
+    private String getContainerTypeArchonID(String value) {
         return archonValuesToIDs.get(value.toLowerCase().trim());
+    }
+}
