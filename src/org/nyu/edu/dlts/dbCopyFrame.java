@@ -175,6 +175,16 @@ public class dbCopyFrame extends JFrame {
 
                     ascopy = new ASpaceCopyUtil(archonClient, host, admin, adminPassword);
                     ascopy.setSimulateRESTCalls(simulateRESTCalls);
+                    String[] testCollectionsArray = {};
+                    if (UIUCPropertiesReader.getUIUCProperties() != null && UIUCPropertiesReader.getUIUCProperties().getProperty("testing.collections") != null) {
+                        String testCollections =  UIUCPropertiesReader.getUIUCProperties().getProperty("testing.collections");
+                        testCollectionsArray = testCollections.split(",");
+                    }
+                    ArrayList<String> readCollArchonIDsList = new ArrayList<String>();
+                    for (String id : testCollectionsArray) {
+                        readCollArchonIDsList.add(id);
+                    }
+                    ascopy.setCollArchonIDToCopyList(readCollArchonIDsList);
 
                     // set the reset password, and output console and progress bar
                     ascopy.setResetPassword(resetPasswordTextField.getText().trim());
