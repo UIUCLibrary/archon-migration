@@ -626,7 +626,29 @@ public class ASpaceEnumUtil {
         if(languagesJS.has(arId)) {
             try {
                 JSONObject languageJS = languagesJS.getJSONObject(arId);
-                return languageJS.getString("LanguageShort");
+                return languageJS.getString("ASpaceCode");
+            } catch (JSONException e) {
+                return "und";
+            }
+        } else {
+            return "und";
+        }
+    }
+
+    /**
+     * Method to return the ASpace language code when given the Archon 3 letter code.
+     * For most language codes this is the same code for each, but not for all.
+     *
+     * @param languageShort
+     * @return
+     */
+    public String getASpaceLanguageCodeForArchonCode(String languageShort) {
+        if(languageShort.isEmpty()) return "und";
+
+        if(textLanguagesJS.has(languageShort)) {
+            try {
+                JSONObject languageJS = textLanguagesJS.getJSONObject(languageShort);
+                return languageJS.getString("ASpaceCode");
             } catch (JSONException e) {
                 return "und";
             }
