@@ -3497,6 +3497,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
         if (UIUCPropertiesReader.getUIUCProperties() != null) {
             archonInstance = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.prefix");
         }
+        aspaceCopyUtil.setIdentifierPrefix(archonInstance);
 
         ArchonIDListReader archonIDListReader = new ArchonIDListReader(archonInstance);
         ArrayList<String> archonIDList = archonIDListReader.getRecordSubset();
@@ -3524,7 +3525,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
         
         archonClient.setDebugMode(false);
         aspaceCopyUtil.mapper.setAppendTestIdentifier("test");
-
+        
         try {
             /*
             File recordDirectory = new File("/Users/nathan/temp/JSON_Records");
