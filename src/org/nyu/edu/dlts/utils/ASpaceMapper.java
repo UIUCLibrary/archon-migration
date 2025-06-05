@@ -445,9 +445,27 @@ public class ASpaceMapper {
         if(record.has("Dates") && !record.getString("Dates").isEmpty()) {
             JSONArray datesJA = new JSONArray();
             JSONObject dateJS = new JSONObject();
-            dateJS.put("date_type", "single");
+            String creatorDates = record.getString("Dates");
+
+            //check date expression for date type and begin/end dates
+            HashMap<String, Integer> normalDate = getNormalDate(creatorDates);
+            if(!normalDate.isEmpty()){
+                Integer dateBegin = normalDate.get("start");
+                Integer dateEnd = normalDate.get("end");
+                if(dateBegin < dateEnd){
+                    dateJS.put("begin", dateBegin.toString());
+                    dateJS.put("end", dateEnd.toString());
+                    dateJS.put("date_type", "range");
+                } else {
+                    dateJS.put("begin", dateBegin.toString());
+                    dateJS.put("date_type", "single");
+                }
+            } else {
+                dateJS.put("date_type", "single");
+            }
+            
             dateJS.put("label", "existence");
-            dateJS.put("expression", record.get("Dates"));
+            dateJS.put("expression", creatorDates);
             datesJA.put(dateJS);
             agentJS.put("dates_of_existence", datesJA);
         }
@@ -2362,9 +2380,9 @@ public class ASpaceMapper {
      * 12-03-37
      * 
      * Returns an empty HashMap if no years are found.
-     * 
+     *
      * @param dateString
-     * @return      
+     * @return
      */
     private HashMap<String,Integer> getNormalDate(String dateString) {
         HashMap<String, Integer> normalDate = new HashMap<>();
