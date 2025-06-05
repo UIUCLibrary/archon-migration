@@ -3378,6 +3378,22 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Print the EnumIDsToValues list entries for a given starting string
+     * for testing/debugging 
+     * @param type
+     */
+    public void printEnumIDList(String type){
+        HashMap<String, String> enumIDList = enumUtil.getEnumListIDsToValues();
+        System.out.println("\n**Contents of Enum ID List for " + type + "**");
+        for (Map.Entry<String, String> e : enumIDList.entrySet()){
+            if(e.getKey().startsWith(type)){    
+                System.out.println("Key: " + e.getKey() + " Value: " + e.getValue());
+            }
+        }
+        System.out.println("**End contents of Enum ID List for " + type + "**");
+    }
+
+    /**
      * Method to test the conversion without having to startup the gui
      *
      * @param args
@@ -3413,8 +3429,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
 
         //limit collections for testing
-        //ArrayList<String> collectionsIDsList = new ArrayList<String>();
-        //collectionsIDsList.add("54");
+        ArrayList<String> collectionsIDsList = new ArrayList<String>();
+        collectionsIDsList.add("54");
         //aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
 
         //limit collections for testing by archon collection ID
@@ -3432,21 +3448,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            //aspaceCopyUtil.copyRepositoryRecords();
-            //aspaceCopyUtil.mapRepositoryGroups();
-            //aspaceCopyUtil.copyUserRecords();
-            //aspaceCopyUtil.copySubjectRecords();
-            //aspaceCopyUtil.copyCreatorRecords();
-            //aspaceCopyUtil.copyClassificationRecords();
-            //aspaceCopyUtil.findAccessionRecordRepositories();
-            //aspaceCopyUtil.copyAccessionRecords();
-            //aspaceCopyUtil.copyDigitalObjectRecords();
+            aspaceCopyUtil.copyRepositoryRecords();
+            aspaceCopyUtil.mapRepositoryGroups();
+            aspaceCopyUtil.copyUserRecords();
+            aspaceCopyUtil.copySubjectRecords();
+            aspaceCopyUtil.copyCreatorRecords();
+            aspaceCopyUtil.copyClassificationRecords();
+            aspaceCopyUtil.findAccessionRecordRepositories();
+            aspaceCopyUtil.copyAccessionRecords();
+            aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            ///aspaceCopyUtil.deleteUnlinkedClassifications();
+            aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -3460,7 +3476,4 @@ public class ASpaceCopyUtil implements  PrintConsole {
         archonValuesToIDs.put(value.toLowerCase().trim(), id);
     }
 
-    private String getContainerTypeArchonID(String value) {
         return archonValuesToIDs.get(value.toLowerCase().trim());
-    }
-}
