@@ -84,6 +84,9 @@ public class ASpaceMapper {
 
     //for appending to ids to aid in testing
     private String appendTestIdentifier = "";
+    //prefix to add before identifier to make unique when combining multiple instances of Archon
+    //todo: add option to set in GUI rather than hardcoding here
+    private String identifierPrefix = "";
 
     /**
      *  Main constructor
@@ -158,6 +161,14 @@ public class ASpaceMapper {
      */
     public void setAppendTestIdentifier(String testString) {
         appendTestIdentifier = "_" + testString;
+    }
+
+    /** Method to set the identifier prefix for collections
+     *
+     * @param prefix
+     */
+    public void setIdentifierPrefix(String prefix) {
+        identifierPrefix = prefix;
     }
 
     /**
@@ -1134,11 +1145,20 @@ public class ASpaceMapper {
             cId = classificationParents.get(cId);
         }
 
-        idParts[0] = fullId.pop();
-        if (!fullId.isEmpty()) idParts[1] = fullId.pop();
-        if (!fullId.isEmpty()) idParts[2] = fullId.pop();
-        while (fullId.size() > 1) idParts[2] += "-" + fullId.pop();
-        if (!fullId.isEmpty()) idParts[3] = fullId.pop();
+        //if there is an identifier prefix, add it to the front of the existing identifier
+        if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+            idParts[0] = identifierPrefix;
+            idParts[1] = fullId.pop();
+            if (!fullId.isEmpty()) idParts[2] = fullId.pop();
+            while (fullId.size() > 1) idParts[2] += "-" + fullId.pop();
+            if (!fullId.isEmpty()) idParts[3] = fullId.pop();
+        } else {
+            idParts[0] = fullId.pop();
+            if (!fullId.isEmpty()) idParts[1] = fullId.pop();
+            if (!fullId.isEmpty()) idParts[2] = fullId.pop();
+            while (fullId.size() > 1) idParts[2] += "-" + fullId.pop();
+            if (!fullId.isEmpty()) idParts[3] = fullId.pop();
+        }
 
         // make sure the id is unique
         getUniqueID(ASpaceClient.RESOURCE_ENDPOINT, "", idParts, title);

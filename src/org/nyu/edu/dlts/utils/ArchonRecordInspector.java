@@ -449,6 +449,11 @@ public class ArchonRecordInspector {
         archonClient.setDebugMode(false);
 
         ASpaceMapper mapper = new ASpaceMapper();
+        String identiferPrefix = null;
+        if (UIUCPropertiesReader.getUIUCProperties() != null) {
+            identiferPrefix = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.prefix");
+        }
+        mapper.setIdentifierPrefix(identiferPrefix);
 
         try {
             loadTestClassificationData(archonClient,mapper);
@@ -458,10 +463,9 @@ public class ArchonRecordInspector {
         System.out.println("Classification hashmap size: " + testClassificationIdentifiers.size() + "\n\n");
         System.out.println("Classification parents hashmap size: " + testClassificationParents.size() + "\n\n");
 
-        //String archonIDtoTest = "8342";//"7748";//coll content working initially
-        String archonIDtoTest = "7543";//"8599";//"7760";//coll content failing initially
+        String archonIDtoTest = "7543";
         loadCollectionByArchonID(archonIDtoTest);
-        //testConvertCollection(archonIDtoTest, mapper);
+        testConvertCollection(archonIDtoTest, mapper);
 
         String archonCreatorIDtoTest = "3945";//"3473";
         loadCreatorByArchonID(archonCreatorIDtoTest);

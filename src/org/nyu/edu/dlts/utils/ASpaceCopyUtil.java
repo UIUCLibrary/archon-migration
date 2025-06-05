@@ -260,6 +260,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Method to set the identifer prefix to differentiate between multiple instances of archon
+     * @param prefix
+     */
+    public void setIdentifierPrefix(String prefix) {
+        mapper.setIdentifierPrefix(prefix);
+    }
+
+    /**
      * Method to set the output console
      *
      * @param outputConsole

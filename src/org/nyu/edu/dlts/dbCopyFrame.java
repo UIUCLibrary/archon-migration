@@ -94,6 +94,7 @@ public class dbCopyFrame extends JFrame {
             hostTextField.setText(UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.host"));
             adminTextField.setText(UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.admin"));
             adminPasswordTextField.setText(UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.password"));
+            collectionPrefixTextField.setText(UIUCPropertiesReader.getUIUCProperties().getProperty("archon.prefix"));
         } else {
             // clear out some defaults used when in development
             sourceTextField.setText("http://localhost/archon");
@@ -173,6 +174,7 @@ public class dbCopyFrame extends JFrame {
                     String admin = adminTextField.getText();
                     String adminPassword = adminPasswordTextField.getText();
                     boolean simulateRESTCalls = simulateCheckBox.isSelected();
+                    String collectionPrefix = collectionPrefixTextField.getText();
 
                     ascopy = new ASpaceCopyUtil(archonClient, host, admin, adminPassword);
                     ascopy.setSimulateRESTCalls(simulateRESTCalls);
@@ -187,6 +189,9 @@ public class dbCopyFrame extends JFrame {
                     if(downloadCheckBox.isSelected()) {
                         ascopy.setDigitalObjectBaseURI(doURLTextField.getText().trim());
                     }
+
+                    //set identifier prefix if indicated in properties file
+                    ascopy.setIdentifierPrefix(collectionPrefix);
 
                     // try getting the session and only continue if a valid session is return;
                     if(!ascopy.getSession()) {
@@ -591,6 +596,8 @@ public class dbCopyFrame extends JFrame {
         basicUIButton = new JButton();
         okButton = new JButton();
         CellConstraints cc = new CellConstraints();
+        collectionPrefixLabel = new JLabel();
+        collectionPrefixTextField = new JTextField();
 
         //======== this ========
         setTitle("Archon Data Migrator v2.x (11-2017)");
@@ -619,6 +626,8 @@ public class dbCopyFrame extends JFrame {
                         new ColumnSpec(ColumnSpec.FILL, Sizes.DEFAULT, FormSpec.DEFAULT_GROW)
                     },
                     new RowSpec[] {
+                        FormFactory.DEFAULT_ROWSPEC,
+                        FormFactory.LINE_GAP_ROWSPEC,
                         FormFactory.DEFAULT_ROWSPEC,
                         FormFactory.LINE_GAP_ROWSPEC,
                         FormFactory.DEFAULT_ROWSPEC,
@@ -801,19 +810,27 @@ public class dbCopyFrame extends JFrame {
                 deleteResourcesCheckBox.setText("Delete Previously Saved Resources");
                 contentPanel.add(deleteResourcesCheckBox, cc.xy(1, 19));
 
+                //---- collectionPrefixLabel ----
+                collectionPrefixLabel.setText("Collection Prefix");
+                contentPanel.add(collectionPrefixLabel, cc.xy(3, 19));
+
+                //---- collectionPrefixTextField ----
+                collectionPrefixTextField.setText("prefix here");
+                contentPanel.add(collectionPrefixTextField, cc.xy(5, 19));
+
                 //---- resourcesToCopyLabel ----
                 resourcesToCopyLabel.setText("Migration Options");
-                contentPanel.add(resourcesToCopyLabel, cc.xy(3, 19));
+                contentPanel.add(resourcesToCopyLabel, cc.xy(3, 21));
 
-                //---- resourcesToCopyTextField ----
+                // //---- resourcesToCopyTextField ----
                 resourcesToCopyTextField.setText("-bbcode_html");
                 resourcesToCopyTextField.setColumns(40);
-                contentPanel.add(resourcesToCopyTextField, cc.xywh(5, 19, 7, 1));
+                contentPanel.add(resourcesToCopyTextField, cc.xywh(5, 21, 7, 1));
 
                 //---- outputConsoleLabel ----
                 outputConsoleLabel.setText("Output Console:");
-                contentPanel.add(outputConsoleLabel, cc.xy(1, 21));
-                contentPanel.add(copyProgressBar, cc.xywh(3, 21, 9, 1));
+                contentPanel.add(outputConsoleLabel, cc.xy(1, 23));
+                contentPanel.add(copyProgressBar, cc.xywh(3, 23, 9, 1));
 
                 //======== scrollPane1 ========
                 {
@@ -822,7 +839,7 @@ public class dbCopyFrame extends JFrame {
                     consoleTextArea.setRows(12);
                     scrollPane1.setViewportView(consoleTextArea);
                 }
-                contentPanel.add(scrollPane1, cc.xywh(1, 23, 11, 1));
+                contentPanel.add(scrollPane1, cc.xywh(1, 25, 11, 1));
 
                 //---- recordURIComboBox ----
                 recordURIComboBox.setModel(new DefaultComboBoxModel(new String[] {
@@ -838,7 +855,7 @@ public class dbCopyFrame extends JFrame {
                     "/config/enumerations"
                 }));
                 recordURIComboBox.setEditable(true);
-                contentPanel.add(recordURIComboBox, cc.xy(1, 25));
+                contentPanel.add(recordURIComboBox, cc.xy(1, 27));
 
                 //======== panel1 ========
                 {
@@ -862,7 +879,7 @@ public class dbCopyFrame extends JFrame {
                     });
                     panel1.add(viewRecordButton);
                 }
-                contentPanel.add(panel1, cc.xywh(3, 25, 9, 1));
+                contentPanel.add(panel1, cc.xywh(3, 27, 9, 1));
             }
             dialogPane.add(contentPanel, BorderLayout.CENTER);
 
@@ -1005,6 +1022,8 @@ public class dbCopyFrame extends JFrame {
     private JButton stopButton;
     private JButton basicUIButton;
     private JButton okButton;
+    private JLabel collectionPrefixLabel;
+    private JTextField collectionPrefixTextField;
     // JFormDesigner - End of variables declaration  //GEN-END:variables
 
     /**
