@@ -654,27 +654,6 @@ public class ASpaceEnumUtil {
     }
 
     /**
-     * Method to return the long version of the language name
-     *
-     * @param langaugeShort
-     * @return
-     */
-    public String getLanguageLong(String languageShort) {
-        if(languageShort.isEmpty())  return "undefined";
-
-        if(textLanguagesJS.has(languageShort)) {
-            try {
-                JSONObject languageJS = textLanguagesJS.getJSONObject(languageShort);
-                return languageJS.getString("LanguageLong");
-            } catch (JSONException e) {
-                return "undedfined";
-            }
-        } else {
-            return "undefined";
-        }
-    }
-
-    /**
      * Method to return the ASpace language code when given the Archon 3 letter code.
      * For most language codes this is the same code for each, but not for all.
      *
