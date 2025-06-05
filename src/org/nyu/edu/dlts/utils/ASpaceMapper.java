@@ -1111,7 +1111,7 @@ public class ASpaceMapper {
 
             dateJS.put("date_type", "bulk");
 
-            dateJS.put("label", "other");
+            dateJS.put("label", "creation");
 
             dateExpression = bulkDates;
             dateJS.put("expression", dateExpression);

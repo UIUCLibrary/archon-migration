@@ -259,6 +259,53 @@ public class ArchonRecordInspector {
     }
 
     /**
+     * Method to load a particular creator record by archon database id
+     * @param archonID
+     */
+    public static void loadCreatorByArchonID(String archonID) {
+        JSONObject creatorRecordsJS = archonClient.getCreatorRecords();
+        if(creatorRecordsJS.has(archonID)){
+            try {
+                JSONObject recordJS = creatorRecordsJS.getJSONObject(archonID);
+
+                System.out.println("Found Record " + recordJS.get("Name"));
+
+                //print collection json
+                System.out.println(recordJS.toString(2));
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Method to test converting particular creator record by archon database id
+     * @param archonID
+     * @param mapper
+     */
+    public static void testConvertCreator(String archonID, ASpaceMapper mapper) {
+        JSONObject creatorRecordsJS = archonClient.getCreatorRecords();
+        if(creatorRecordsJS.has(archonID)){
+            try {
+                JSONObject recordJS = creatorRecordsJS.getJSONObject(archonID);
+                int creatorTypeId = recordJS.getInt("CreatorTypeID");
+
+                System.out.println("Found Record " + recordJS.get("Name"));
+                try {
+                    JSONObject convertedcreator  = mapper.convertCreator(recordJS, creatorTypeId);
+                    System.out.println(convertedcreator.toString(2));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
      * Main method
      *
      * @param args
@@ -312,9 +359,13 @@ public class ArchonRecordInspector {
         System.out.println("Classification hashmap size: " + testClassificationIdentifiers.size() + "\n\n");
         System.out.println("Classification parents hashmap size: " + testClassificationParents.size() + "\n\n");
 
-        String archonIDtoTest = "8753";
-        loadCollectionByArchonID(archonIDtoTest);
-        testConvertCollection(archonIDtoTest, mapper);
+        String archonIDtoTest = "7394";//"8753";
+        //loadCollectionByArchonID(archonIDtoTest);
+        //testConvertCollection(archonIDtoTest, mapper);
+
+        String archonCreatorIDtoTest = "3473";
+        loadCreatorByArchonID(archonCreatorIDtoTest);
+        testConvertCreator(archonCreatorIDtoTest, mapper);
 
     }
 }
