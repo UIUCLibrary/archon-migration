@@ -193,6 +193,8 @@ public class ArchonRecordInspector {
      * as needed for testing
      * @param testArchonClient
      * @param mapper
+     * @param testArchonClient
+     * @param mapper
      */
     private static void loadTestClassificationData(ArchonClient testArchonClient, ASpaceMapper mapper) throws Exception{
         
@@ -239,6 +241,7 @@ public class ArchonRecordInspector {
      * Does NOT properly convert the identifier if classifications are used
      * Need to load test classification data first if using classifications in identifier
      * @param archonID
+     * @param mapper
      * @param mapper
      */
     public static void testConvertCollection(String archonID, ASpaceMapper mapper) {
@@ -462,12 +465,12 @@ public class ArchonRecordInspector {
         }
         System.out.println("Classification hashmap size: " + testClassificationIdentifiers.size() + "\n\n");
         System.out.println("Classification parents hashmap size: " + testClassificationParents.size() + "\n\n");
-
-        String archonIDtoTest = "7543";
+        
+        String archonIDtoTest = "7394";//"8753";
         loadCollectionByArchonID(archonIDtoTest);
         testConvertCollection(archonIDtoTest, mapper);
-
-        String archonCreatorIDtoTest = "3945";//"3473";
+         
+        String archonCreatorIDtoTest = "3473";
         loadCreatorByArchonID(archonCreatorIDtoTest);
         testConvertCreator(archonCreatorIDtoTest, mapper);
         
