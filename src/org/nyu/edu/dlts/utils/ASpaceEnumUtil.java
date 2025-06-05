@@ -63,6 +63,9 @@ public class ASpaceEnumUtil {
 
     public boolean returnATValue = true; // set this to return the AT value instead of UNMAPPED
 
+    //Use to look up long version of language from three letter code
+    private JSONObject textLanguagesJS;
+
     /**
      * Main constructor
      */
@@ -88,6 +91,7 @@ public class ASpaceEnumUtil {
         initASpaceAccessionResourceTypes();
 
         loadLanguageCodes();
+        loadLanguageText();
     }
 
     /**
@@ -97,6 +101,20 @@ public class ASpaceEnumUtil {
         try {
             String text = IOUtils.toString(this.getClass().getResourceAsStream("languages.json"), "UTF-8");
             languagesJS = new JSONObject(text);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Method to load the language text json object
+     */
+    private void loadLanguageText() {
+        try {
+            String text = IOUtils.toString(this.getClass().getResourceAsStream("languageTextCodes.json"), "UTF-8");
+            textLanguagesJS = new JSONObject(text);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
@@ -614,6 +632,27 @@ public class ASpaceEnumUtil {
             }
         } else {
             return "und";
+        }
+    }
+
+    /**
+     * Method to return the long version of the language name
+     *
+     * @param langaugeShort
+     * @return
+     */
+    public String getLanguageLong(String languageShort) {
+        if(languageShort.isEmpty())  return "undefined";
+
+        if(textLanguagesJS.has(languageShort)) {
+            try {
+                JSONObject languageJS = textLanguagesJS.getJSONObject(languageShort);
+                return languageJS.getString("LanguageLong");
+            } catch (JSONException e) {
+                return "undedfined";
+            }
+        } else {
+            return "undefined";
         }
     }
 
