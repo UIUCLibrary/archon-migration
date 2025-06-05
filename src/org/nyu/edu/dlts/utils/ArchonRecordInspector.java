@@ -172,12 +172,15 @@ public class ArchonRecordInspector {
                 System.out.println("Found Record " + recordJS.get("Title"));
 
                 //print collection json
+                System.out.println("printing collection record json...");
                 System.out.println(recordJS.toString(2));
 
                 // get the collection content
                 JSONObject collectionContentsJS = archonClient.getCollectionContentRecords(archonID);
-
+                System.out.println("printing collection content json...");
                 System.out.println(collectionContentsJS.toString(2));
+                System.out.println("count of collection content in json:");
+                System.out.println(collectionContentsJS.length());
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -455,10 +458,10 @@ public class ArchonRecordInspector {
         System.out.println("Classification hashmap size: " + testClassificationIdentifiers.size() + "\n\n");
         System.out.println("Classification parents hashmap size: " + testClassificationParents.size() + "\n\n");
 
-        
-        String archonIDtoTest = "7394";//"8753";
+        //String archonIDtoTest = "8342";//"7748";//coll content working initially
+        String archonIDtoTest = "7543";//"8599";//"7760";//coll content failing initially
         loadCollectionByArchonID(archonIDtoTest);
-        testConvertCollection(archonIDtoTest, mapper);
+        //testConvertCollection(archonIDtoTest, mapper);
 
         String archonCreatorIDtoTest = "3945";//"3473";
         loadCreatorByArchonID(archonCreatorIDtoTest);
