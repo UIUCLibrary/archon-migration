@@ -185,6 +185,12 @@ public class ASpaceMapper {
                 valuesJA.put(ASpaceEnumUtil.UNMAPPED);
             }
 
+            // need to add default to processing priorities enum list
+            if (endpoint.contains("processingpriorities")) {
+                valuesJA.put("default");
+                count++;
+            }
+
 
             if (count != 0) {
                 dynamicEnumsUpdated.add(dynamicEnumJS);
@@ -706,7 +712,7 @@ public class ASpaceMapper {
 
         json.put("processing_plan", "Expected Completion Date: " + record.get("ExpectedCompletionDate"));
 
-        if (record.has("ProcessingPriorityID")) {
+        if (record.has("ProcessingPriorityID") && record.getInt("ProcessingPriorityID") != 0) {
             json.put("processing_priority", enumUtil.getASpaceCollectionManagementRecordProcessingPriority(record.getInt("ProcessingPriorityID")));
         }
 
