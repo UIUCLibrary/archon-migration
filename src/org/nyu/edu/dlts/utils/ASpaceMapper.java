@@ -1607,6 +1607,16 @@ public class ASpaceMapper {
         dateJS.put("label", label);
         dateJS.put("expression", dateExpression);
 
+        //determine normal begin and end dates from date expression if possible
+        HashMap<String, Integer> normalDate = getNormalDate(dateExpression);
+        if(!normalDate.isEmpty()){
+            Integer dateBegin = normalDate.get("start");
+            Integer dateEnd = normalDate.get("end");
+            dateJS.put("begin", dateBegin.toString());
+            dateJS.put("end", dateEnd.toString());
+            dateJS.put("date_type", "inclusive");
+        }
+
         dateJA.put(dateJS);
         json.put("dates", dateJA);
 
