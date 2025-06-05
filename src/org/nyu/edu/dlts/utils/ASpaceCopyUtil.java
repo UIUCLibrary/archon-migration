@@ -194,6 +194,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
 
+    //Boolean to set whether location content ranges (e.g. Box 1-10) should be expanded into individual boxes
+    private Boolean expandLocationContentRange = true;
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -265,6 +268,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
      */
     public void setIdentifierPrefix(String prefix) {
         mapper.setIdentifierPrefix(prefix);
+    }
+
+    /**
+     * Method to set whether ranges of boxes should be expanded into individual records or not
+     * @param option
+     */
+    public void setExpandLocationContent(Boolean option){
+        this.expandLocationContentRange = option;
     }
 
     /**
@@ -2716,7 +2727,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             // a dash probably indicates a range
             // if the items on either side are numbers use these numbers and if so add these and all in between
-            if (str.contains("-")) {
+            if (expandLocationContentRange && str.contains("-")) {
                 String[] bounds = str.split("-");
                 if (bounds.length == 2) {
                     try {
@@ -3512,6 +3523,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             collArchonIDsList.add("8734");
             aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
         }
+        aspaceCopyUtil.setExpandLocationContent(false);
 
         //limit collections for testing
         ArrayList<String> collectionsIDsList = new ArrayList<String>();
