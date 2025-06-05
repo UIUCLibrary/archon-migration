@@ -3653,18 +3653,16 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
 
-        //limit collections for testing
-        ArrayList<String> collectionsIDsList = new ArrayList<String>();
-        collectionsIDsList.add("54");
-        //collectionsIDsList.add("84");
-        //aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
-
         //limit collections for testing by archon collection ID
+        String[] testCollectionsArray = {};
+        if (UIUCPropertiesReader.getUIUCProperties() != null && UIUCPropertiesReader.getUIUCProperties().getProperty("testing.collections") != null) {
+            String testCollections =  UIUCPropertiesReader.getUIUCProperties().getProperty("testing.collections");
+            testCollectionsArray = testCollections.split(",");
+        }
         ArrayList<String> collArchonIDsList = new ArrayList<String>();
-        collArchonIDsList.add("7226");
-        collArchonIDsList.add("8302");
-        collArchonIDsList.add("7853");
-        collArchonIDsList.add("8734");
+        for (String id : testCollectionsArray) {
+            collArchonIDsList.add(id);
+        }
         aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
         
         archonClient.setDebugMode(false);
