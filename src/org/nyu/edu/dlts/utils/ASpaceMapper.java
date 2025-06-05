@@ -1144,6 +1144,7 @@ public class ASpaceMapper {
         }
 
         // add the acquisition date
+        /** 
         String acquisitionDate = record.getString("AcquisitionDate");
         if(!acquisitionDate.isEmpty()) {
             dateJS = new JSONObject();
@@ -1161,6 +1162,7 @@ public class ASpaceMapper {
 
             dateJA.put(dateJS);
         }
+        */
 
         // it is still possible to get to this point without any dates so just hard a dummy
         // date so that the record can be saved.
@@ -1371,6 +1373,20 @@ public class ASpaceMapper {
         addMultipartNote(notesJA, "phystech", "Physical Access Requirements", record.getString("PhysicalAccess"));
 
         addMultipartNote(notesJA, "phystech", "Technical Access Requirements", record.getString("TechnicalAccess"));
+
+        String acquisitionDate = record.getString("AcquisitionDate");
+        if(!acquisitionDate.isEmpty()) {
+            String readableAcquisitionDate = getHumanReadableDate(acquisitionDate);
+            String formattedAcquisitionDate = "";
+            String isoAcquisitionDate = getISODate(acquisitionDate);
+            if(isoAcquisitionDate != ""){
+                formattedAcquisitionDate += "<date normal=" + '"' + isoAcquisitionDate + '"' +">";
+            } else {
+                formattedAcquisitionDate += "<date>";
+            }
+            formattedAcquisitionDate += readableAcquisitionDate + "</date>";
+            addMultipartNote(notesJA, "acqinfo", "Date of Acquisition", formattedAcquisitionDate);
+        }
 
         addMultipartNote(notesJA, "acqinfo", "Source of Acquisition", record.getString("AcquisitionSource"));
 
@@ -1861,9 +1877,53 @@ public class ASpaceMapper {
             String year = dateString.substring(0, 4);
             String month = dateString.substring(4, 6);
             String day = dateString.substring(6);
-            return month + "/" + day + "/" + year;
+            String readableDateString = "";
+            if(!month.equals("00")){
+                readableDateString += month + "/";
+                if(!day.equals("00")){
+                    //only add the day if it is not "00"
+                    readableDateString += day + "/";
+                }
+            } else {
+                if(!day.equals("00")){
+                    //if in the unlikely case that the day but not the month is filled out, use the full string with the zereos for the month
+                    readableDateString += month + "/" + day + "/";
+                }
+            }
+            readableDateString += year;
+            return readableDateString;
         } catch (Exception e) {
             return dateString;
+        }
+    }
+
+    /**
+     * Method to return the iso date given a date string formatted as YYYYMMDD
+     *
+     * @param dateString
+     * @return
+     */
+    private String getISODate(String dateString) {
+        try {
+            String year = dateString.substring(0, 4);
+            String month = dateString.substring(4, 6);
+            String day = dateString.substring(6);
+            String isoDateString = year;
+            if(!month.equals("00")){
+                isoDateString += "-" + month;
+                if(!day.equals("00")){
+                    //only add the day if it is not "00"
+                    isoDateString += "-" + day;
+                }
+            } else {
+                if(!day.equals("00")){
+                    //if in the unlikely case that the day but not the month is filled out, use the full string with the zereos for the month
+                    isoDateString += "-" + month + "-" + day;
+                }
+            }
+            return isoDateString;
+        } catch (Exception e) {
+            return "";
         }
     }
 
