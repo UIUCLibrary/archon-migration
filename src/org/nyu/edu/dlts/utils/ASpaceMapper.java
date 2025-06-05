@@ -761,7 +761,7 @@ public class ASpaceMapper {
         String title = record.getString("Title");
         json.put("title", title);
 
-        boolean dateAdded = addDate(record.getString("Date"), json, null, "digitized");
+        boolean dateAdded = addDate(record.getString("Date"), json, null, "creation");
 
         // need to add title if no date or title
         if(title.isEmpty() && !dateAdded) {
