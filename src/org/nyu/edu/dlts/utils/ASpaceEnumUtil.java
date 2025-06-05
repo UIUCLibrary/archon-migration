@@ -621,7 +621,8 @@ public class ASpaceEnumUtil {
      * @return
      */
     public String getASpaceLanguageCode(String arId) {
-        if(arId.isEmpty()) return "und";
+        String defaultLanguageCode = "eng";
+        if(arId.isEmpty()) return defaultLanguageCode;
 
         if(languagesJS.has(arId)) {
             try {
@@ -631,7 +632,45 @@ public class ASpaceEnumUtil {
                 return "und";
             }
         } else {
-            return "und";
+            return defaultLanguageCode;
+        }
+    }
+
+    /**
+     * Method to return an appropriate script code (ISO 15924), given the 3-letter language code
+     * Set only to work with English currently, but could be extended to more languages
+     * Returns "Zyyy" (code for undetermined script) if the script is unknown
+     *
+     * @param langaugeShort
+     * @return
+     */
+    public String getScriptCode(String languageShort) {
+        if(languageShort.equals("eng")){
+            return "Latn";
+        } else {
+            return "Zyyy";
+        }
+
+    }
+
+    /**
+     * Method to return the long version of the language name
+     *
+     * @param langaugeShort
+     * @return
+     */
+    public String getLanguageLong(String languageShort) {
+        if(languageShort.isEmpty())  return "undefined";
+
+        if(textLanguagesJS.has(languageShort)) {
+            try {
+                JSONObject languageJS = textLanguagesJS.getJSONObject(languageShort);
+                return languageJS.getString("LanguageLong");
+            } catch (JSONException e) {
+                return "undedfined";
+            }
+        } else {
+            return "undefined";
         }
     }
 

@@ -1229,7 +1229,12 @@ public class ASpaceMapper {
             json.put("finding_aid_description_rules", enumUtil.getASpaceFindingAidDescriptionRule(descriptiveRulesID));
         }
 
-        json.put("finding_aid_language", enumUtil.getASpaceLanguageCode(record.getString("FindingLanguageID")));
+        String findingLanguageCode = enumUtil.getASpaceLanguageCode(record.getString("FindingLanguageID"));
+        String findingScriptCode = enumUtil.getScriptCode(findingLanguageCode);
+        String findingLanguageLong = enumUtil.getLanguageLong(findingLanguageCode);
+        String findingLanguageString = "<language langcode='" + findingLanguageCode + "' scriptcode='" + findingScriptCode + "'>" + findingLanguageLong + "</language>";
+        json.put("finding_aid_language", findingLanguageString);
+        
         json.put("finding_aid_note", record.get("PublicationNote"));
 
         // add any reversion statements
