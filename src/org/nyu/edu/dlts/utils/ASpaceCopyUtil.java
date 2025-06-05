@@ -196,6 +196,15 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
     //Boolean to set whether location content ranges (e.g. Box 1-10) should be expanded into individual boxes
     private Boolean expandLocationContentRange = true;
+    
+    // whether to check if the shelf field in the location holds the barcode for the box
+    private Boolean checkShelfForBarcode = true;
+
+    // whether to use the custom location mapper
+    private Boolean useCustomLocationMapper = true;
+    
+    //custom location mapper object
+    private CustomArchonLocationMapper archonLocationMapper;
 
     /**
      * The main constructor, used when running as a stand alone application
@@ -320,6 +329,24 @@ public class ASpaceCopyUtil implements  PrintConsole {
             defaultRepositoryId = sa[0];
         } else {
             defaultRepositoryId = id;
+        }
+    }
+
+    /**
+     * Checks the CustomArchonLocationMapper and returns true if it is ready to use.
+     * If the archonLocationMapper variable is not yet set, it will create it.
+     * Returns false if useCustomLocationMapper is set to false.
+     * @return
+     */
+    private Boolean checkCustomArchonLocationMapper(){
+        if(useCustomLocationMapper) {
+            if(archonLocationMapper == null) {
+                // create custom location mapper
+                archonLocationMapper = new CustomArchonLocationMapper(mapper.getIdentifierPrefix());
+            }
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -2246,6 +2273,20 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+    * method to check whether a string is likely a barcode (14 characters long)
+    * todo: also check that it consists of digits rather than letters or other characters
+    @param possibleBarcode
+    @return
+     */
+     private Boolean isBarcode(String possibleBarcode){
+        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty() && possibleBarcode.length() == 14) {
+            return true;
+        } else {
+            return false;
+        }
+     }
+
+    /**
      * method to add a top container to ASpace or return the URI of a previously added equivalent one
      * @param containerType
      * @param containerIndicator
@@ -2321,6 +2362,25 @@ public class ASpaceCopyUtil implements  PrintConsole {
         String coordinate1 = location.getString("RangeValue");
         String coordinate2 = location.getString("Section");
         String coordinate3 = location.getString("Shelf");
+
+        //if shelf field for the location is a barcode, add that to the top container instead
+        if (checkShelfForBarcode && isBarcode(coordinate3)) {
+            containerJS.put("barcode", coordinate3);
+            coordinate3 = "";
+        }
+
+        //if barcode as shelf, then remove that and split the section value on the separator
+        if(isBarcode(coordinate3)){
+            coordinate3="";
+            //if using custom location mapper, split section on separator into coordinate 2 or 3
+            if(checkCustomArchonLocationMapper() && coordinate2 != null && coordinate2.length()>1){
+                String[] splitSection = coordinate2.split(archonLocationMapper.getSectionSeparator(),2);
+                coordinate2 = splitSection[0].trim();
+                if(splitSection.length==2){
+                    coordinate3 = splitSection[1].trim();
+                }
+            }
+        }
 
         String locationURI = getLocationURI(building, coordinate1, coordinate2, coordinate3);
 
@@ -2808,6 +2868,49 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // lets create a JSON object for the location in case we need to save it
         JSONObject locationJS = new JSONObject();
+
+        //get the custom building, floor, room, and area text for the location text ("building")
+        if(checkCustomArchonLocationMapper()){
+            String locationText = building;
+            String floor = "";
+            String room = "";
+            String area = "";
+            JSONObject locationComponents = archonLocationMapper.getLocationComponents(locationText);
+            if(locationComponents != null){
+                //find building for location text or use default text since this is a required field
+                if(locationComponents.has("Building")) {
+                    building = locationComponents.getString("Building");
+                } else {
+                    building = "Unknown";
+                    addErrorMessage("No building found for " + locationText);
+                }
+                floor = (locationComponents.has("Floor")) ? locationComponents.getString("Floor") : "";
+                room = (locationComponents.has("Room")) ? locationComponents.getString("Room") : "";
+                area = (locationComponents.has("Area")) ? locationComponents.getString("Area") : "";
+                //also overwrite default starting key to include the new building text
+                key = building;
+            }else{
+                String locationErrorType ="";
+                if(locationComponents == null){
+                    locationErrorType = "locations map is null";
+                }    
+                String locationErrorMessage = "Error with archonLocationMapper with mapping " + locationText + "; " + locationErrorType;
+                addErrorMessage(locationErrorMessage);
+            }
+            if (!floor.equals("null") && !floor.isEmpty()) {
+                locationJS.put("floor", floor);
+                key += "-" + floor;
+            }
+            if (!room.equals("null") && !room.isEmpty()) {
+                locationJS.put("room", room);
+                key += "-" + room;
+            }
+            if (!area.equals("null") && !area.isEmpty()) {
+                locationJS.put("area", area);
+                key += "-" + area;
+            }
+        }
+
         locationJS.put("building", building);
 
         if (!coordinate1.equals("null") && !coordinate1.isEmpty()) {

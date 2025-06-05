@@ -84,8 +84,8 @@ public class ASpaceMapper {
 
     //for appending to ids to aid in testing
     private String appendTestIdentifier = "";
+    
     //prefix to add before identifier to make unique when combining multiple instances of Archon
-    //todo: add option to set in GUI rather than hardcoding here
     private String identifierPrefix = "";
 
     /**
@@ -170,6 +170,15 @@ public class ASpaceMapper {
      */
     public void setIdentifierPrefix(String prefix) {
         identifierPrefix = prefix;
+    }
+
+    /**
+     * Method to get the identifier prefix for collections
+     *
+     * @return
+     */
+    public String getIdentifierPrefix() {
+        return identifierPrefix;
     }
 
     /**
