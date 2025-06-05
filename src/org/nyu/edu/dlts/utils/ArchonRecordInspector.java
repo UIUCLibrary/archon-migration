@@ -373,9 +373,24 @@ public class ArchonRecordInspector {
                 System.out.println(recordJS.toString(2));
 
                 try {
-                    JSONObject convertedDigitalObject  = mapper.convertDigitalObject(recordJS);
+                    JSONArray batchJA = new JSONArray();
+                    JSONObject digitalObjectJS  = mapper.convertDigitalObject(recordJS);
+                    if (digitalObjectJS != null) {
+                        digitalObjectJS.put("jsonmodel_type", "digital_object");
+                        batchJA.put(digitalObjectJS);
+                        JSONArray digitalObjectChildren = recordJS.getJSONArray("components");
+                        for (int i = 0; i < digitalObjectChildren.length(); i++) {
+                            JSONObject digitalObjectChild = digitalObjectChildren.getJSONObject(i);
+
+                            JSONObject digitalObjectChildJS = mapper.convertToDigitalObjectComponent(digitalObjectChild);
+
+                            if (digitalObjectChildJS != null) {
+                                batchJA.put(digitalObjectChildJS);
+                            } 
+                        }
+                    }
                     System.out.println("Converted Record with ArchonID " + recordJS.get("ID"));
-                    System.out.println(convertedDigitalObject.toString(2));
+                    System.out.println(batchJA.toString(2));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -449,7 +464,7 @@ public class ArchonRecordInspector {
         loadCreatorByArchonID(archonCreatorIDtoTest);
         testConvertCreator(archonCreatorIDtoTest, mapper);
         
-        String archonDigitalIDtoTest = "188";
+        String archonDigitalIDtoTest = "3540";//"188";
         testConvertDigitalObject(archonDigitalIDtoTest, mapper);
 
         String archonAccesionIDtoTest = "142";
