@@ -426,6 +426,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // A hashmap to map the short name to the repository URI to prevent duplications
         HashMap<String, String> shortNamesToURIMap = new HashMap<String, String>();
 
+        //load the repositories already in ASpace, if applicable
+        HashMap<String, String> currentRepos = aspaceClient.loadRepositories();
+        if(currentRepos != null) shortNamesToURIMap = currentRepos;
+
         // these are used to update the progress bar
         int total = records.length();
         int count = 0;
@@ -3699,16 +3703,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
             //limit collections for testing by archon collection ID
             ArrayList<String> collArchonIDsList = new ArrayList<String>();
             collArchonIDsList.add("8434");
-            collArchonIDsList.add("8457");
-            collArchonIDsList.add("8020");
-            collArchonIDsList.add("8734");
             aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
         }
         aspaceCopyUtil.setExpandLocationContent(false);
 
         //limit collections for testing
-        ArrayList<String> collectionsIDsList = new ArrayList<String>();
-        collectionsIDsList.add("54");
+        //ArrayList<String> collectionsIDsList = new ArrayList<String>();
+        //collectionsIDsList.add("54");
         //aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
 
         //limit collections for testing by archon collection ID
@@ -3717,8 +3718,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
         aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
         
         archonClient.setDebugMode(false);
-        aspaceCopyUtil.mapper.setAppendTestIdentifier("test");
-        
+        String testString = archonIDListReader.getSuffixForTesting();
+        if(testString != null && !testString.isEmpty()){
+            aspaceCopyUtil.mapper.setAppendTestIdentifier(testString);
+        } else {
+            aspaceCopyUtil.mapper.setAppendTestIdentifier("test");
+        }
+
         try {
             /*
             File recordDirectory = new File("/Users/nathan/temp/JSON_Records");
@@ -3726,21 +3732,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.setDefaultRepositoryId("1");
 
             aspaceCopyUtil.copyEnumRecords();
-            //aspaceCopyUtil.copyRepositoryRecords();
-            //aspaceCopyUtil.mapRepositoryGroups();
-            //aspaceCopyUtil.copyUserRecords();
-            //aspaceCopyUtil.copySubjectRecords();
-            //aspaceCopyUtil.copyCreatorRecords();
-            //aspaceCopyUtil.copyClassificationRecords();
-            //aspaceCopyUtil.findAccessionRecordRepositories();
-            //aspaceCopyUtil.copyAccessionRecords();
-            //aspaceCopyUtil.copyDigitalObjectRecords();
+            aspaceCopyUtil.copyRepositoryRecords();
+            aspaceCopyUtil.mapRepositoryGroups();
+            aspaceCopyUtil.copyUserRecords();
+            aspaceCopyUtil.copySubjectRecords();
+            aspaceCopyUtil.copyCreatorRecords();
+            aspaceCopyUtil.copyClassificationRecords();
+            aspaceCopyUtil.findAccessionRecordRepositories();
+            aspaceCopyUtil.copyAccessionRecords();
+            aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            ///aspaceCopyUtil.deleteUnlinkedClassifications();
+            aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }

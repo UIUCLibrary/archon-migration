@@ -1,0 +1,18 @@
+{
+    "default":{
+        "Option":"default",
+        "FileName":"custom-json/record-subsets.json",
+        "SubsetCode":"Sample A"
+    },
+    "archon1":{
+        "Option":"archon1",
+        "FileName":"custom-json/archon1-record-subsets.json",
+        "SubsetCode":"Sample B",
+        "IdentifierSuffixForTesting":"0416test16"
+    },
+    "archon2":{
+        "Option":"archon2",
+        "FileName":"custom-json/archon2-record-subsets.json",
+        "SubsetCode":"Sample A"
+    },
+}
