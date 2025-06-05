@@ -168,6 +168,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // A string builder object to track errors
     private StringBuilder errorBuffer = new StringBuilder();
 
+    // A string builder object to track data changes
+    private StringBuilder changelogBuffer = new StringBuilder();
+
+    // count the number of changes logged
+    private int changelogCount = 0;
+
     private File recordDumpDirectory = null;
 
     private JSONObject cachedCollectionsJS;
@@ -3149,6 +3155,16 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Method to add an change log message to the buffer
+     *
+     * @param message
+     */
+    public void addChangeMessage(String message) {
+        changelogBuffer.append(message).append("\n");
+        changelogCount++;
+    }
+
+    /**
      * Method to return the error messages that occurred during the transfer process
      * @return
      */
@@ -3161,6 +3177,15 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 "\n\nNUMBER OF RECORDS COPIED: \n" + getTotalRecordsCopiedMessage();
 
         return errorMessage;
+    }
+
+    /**
+     * Method to return the change log messages that occurred during the transfer process
+     * @return
+     */
+    public String getChangeLogMessages() {
+        String changelogMessage = "RECORD CONVERSION CHANGES NOTED ( " + changelogCount + " ) ::\n\n" + changelogBuffer.toString();
+        return changelogMessage;
     }
 
     /**
@@ -3469,6 +3494,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // print out the error messages
         System.out.println("\n\nSave Errors:\n" + aspaceCopyUtil.getSaveErrorMessages());
+        // print out record changes
+        System.out.println("\n\nData changes:\n" + aspaceCopyUtil.getChangeLogMessages());
         System.exit(0);
     }
 

@@ -33,6 +33,9 @@ public class dbCopyFrame extends JFrame {
     // stores any migration errors
     private String migrationErrors = "";
 
+    // stores any notable data changes
+    private String migrationDataChanges = "";
+
     // store any mismatch errors
     private String repositoryMismatchErrors = "";
 
@@ -281,6 +284,7 @@ public class dbCopyFrame extends JFrame {
                     String errorCount = "" + ascopy.getASpaceErrorCount();
                     errorCountLabel.setText(errorCount);
                     migrationErrors = ascopy.getSaveErrorMessages() + "\n\nTotal errors/warnings: " + errorCount;
+                    migrationDataChanges = ascopy.getChangeLogMessages();
                 } catch (Exception e) {
                     consoleTextArea.setText("Unrecoverable exception, migration stopped ...\n\n");
 
@@ -377,6 +381,23 @@ public class dbCopyFrame extends JFrame {
         } else {
             logDialog = new ImportExportLogDialog(this, migrationErrors);
             logDialog.setTitle("Data Transfer Errors");
+        }
+
+        logDialog.showDialog();
+    }
+
+    /**
+     * Method to display the change log dialog
+     */
+    private void changeLogButtonActionPerformed() {
+        ImportExportLogDialog logDialog;
+
+        if(ascopy != null && ascopy.isCopying()) {
+            logDialog = new ImportExportLogDialog(this, ascopy.getChangeLogMessages());
+            logDialog.setTitle("Current Data Transfer Changes");
+        } else {
+            logDialog = new ImportExportLogDialog(this, migrationDataChanges);
+            logDialog.setTitle("Data Transfer Changes");
         }
 
         logDialog.showDialog();
@@ -561,6 +582,7 @@ public class dbCopyFrame extends JFrame {
         viewRecordButton = new JButton();
         buttonBar = new JPanel();
         errorLogButton = new JButton();
+        changeLogButton = new JButton();
         saveErrorsLabel = new JLabel();
         errorCountLabel = new JLabel();
         stopButton = new JButton();
@@ -881,6 +903,15 @@ public class dbCopyFrame extends JFrame {
                 errorCountLabel.setFont(new Font("Lucida Grande", Font.BOLD, 13));
                 buttonBar.add(errorCountLabel, cc.xy(6, 1));
 
+                //---- changeLogButton ----
+                changeLogButton.setText("View Change Log");
+                changeLogButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        changeLogButtonActionPerformed();
+                    }
+                });
+                buttonBar.add(changeLogButton, cc.xy(7, 1));
+
                 //---- stopButton ----
                 stopButton.setText("Cancel Copy");
                 stopButton.setEnabled(false);
@@ -966,6 +997,7 @@ public class dbCopyFrame extends JFrame {
     private JButton viewRecordButton;
     private JPanel buttonBar;
     private JButton errorLogButton;
+    private JButton changeLogButton;
     private JLabel saveErrorsLabel;
     private JLabel errorCountLabel;
     private JButton stopButton;
