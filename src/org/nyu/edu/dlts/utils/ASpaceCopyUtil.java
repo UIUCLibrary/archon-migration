@@ -3385,22 +3385,20 @@ public class ASpaceCopyUtil implements  PrintConsole {
             //limit collections for testing by archon collection ID
             ArrayList<String> collArchonIDsList = new ArrayList<String>();
             collArchonIDsList.add("8434");
-            collArchonIDsList.add("8457");
-            collArchonIDsList.add("8020");
-            collArchonIDsList.add("8734");
             aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
         }
 
         //limit collections for testing
-        ArrayList<String> collectionsIDsList = new ArrayList<String>();
-        collectionsIDsList.add("54");
-        //collectionsIDsList.add("84");
+        //ArrayList<String> collectionsIDsList = new ArrayList<String>();
+        //collectionsIDsList.add("54");
         //aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
 
         archonClient.setDebugMode(false);
         String testString = archonIDListReader.getSuffixForTesting();
         if(testString != null && !testString.isEmpty()){
             aspaceCopyUtil.mapper.setAppendTestIdentifier(testString);
+        } else {
+            aspaceCopyUtil.mapper.setAppendTestIdentifier("test");
         }
 
         try {
@@ -3412,10 +3410,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.copyEnumRecords();
             aspaceCopyUtil.copyRepositoryRecords();
             aspaceCopyUtil.mapRepositoryGroups();
-            /**aspaceCopyUtil.copyUserRecords();
+            aspaceCopyUtil.copyUserRecords();
             aspaceCopyUtil.copySubjectRecords();
             aspaceCopyUtil.copyCreatorRecords();
-            aspaceCopyUtil.copyClassificationRecords();*/
+            aspaceCopyUtil.copyClassificationRecords();
             aspaceCopyUtil.findAccessionRecordRepositories();
             aspaceCopyUtil.copyAccessionRecords();
             aspaceCopyUtil.copyDigitalObjectRecords();
@@ -3424,7 +3422,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
-            //aspaceCopyUtil.deleteUnlinkedClassifications();
+            aspaceCopyUtil.deleteUnlinkedClassifications();
         } catch (Exception e) {
             e.printStackTrace();
         }
