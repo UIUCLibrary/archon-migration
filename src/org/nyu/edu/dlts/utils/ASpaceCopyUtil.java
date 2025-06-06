@@ -3697,6 +3697,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         ArchonIDListReader archonIDListReader = new ArchonIDListReader(archonInstance);
         ArrayList<String> archonIDList = archonIDListReader.getRecordSubset();
+
         if(archonIDList != null && !archonIDList.isEmpty()){
             aspaceCopyUtil.setCollArchonIDToCopyList(archonIDList);
         }else {
@@ -3705,17 +3706,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             collArchonIDsList.add("8434");
             aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
         }
-        aspaceCopyUtil.setExpandLocationContent(false);
-
-        //limit collections for testing
-        //ArrayList<String> collectionsIDsList = new ArrayList<String>();
-        //collectionsIDsList.add("54");
-        //aspaceCopyUtil.setCollectionsToCopyList(collectionsIDsList);
-
-        //limit collections for testing by archon collection ID
-        ArrayList<String> collArchonIDsList = new ArrayList<String>();
-        collArchonIDsList.add("8434");
-        aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
+        aspaceCopyUtil.setExpandLocationContent(true);
         
         archonClient.setDebugMode(false);
         String testString = archonIDListReader.getSuffixForTesting();
