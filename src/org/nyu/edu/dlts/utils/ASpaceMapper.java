@@ -1515,7 +1515,7 @@ public class ASpaceMapper {
             mainExtent.put("number", "0");
         }
 
-        allExtents.put(mainExtent);
+        allExtents.put(0, mainExtent);
 
         json.put("extents", allExtents);
     }
