@@ -1452,6 +1452,9 @@ public class ASpaceMapper {
         String altExtent = record.getString("AltExtentStatement");
 
         if( ! altExtent.isEmpty()) {
+            // mainExtent needs to be first in the allExtents array (its data will be updated later)
+            allExtents.put(0, mainExtent);
+            
             parsedAltExtent = annotateParsedAltExtents(altExtent);
             JSONArray structuredExtents = parsedAltExtent.getJSONArray("processedExtents");
 
