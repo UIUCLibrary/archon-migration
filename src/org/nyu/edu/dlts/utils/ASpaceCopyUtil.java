@@ -2192,7 +2192,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
         if (indicatorStart == splitId.length - 1) containerIndicator = splitId[indicatorStart];
         else {
             StringBuilder indicatorSb = new StringBuilder();
-            for (int i = indicatorStart; i < splitId.length; i++) indicatorSb.append(splitId[i]);
+            if (indicatorStart < splitId.length) indicatorSb.append(splitId[indicatorStart]);
+            for (int i = indicatorStart+1; i < splitId.length; i++){
+                indicatorSb.append(" " + splitId[i]);
+            }
             containerIndicator = indicatorSb.toString();
 
         }
