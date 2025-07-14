@@ -1233,6 +1233,11 @@ public class ASpaceMapper {
         json.put("finding_aid_date", getHumanReadableDate(record.getString("PublicationDate")));
         json.put("finding_aid_author", record.get("FindingAidAuthor"));
 
+        String sortTitle = record.getString("SortTitle");
+        if(!sortTitle.isEmpty()){
+            json.put("finding_aid_filing_title", sortTitle);
+        }
+
         Integer descriptiveRulesID = record.getInt("DescriptiveRulesID");
         if(descriptiveRulesID != null && descriptiveRulesID != 0) {
             json.put("finding_aid_description_rules", enumUtil.getASpaceFindingAidDescriptionRule(descriptiveRulesID));
