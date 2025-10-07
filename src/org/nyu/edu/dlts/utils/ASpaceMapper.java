@@ -88,6 +88,10 @@ public class ASpaceMapper {
     //prefix to add before identifier to make unique when combining multiple instances of Archon
     private String identifierPrefix = "";
 
+    //whether to convert 9999 dates
+    private Boolean convertOpenEndDate = true;
+    private int defaultOpenEndDate = 2025;
+
     /**
      *  Main constructor
      */
@@ -1539,6 +1543,10 @@ public class ASpaceMapper {
 
         Integer dateBegin = convertToInteger(record.getString("NormalDateBegin"));
         Integer dateEnd = convertToInteger(record.getString("NormalDateEnd"));
+
+        if(convertOpenEndDate && dateEnd != null && dateEnd == 9999){
+            dateEnd = defaultOpenEndDate;
+        }
 
         if (dateBegin != null) {
             dateJS.put("date_type", "inclusive");
