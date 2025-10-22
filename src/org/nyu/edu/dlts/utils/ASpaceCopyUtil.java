@@ -1635,7 +1635,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
             String collectionTitle = collection.getString("Title");
 
             if (hasToSkipSubstring(collectionTitle)) {
-                print("Not Copied (title indicating not to migrate): " + collectionTitle);
+                String skippedRecordMessage = "Not Copied (title indicating not to migrate): " + collectionTitle;
+                addChangeMessage(skippedRecordMessage);
+                print(skippedRecordMessage);
                 updateProgress("Collection Records", total, count);
                 continue;
             }
