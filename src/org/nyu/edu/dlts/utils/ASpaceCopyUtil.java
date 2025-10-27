@@ -1634,7 +1634,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             // get the resource title
             String collectionTitle = collection.getString("Title");
 
-            if (hasToSkipSubstring(collectionTitle)) {
+            if (hasToSkipSubstring(collectionTitle) && collection.getInt("Enabled") != 1) {
                 String skippedRecordMessage = "Not Copied (title indicating not to migrate): " + collectionTitle;
                 addChangeMessage(skippedRecordMessage);
                 print(skippedRecordMessage);
@@ -3750,9 +3750,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.copyEnumRecords();
             aspaceCopyUtil.copyRepositoryRecords();
             aspaceCopyUtil.mapRepositoryGroups();
-            aspaceCopyUtil.copyUserRecords();
+            /*aspaceCopyUtil.copyUserRecords();
             aspaceCopyUtil.copySubjectRecords();
-            aspaceCopyUtil.copyCreatorRecords();
+            aspaceCopyUtil.copyCreatorRecords();*/
             aspaceCopyUtil.copyClassificationRecords();
             aspaceCopyUtil.findAccessionRecordRepositories();
             aspaceCopyUtil.copyAccessionRecords();
