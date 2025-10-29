@@ -2808,7 +2808,16 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             String containerType = info[0];
 
-            ArrayList<String> containerIndicators = getContainerIndicators(info[1]);
+            ArrayList<String> containerIndicators;
+            
+            if (checkShelfForBarcode && isBarcode(location.getString("Shelf"))) {
+                //keep the whole indicator string together if there is a barcode
+                containerIndicators = new ArrayList<String>();
+                containerIndicators.add(info[1]);
+            } else {
+                //split indicator string based on commas or dashes to create separate instances
+                containerIndicators = getContainerIndicators(info[1]);
+            }
 
             for (String containerIndicator : containerIndicators) {
 
