@@ -2514,8 +2514,15 @@ public class ASpaceMapper {
         List<Integer> years = new ArrayList<>();
         Integer lastFullYear = null;
 
+        //normalize text
+        dateString = dateString.replace("‑", "-");
+        dateString = dateString.replace("–", "-");
+        dateString = dateString.replace("‘", "'");
+        dateString = dateString.replace("’", "'");
+        dateString = dateString.toLowerCase();
+
         // Find all full years and partial year ranges
-        Pattern pattern = Pattern.compile("\\b(\\d{4})(?:-(\\d{1,2}))?\\b");
+        Pattern pattern = Pattern.compile("\\b(\\d{4})(?:-(\\d{1,2}))?\\b(?!'s)(?!\\/)");
         Matcher matcher = pattern.matcher(dateString);
 
         while (matcher.find()) {
@@ -2535,42 +2542,125 @@ public class ASpaceMapper {
                     if (endYear < fullYear) {
                         endYear += 100;
                     }
+                    if (endYear - fullYear > 10 && Integer.parseInt(partialYear) < 13){
+                        continue; //more likely a month
+                    }
                 }
                 years.add(endYear);
             }
         }
 
-        // Look for decades
-        Pattern decadePattern = Pattern.compile("\\b(\\d{4}'?s|\\d{2}'?s)\\b");
+        // Century matching
+        Pattern centuryPattern = Pattern.compile("(mid-|mid|late|early)?\\s?(\\b\\d{2}00\\'?s\\b)");
+        Matcher centuryMatcher = centuryPattern.matcher(dateString);
+
+        while (centuryMatcher.find()) {
+            String rangeTerm = centuryMatcher.group(1) != null ? centuryMatcher.group(1) : "";
+            String matchText = centuryMatcher.group(2).replace("'", "");
+            int centuryStart = Integer.parseInt(matchText.substring(0, 4));
+            int centuryEnd = centuryStart + 99;
+
+            if (!rangeTerm.isEmpty()) {
+                if (rangeTerm.startsWith("mid")) {
+                    centuryStart += 30;
+                    centuryEnd -= 20;
+                } else if (rangeTerm.equals("late")) {
+                    centuryStart += 70;
+                } else if (rangeTerm.equals("early")) {
+                    centuryEnd -= 60;
+                }
+            }
+
+            years.add(centuryStart);
+            years.add(centuryEnd);
+        }
+
+        // Decade matching
+        Pattern decadePattern = Pattern.compile("(mid-|mid|late|early)?\\s?(\\b(?:\\d{2}[1-9]0'?s|\\d{1}0'?s)\\b)");
         Matcher decadeMatcher = decadePattern.matcher(dateString);
 
         while (decadeMatcher.find()) {
-            String match = decadeMatcher.group().replace("'", "");
+            String rangeTerm = decadeMatcher.group(1) != null ? decadeMatcher.group(1) : "";
+            String matchText = decadeMatcher.group(2).replace("'", "");
             int yearStart;
-            if (match.length() == 5) {
-                yearStart = Integer.parseInt(match.substring(0, 4));
+            if (matchText.length() == 5) {
+                yearStart = Integer.parseInt(matchText.substring(0, 4));
                 lastFullYear = yearStart;
             } else {
                 if (lastFullYear != null) {
                     int century = (lastFullYear / 100) * 100;
-                    yearStart = century + Integer.parseInt(match.substring(0, 2));
+                    yearStart = century + Integer.parseInt(matchText.substring(0, 2));
                     if (yearStart < lastFullYear) {
                         yearStart += 100;
                     }
                 } else {
                     Boolean assume20thCentury = false;
                     if(assume20thCentury){
-                        yearStart = Integer.parseInt("19" + match.substring(0, 2));
+                        yearStart = Integer.parseInt("19" + matchText.substring(0, 2));
                     } else {
                         yearStart = 0;
                     }
                 }
             }
-            if (yearStart != 0){
+
+            if(yearStart != 0) {
                 int yearEnd = yearStart + 9;
+
+                if (!rangeTerm.isEmpty()) {
+                    if (rangeTerm.startsWith("mid")) {
+                        yearStart += 3;
+                        yearEnd -= 2;
+                    } else if (rangeTerm.equals("late")) {
+                        yearStart += 7;
+                    } else if (rangeTerm.equals("early")) {
+                        yearEnd -= 6;
+                    }
+                }
+
                 years.add(yearStart);
                 years.add(yearEnd);
             }
+        }
+
+        // Abbreviated years
+        Pattern abbrevYearPattern = Pattern.compile("'\\d{2}\\b");
+        Matcher abbrevYearMatcher = abbrevYearPattern.matcher(dateString);
+
+        while (abbrevYearMatcher.find()) {
+            String matchText = abbrevYearMatcher.group().replace("'", "");
+            int abbrevYear;
+            if (lastFullYear != null) {
+                int century = (lastFullYear / 100) * 100;
+                abbrevYear = century + Integer.parseInt(matchText);
+                if (abbrevYear < lastFullYear) {
+                    abbrevYear += 100;
+                }
+            } else {
+                abbrevYear = Integer.parseInt("19" + matchText);
+            }
+            years.add(abbrevYear);
+        }
+
+        // Uncertain years
+        Pattern uncertainYearPattern = Pattern.compile("\\b\\d{3}[xu]\\b");
+        Matcher uncertainYearMatcher = uncertainYearPattern.matcher(dateString);
+
+        while (uncertainYearMatcher.find()) {
+            int yearStart = Integer.parseInt(uncertainYearMatcher.group().substring(0, 3) + "0");
+            int yearEnd = yearStart + 9;
+            years.add(yearStart);
+            years.add(yearEnd);
+        }
+
+        // Uncertain decades
+        Pattern uncertainDecadePattern = Pattern.compile("\\b\\d{2}[xu]{2}\\b");
+        Matcher uncertainDecadeMatcher = uncertainDecadePattern.matcher(dateString);
+
+        while (uncertainDecadeMatcher.find()) {
+            int yearStart = Integer.parseInt(uncertainDecadeMatcher.group().substring(0, 2) + "00");
+            int yearEnd = yearStart + 99;
+            years.add(yearStart);
+            years.add(yearEnd);
         }
 
         if (!years.isEmpty()) {
