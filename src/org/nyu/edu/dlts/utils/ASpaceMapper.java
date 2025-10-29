@@ -2336,6 +2336,9 @@ public class ASpaceMapper {
                 fullId += "."  + ids[i];
             }
         }
+        
+        //remove any spaces
+        fullId = fullId.replaceAll("\\s", "");
 
         return fullId;
     }
