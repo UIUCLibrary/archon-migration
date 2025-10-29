@@ -1540,6 +1540,7 @@ public class ASpaceMapper {
         Integer dateBegin = convertToInteger(record.getString("NormalDateBegin"));
         Integer dateEnd = convertToInteger(record.getString("NormalDateEnd"));
 
+        String archonID = record.getString("ID");//for error messages
         if (dateBegin != null) {
             dateJS.put("date_type", "inclusive");
 
@@ -1551,7 +1552,7 @@ public class ASpaceMapper {
                 } else {
                     dateJS.put("end", dateBegin.toString());
 
-                    String message = "End date: " + dateEnd + " before begin date: " + dateBegin + ", ignoring end date\n" + recordIdentifier;
+                    String message = "End date: " + dateEnd + " before begin date: " + dateBegin + ", ignoring end date. Archon ID" + archonID;
                     if(aspaceCopyUtil != null){
                         aspaceCopyUtil.addErrorMessage(message);
                     } else {
@@ -1563,7 +1564,7 @@ public class ASpaceMapper {
             }
         } else {
             if(addNormalDateFromExpression(dateExpression, dateJS)){
-                String message = "No normal date; adding calculated normal date using date expression " + dateExpression + "\n" + recordIdentifier;
+                String message = "No normal date for record with Archon ID "+ archonID + "; adding calculated normal date using date expression " + dateExpression;
                 if(aspaceCopyUtil != null){
                     aspaceCopyUtil.addChangeMessage(message);
                 } else {
