@@ -210,6 +210,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private String containerDefaultType = "box";
     private Boolean addDefaultContainerType = true;
 
+    //substring to indicate that a collection record should not be migrated when in the title
+    private String toSkipSubstring = "//DO NOT MIGRATE//";
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -1556,6 +1559,20 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Method to check if a record title includes a substring indicating that it should not be migrated.
+     * @param titleString
+     */
+    private Boolean hasToSkipSubstring(String titleString){
+        Boolean result;
+        if(titleString != null && toSkipSubstring != null) {
+            result = titleString.contains(toSkipSubstring);
+        } else {
+            result = false;
+        }
+        return result;
+    }
+
+    /**
      * Method to copy resource records from one database to the next
      *
      * @throws Exception
@@ -1616,6 +1633,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             // get the resource title
             String collectionTitle = collection.getString("Title");
+
+            if (hasToSkipSubstring(collectionTitle) && collection.getInt("Enabled") != 1) {
+                String skippedRecordMessage = "Not Copied (title indicating not to migrate): " + collectionTitle;
+                addChangeMessage(skippedRecordMessage);
+                print(skippedRecordMessage);
+                updateProgress("Collection Records", total, count);
+                continue;
+            }
 
             // get the record id
             String dbId = collection.getString("ID");
@@ -3728,9 +3753,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.copyEnumRecords();
             aspaceCopyUtil.copyRepositoryRecords();
             aspaceCopyUtil.mapRepositoryGroups();
-            aspaceCopyUtil.copyUserRecords();
+            /*aspaceCopyUtil.copyUserRecords();
             aspaceCopyUtil.copySubjectRecords();
-            aspaceCopyUtil.copyCreatorRecords();
+            aspaceCopyUtil.copyCreatorRecords();*/
             aspaceCopyUtil.copyClassificationRecords();
             aspaceCopyUtil.findAccessionRecordRepositories();
             aspaceCopyUtil.copyAccessionRecords();
