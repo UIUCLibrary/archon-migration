@@ -1552,10 +1552,23 @@ public class ASpaceMapper {
                     dateJS.put("end", dateBegin.toString());
 
                     String message = "End date: " + dateEnd + " before begin date: " + dateBegin + ", ignoring end date\n" + recordIdentifier;
-                    aspaceCopyUtil.addErrorMessage(message);
+                    if(aspaceCopyUtil != null){
+                        aspaceCopyUtil.addErrorMessage(message);
+                    } else {
+                        System.out.println(message);
+                    }
                 }
             } else {
                 dateJS.put("end", dateBegin.toString());
+            }
+        } else {
+            if(addNormalDateFromExpression(dateExpression, dateJS)){
+                String message = "No normal date; adding calculated normal date using date expression " + dateExpression + "\n" + recordIdentifier;
+                if(aspaceCopyUtil != null){
+                    aspaceCopyUtil.addChangeMessage(message);
+                } else {
+                    System.out.println(message);
+                }
             }
         }
 
@@ -1723,6 +1736,21 @@ public class ASpaceMapper {
         dateJS.put("label", label);
         dateJS.put("expression", dateExpression);
 
+        addNormalDateFromExpression(dateExpression, dateJS);
+
+        dateJA.put(dateJS);
+        json.put("dates", dateJA);
+
+        return true;
+    }
+
+    /**
+     * Method to add a normal dates to json date object by parsing the date expression
+     *
+     * @param dateExpression
+     * @param dateJS
+     */
+    private Boolean addNormalDateFromExpression(String dateExpression, JSONObject dateJS) throws Exception{
         //determine normal begin and end dates from date expression if possible
         HashMap<String, Integer> normalDate = getNormalDate(dateExpression);
         if(!normalDate.isEmpty()){
@@ -1731,12 +1759,10 @@ public class ASpaceMapper {
             dateJS.put("begin", dateBegin.toString());
             dateJS.put("end", dateEnd.toString());
             dateJS.put("date_type", "inclusive");
+            return true;
+        } else {
+            return false;
         }
-
-        dateJA.put(dateJS);
-        json.put("dates", dateJA);
-
-        return true;
     }
 
     /**
