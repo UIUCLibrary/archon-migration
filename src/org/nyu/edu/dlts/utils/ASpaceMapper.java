@@ -1233,6 +1233,11 @@ public class ASpaceMapper {
         json.put("finding_aid_date", getHumanReadableDate(record.getString("PublicationDate")));
         json.put("finding_aid_author", record.get("FindingAidAuthor"));
 
+        String sortTitle = record.getString("SortTitle");
+        if(!sortTitle.isEmpty()){
+            json.put("finding_aid_filing_title", sortTitle);
+        }
+
         Integer descriptiveRulesID = record.getInt("DescriptiveRulesID");
         if(descriptiveRulesID != null && descriptiveRulesID != 0) {
             json.put("finding_aid_description_rules", enumUtil.getASpaceFindingAidDescriptionRule(descriptiveRulesID));
@@ -1452,6 +1457,9 @@ public class ASpaceMapper {
         String altExtent = record.getString("AltExtentStatement");
 
         if( ! altExtent.isEmpty()) {
+            // mainExtent needs to be first in the allExtents array (its data will be updated later)
+            allExtents.put(0, mainExtent);
+            
             parsedAltExtent = annotateParsedAltExtents(altExtent);
             JSONArray structuredExtents = parsedAltExtent.getJSONArray("processedExtents");
 
@@ -1501,7 +1509,11 @@ public class ASpaceMapper {
             if ( ! errors.isEmpty()){
                 for (String error : errors){
                     String message = String.format("Alt Extent error: %s. Collection %s, Archon ID %s", error, collectionIdentifier, archonID);
-                    aspaceCopyUtil.addErrorMessage(message); 
+                    if(aspaceCopyUtil != null){
+                        aspaceCopyUtil.addErrorMessage(message); 
+                    } else {
+                        System.out.println(message);
+                    }
                 }
             }
         } else {
@@ -1515,7 +1527,7 @@ public class ASpaceMapper {
             mainExtent.put("number", "0");
         }
 
-        allExtents.put(mainExtent);
+        allExtents.put(0, mainExtent);
 
         json.put("extents", allExtents);
     }
