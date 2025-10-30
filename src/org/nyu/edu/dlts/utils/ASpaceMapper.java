@@ -1135,7 +1135,7 @@ public class ASpaceMapper {
 
         // add English as the default language code if no language specified in Archon
         // (otherwise, add language later using a language of materials note)
-        if(!record.has("Languages")){
+        if(!record.has("Languages") || record.getJSONArray("Languages").length() == 0){
             json.put("language", getLanguageCode(null, "eng"));
         }
 
