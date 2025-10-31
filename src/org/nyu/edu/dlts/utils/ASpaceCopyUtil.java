@@ -1634,17 +1634,17 @@ public class ASpaceCopyUtil implements  PrintConsole {
             // get the resource title
             String collectionTitle = collection.getString("Title");
 
+            // get the record id
+            String dbId = collection.getString("ID");
+            int intID = Integer.parseInt(dbId);
+            
             if (hasToSkipSubstring(collectionTitle) && collection.getInt("Enabled") != 1) {
-                String skippedRecordMessage = "Not Copied (title indicating not to migrate): " + collectionTitle;
+                String skippedRecordMessage = "Archon ID " + dbId + " not copied (title indicating not to migrate): " + collectionTitle;
                 addChangeMessage(skippedRecordMessage);
                 print(skippedRecordMessage);
                 updateProgress("Collection Records", total, count);
                 continue;
             }
-
-            // get the record id
-            String dbId = collection.getString("ID");
-            int intID = Integer.parseInt(dbId);
 
             // get the parent repository
             String repositoryID = collection.getString("RepositoryID");
