@@ -2229,7 +2229,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
         if (containerTypeID == null) {
             containerIndicator = content;
             //if no type found, provide a default label if specified if the first character is a number
-            Boolean likelyBoxNumber = Character.isDigit(content.charAt(0));
+            Boolean likelyBoxNumber = isLikelyBoxNumber(content);
             if(addDefaultContainerType && containerDefaultType != null && likelyBoxNumber){
                 containerTypeID = getContainerTypeArchonID(containerDefaultType);
             }
@@ -2239,6 +2239,22 @@ public class ASpaceCopyUtil implements  PrintConsole {
         containerType = enumUtil.getASpaceInstanceContainerType(containerTypeID);
 
         return new String[]{containerType, containerIndicator};
+    }
+
+    /**
+     * Method to check if a content string is likely a box number
+     * Checks whether it starts with a digit and if isn't a possible acccesion number
+     * 
+     * @param content
+     * @return
+     */
+    private Boolean isLikelyBoxNumber(String content){
+        Boolean possibleAccessionNumber = content.contains(".");
+        if(!possibleAccessionNumber && Character.isDigit(content.charAt(0))){
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
