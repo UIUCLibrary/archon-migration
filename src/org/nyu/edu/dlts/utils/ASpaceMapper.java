@@ -1902,7 +1902,8 @@ public class ASpaceMapper {
             addSinglePartNote(notesJA, "langmaterial", "Language of Materials", langNoteContent);
         }
 
-        addMultipartNote(notesJA, "acqinfo", "Source of Acquisition", record.getString("AcquisitionSource"));
+        String acqSource = cleanNote(record, "AcquisitionSource");
+        addMultipartNote(notesJA, "acqinfo", "Source of Acquisition", acqSource);
 
         addMultipartNote(notesJA, "acqinfo", "Method of Acquisition", record.getString("AcquisitionMethod"));
 
@@ -2107,13 +2108,24 @@ public class ASpaceMapper {
             regex = "\\[url=https:\\/\\/wiki\\.cites\\.uiuc\\.edu\\/wiki\\/display\\/librare\\/Home\\]https:\\/\\/wiki\\.cites\\.uiuc\\.edu\\/wiki\\/display\\/librare\\/Home\\[\\/url\\]";
             message = "Processing info";
         }
-        if(!regex.isEmpty() && existingNote.matches(regex)){
-            cleanNote = "";
-            message += " '" + existingNote + "' removed from record with Archon ID " + record.getString("ID");
-            if(aspaceCopyUtil != null){
-                aspaceCopyUtil.addChangeMessage(message);
+        if(noteType.equals("AcquisitionSource")){
+            regex = "</?p>";
+            message= "Source of Acquisition";
+        }
+        if(!regex.isEmpty()){
+            if(existingNote.matches(regex)){
+                cleanNote = "";
+                message += " '" + existingNote + "' removed from record with Archon ID " + record.getString("ID");
             } else {
-                System.out.println(message);
+                cleanNote = existingNote.replaceAll(regex,"");
+                message += " '" + existingNote + "' changed to '" + cleanNote + "' in record with Archon ID " + record.getString("ID");
+            }
+            if(!existingNote.equals(cleanNote)){
+                if(aspaceCopyUtil != null){
+                    aspaceCopyUtil.addChangeMessage(message);
+                } else {
+                    System.out.println(message);
+                }
             }
         } else {
             cleanNote = existingNote;
