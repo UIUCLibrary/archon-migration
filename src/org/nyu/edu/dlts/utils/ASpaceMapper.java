@@ -1941,8 +1941,11 @@ public class ASpaceMapper {
         String processingInfo = cleanNote(record, "ProcessingInfo");
         addMultipartNote(notesJA, "processinfo", "Processing Information", processingInfo);
 
-        noteContent = record.getString("BiogHist") + "\n\nNote written by " + record.get("BiogHistAuthor");
-        if(!noteContent.trim().equals("Note written by")) {
+        noteContent = record.getString("BiogHist");
+        if(!record.getString("BiogHistAuthor").isEmpty() && !record.getString("BiogHist").isEmpty()){
+            noteContent += "\n\nNote written by " + record.get("BiogHistAuthor");
+        }
+        if(!noteContent.trim().isEmpty()) {
             addMultipartNote(notesJA, "bioghist", "Biographical or Historical Information", noteContent);
         }
 
