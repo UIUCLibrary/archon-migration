@@ -106,7 +106,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // random string generator to use when simulating rest calls
     private RandomString randomString = new RandomString(3);
 
-    // specify the current record type and ID in case we have fetal error during migration
+    // specify the current record type and ID in case we have fatal error during migration
     private String currentRecordType = "";
     private String currentRecordIdentifier = "";
     private String currentRecordDBID = "";
