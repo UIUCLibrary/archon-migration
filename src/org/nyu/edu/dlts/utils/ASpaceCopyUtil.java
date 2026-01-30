@@ -200,6 +200,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // whether to check if the shelf field in the location holds the barcode for the box
     private Boolean checkShelfForBarcode = true;
 
+    // a hashmap for tracking what barcodes have already been added
+    private HashMap<String, String> barcodesAddedMap = new HashMap<String, String>();
+
     // whether to use the custom location mapper
     private Boolean useCustomLocationMapper = true;
     
@@ -2424,7 +2427,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         //if shelf field for the location is a barcode, add that to the top container instead
         if (checkShelfForBarcode && isBarcode(coordinate3)) {
+            String currentRecordInfo = currentRecordType + ", ArchonID " + currentRecordDBID + " ("+ location.getString("Content") +")";
+            String existingBarcodeInfo = barcodesAddedMap.putIfAbsent(coordinate3, currentRecordInfo);
+            if(existingBarcodeInfo == null){
             containerJS.put("barcode", coordinate3);
+            } else {
+                String barcodeError = "Barcode for " + currentRecordInfo + " already in use for " + existingBarcodeInfo + "; barcode not added to container";
+                addErrorMessage(barcodeError);
+            }
             coordinate3 = "";
         }
 
