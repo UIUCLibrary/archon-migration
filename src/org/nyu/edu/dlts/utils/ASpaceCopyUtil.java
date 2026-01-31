@@ -422,6 +422,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copyRepositoryRecords() throws Exception {
+        currentRecordType = "Repository Record";
+
         print("Copying repository records ...");
 
         // update the progress bar to indicate loading of records
@@ -547,6 +549,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copyUserRecords() throws Exception {
+        currentRecordType = "User Record";
+        
         print("Copying User records ...");
 
         // update the progress bar here to indicate loading of records
@@ -676,6 +680,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copySubjectRecords() throws Exception {
+        currentRecordType = "Subject Record";
+        
         print("Copying Subject records ...");
 
         // update the progress so that the title changes
@@ -696,6 +702,11 @@ public class ASpaceCopyUtil implements  PrintConsole {
             JSONObject subject = records.getJSONObject(key);
 
             String arId = subject.getString("ID");
+
+            //set these so they can be referenced in the case of an error
+            currentRecordIdentifier = "DB ID: " + arId;
+            currentRecordDBID = arId;
+
             int subjectTypeID = subject.getInt("SubjectTypeID");
 
             // check the subject type id since some of these subject need to be converted
@@ -742,6 +753,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copyCreatorRecords() throws Exception {
+        currentRecordType = "Creator Record";
+        
         print("Copying Creator records ...");
 
         // update the progress so that the title changes
@@ -766,6 +779,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
             JSONObject creator = records.getJSONObject(key);
 
             String arId = creator.getString("ID");
+
+            //set these so they can be referenced in the case of an error
+            currentRecordIdentifier = "DB ID: " + arId;
+            currentRecordDBID = arId;
 
             int creatorTypeId = creator.getInt("CreatorTypeID");
 
@@ -964,6 +981,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copyClassificationRecords() throws Exception {
+        currentRecordType = "Classification Record";
+        
         print("Copying Classification records ...");
 
         // update the progress so that the title changes
@@ -987,6 +1006,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
             JSONObject classification = records.getJSONObject(key);
 
             String arId = classification.getString("ID");
+
+            //set these so they can be referenced in the case of an error
+            currentRecordIdentifier = "DB ID: " + arId;
+            currentRecordDBID = arId;
 
             JSONObject classificationJS = mapper.convertClassification(classification);
 
@@ -1199,6 +1222,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copyAccessionRecords() throws Exception {
+        currentRecordType = "Accession Record";
+        
         print("Copying Accession records ...");
 
         // update the progress so that the title changes
@@ -1223,6 +1248,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             String arId = accession.getString("ID");
             String accessionTitle = accession.getString("Title");
+
+            //set these so they can be referenced in the case of an error
+            currentRecordIdentifier = "DB ID: " + arId;
+            currentRecordDBID = arId;
 
             // check to see if we are only copying accessions for specific collections based on collection archon ID
             if(collArchonIDsList != null) {
@@ -1331,6 +1360,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copyDigitalObjectRecords() throws Exception {
+        currentRecordType = "Digital Object Record";
+        
         print("Copying Digital Object records ...");
 
         // update the progress so that the title changes
@@ -1359,6 +1390,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             String arId = digitalObject.getString("ID");
             String digitalObjectTitle = digitalObject.getString("Title");
+
+            //set these so they can be referenced in the case of an error
+            currentRecordIdentifier = "DB ID: " + arId;
+            currentRecordDBID = arId;
 
             // check to see if we are only copying digital objects for specific collections based on collection archon ID
             String strCollectionID = digitalObject.getString("CollectionID");
@@ -2430,7 +2465,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             String currentRecordInfo = currentRecordType + ", ArchonID " + currentRecordDBID + " ("+ location.getString("Content") +")";
             String existingBarcodeInfo = barcodesAddedMap.putIfAbsent(coordinate3, currentRecordInfo);
             if(existingBarcodeInfo == null){
-            containerJS.put("barcode", coordinate3);
+                containerJS.put("barcode", coordinate3);
             } else {
                 String barcodeError = "Barcode for " + currentRecordInfo + " already in use for " + existingBarcodeInfo + "; barcode not added to container";
                 addErrorMessage(barcodeError);
