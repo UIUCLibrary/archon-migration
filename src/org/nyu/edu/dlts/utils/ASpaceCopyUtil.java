@@ -1364,6 +1364,15 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 continue;
             }
 
+            // check if title indicates it should not be migrated
+            if (hasToSkipSubstring(digitalObjectTitle)) {
+                String skippedRecordMessage = "Digital Object with Archon ID " + arId + " not copied (title indicating not to migrate): " + digitalObjectTitle;
+                addChangeMessage(skippedRecordMessage);
+                print(skippedRecordMessage);
+                updateProgress("Digital Objects", total, count);
+                continue;
+            }
+
             // create the batch import JSON array and dummy URI now
             JSONArray batchJA = new JSONArray();
 
