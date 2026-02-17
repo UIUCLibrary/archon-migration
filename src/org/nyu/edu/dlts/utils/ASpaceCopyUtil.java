@@ -2469,6 +2469,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             } else {
                 String barcodeError = "Barcode for " + currentRecordInfo + " already in use for " + existingBarcodeInfo + "; barcode not added to container";
                 addErrorMessage(barcodeError);
+                extentNote += " (shared barcode with " + existingBarcodeInfo + ": " + coordinate3 +")";
             }
             coordinate3 = "";
         }
