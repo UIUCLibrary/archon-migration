@@ -2481,11 +2481,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 extentNote += " (shared barcode with " + existingBarcodeInfo + ": " + coordinate3 +")";
             }
             coordinate3 = "";
-        }
 
-        //if barcode as shelf, then remove that and split the section value on the separator
-        if(isBarcode(coordinate3)){
-            coordinate3="";
             //if using custom location mapper, split section on separator into coordinate 2 or 3
             if(checkCustomArchonLocationMapper() && coordinate2 != null && coordinate2.length()>1){
                 String[] splitSection = coordinate2.split(archonLocationMapper.getSectionSeparator(),2);
