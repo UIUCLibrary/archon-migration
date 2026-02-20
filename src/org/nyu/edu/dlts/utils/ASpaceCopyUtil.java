@@ -2454,14 +2454,18 @@ public class ASpaceCopyUtil implements  PrintConsole {
         String extentString ="";
 
         if(location.has("Extent")) {
-            extentString += location.getString("Extent") + " ";
+            extentString += location.getString("Extent");
+            if(!extentString.equals("0.00")){
             String extentNoteUnit = enumUtil.getASpaceExtentType(location.getInt("ExtentUnitID"), ASpaceEnumUtil.UNMAPPED);
             if(!extentNoteUnit.equals(ASpaceEnumUtil.UNMAPPED)){
                 extentNoteUnit = extentNoteUnit.replace("_"," ");
             }
-            extentString += extentNoteUnit;
+                extentString = "noted as " + extentString + " " + extentNoteUnit;
+            } else {
+                extentString = "not noted";
         }
-        extentNote = "Described as content " + location.getString("Content") + " with extent "+ extentString + " in Archon";
+        }
+        extentNote = "Extent of '" + location.getString("Content") + "' "+ extentString + " (data migrated from Archon)";
 
         // add a location record record now
         String building = location.getString("Location");
