@@ -203,6 +203,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // a hashmap for tracking what barcodes have already been added
     private HashMap<String, String> barcodesAddedMap = new HashMap<String, String>();
 
+    //for alternative barcode lengths (default is 14 characters)
+    private Boolean checkAlternativeBarcode = true;
+    private Integer[] alternativeBarcodeLengths = {16};
+
     // whether to use the custom location mapper
     private Boolean useCustomLocationMapper = true;
     
@@ -2385,11 +2389,20 @@ public class ASpaceCopyUtil implements  PrintConsole {
     @return
      */
      private Boolean isBarcode(String possibleBarcode){
-        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty() && possibleBarcode.length() == 14) {
-            return true;
-        } else {
-            return false;
+        Boolean barcodeMatch = false;
+        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty()){
+            if(possibleBarcode.length() == 14) {
+                barcodeMatch = true;
+            } else if(checkAlternativeBarcode){
+                for(int num : alternativeBarcodeLengths){
+                    if (possibleBarcode.length() == num){
+                        barcodeMatch = true;
+                        break;
+                    }
+                }
+            }
         }
+        return barcodeMatch;
      }
 
     /**
