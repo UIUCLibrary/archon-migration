@@ -2260,7 +2260,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             typeSb.append(splitId[indicatorStart - 1]);
             containerTypeID = getContainerTypeArchonID(typeSb.toString());
             if (containerTypeID != null) break;
-            typeSb.append(" ");
+            typeSb.append("_");
             indicatorStart++;
         }
 
