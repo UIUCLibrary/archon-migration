@@ -2446,7 +2446,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 topContainerURIs.put(containerKey, uri);
                 topContainerURIs.put(cid, uri);
             } else {
-                print("Fail -- Top Container: " + containerKey);
+                String topContainerCopyError = "Fail -- Top Container: " + containerKey;
+                print(topContainerCopyError);
+                addErrorMessage(topContainerCopyError);
                 return null;
             }
         }
@@ -2879,10 +2881,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         if (!id.equalsIgnoreCase(NO_ID)) {
                             print("Added Location to Top Container: all");
                         } else {
-                            print("Fail -- Add location to Top Container: all");
+                            String topContainerAllError = "Fail -- Add location to Top Container: all";
+                            print(topContainerAllError);
+                            addErrorMessage(topContainerAllError);
                         }
                     } catch (NullPointerException e) {
-                        print("Fail -- Add location to Top Container: all\nCould not load " + topContainerURI);
+                        String topContainerAllLoadError = "Fail -- Add location to Top Container: all\nCould not load " + topContainerURI;
+                        print(topContainerAllLoadError);
+                        addErrorMessage(topContainerAllLoadError);
                     }
                 }
                 continue;
@@ -2954,10 +2960,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         if (!id.equalsIgnoreCase(NO_ID)) {
                             print("Added Location to Top Container: " + containerKey);
                         } else {
-                            print("Fail -- Add location to Top Container: " + containerKey);
+                            String topContainerError = "Fail -- Add location to Top Container: " + containerKey;
+                            print(topContainerError);
+                            addErrorMessage(topContainerError);
                         }
                     } catch (NullPointerException e) {
-                        print("Fail -- Add location to Top Container: " + containerKey + "\nCould not load " + topContainerURI);
+                        String topContainerLoadError = "Fail -- Add location to Top Container: " + containerKey + "\nCould not load " + topContainerURI;
+                        print(topContainerLoadError);
+                        addErrorMessage(topContainerLoadError);
                     }
                 }
             }
