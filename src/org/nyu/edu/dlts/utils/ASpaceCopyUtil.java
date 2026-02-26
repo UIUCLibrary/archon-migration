@@ -2910,9 +2910,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
             }
 
             for (String containerIndicator : containerIndicators) {
-
+                
                 String topContainerURI = null;
-                String containerKey = containerType + " " + containerIndicator;
+                String containerKey = (containerType + " " + containerIndicator).toLowerCase();
 
                 topContainerURI = topContainerURIs.get(containerKey);
 
@@ -2926,7 +2926,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         //if one leading zero
                         modifiedIndicator = containerIndicator.substring(1);
                     }
-                    String modifiedContainerKey = containerType + " " + modifiedIndicator;
+                    String modifiedContainerKey = (containerType + " " + modifiedIndicator).toLowerCase();
                     topContainerURI = topContainerURIs.get(modifiedContainerKey);
                 }
 
@@ -2940,10 +2940,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         indicatorIsInteger = false;
                     }
                     if(indicatorIsInteger){
-                        String paddedContainerKey = containerType + " 0" + containerIndicator;
+                        String paddedContainerKey = (containerType + " 0" + containerIndicator).toLowerCase();
                         topContainerURI = topContainerURIs.get(paddedContainerKey);
                         if(topContainerURI == null){
-                            paddedContainerKey = containerType + " 00" + containerIndicator;
+                            paddedContainerKey = (containerType + " 00" + containerIndicator).toLowerCase();
                             topContainerURI = topContainerURIs.get(paddedContainerKey);
                         }
                     }
