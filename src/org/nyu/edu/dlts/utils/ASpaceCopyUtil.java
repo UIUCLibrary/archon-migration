@@ -2260,7 +2260,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             typeSb.append(splitId[indicatorStart - 1]);
             containerTypeID = getContainerTypeArchonID(typeSb.toString());
             if (containerTypeID != null) break;
-            typeSb.append("_");
+            typeSb.append(" ");
             indicatorStart++;
         }
 
@@ -3875,6 +3875,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     private String getContainerTypeArchonID(String value) {
-        return archonValuesToIDs.get(value.toLowerCase().trim());
+        String modifiedValue = value.toLowerCase().trim();
+        modifiedValue = modifiedValue.replace(" ", "_");
+        return archonValuesToIDs.get(modifiedValue);
     }
 }
