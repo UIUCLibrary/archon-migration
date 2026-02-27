@@ -2563,7 +2563,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
      */
     private void addDigitalInstances(JSONObject json, int collectionID, int contentID, String recordTitle, String batchEndpoint) throws Exception {
 
-        JSONArray instancesJA = new JSONArray();
+        JSONArray instancesJA;
+        //check if the recordJS already has instances added
+        if(json.has("instances")){
+            instancesJA = json.getJSONArray("instances");
+        } else {
+            instancesJA = new JSONArray();
+        } 
 
         HashMap<Integer, ArrayList<JSONArray>> collectionMap = digitalObjectMap.get(collectionID);
         ArrayList<JSONArray> digitalObjectList;
