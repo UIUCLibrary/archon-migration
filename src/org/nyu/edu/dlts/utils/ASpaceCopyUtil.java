@@ -2549,6 +2549,17 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 }
             }
 
+            //check whether the extent note is too long for the database and adjust as needed
+            if(locationJS.has("note")){
+                String fullExtentNote = locationJS.getString("note");
+                if(fullExtentNote.length() > 255){
+                    String truncExtentNote = fullExtentNote.substring(0,250)+"[...]";
+                    String truncationError = "Extent note too long for " + currentRecordType + " with ArchonID " + currentRecordDBID + ". Migrated in truncated form. Full note: " + fullExtentNote;
+                    addErrorMessage(truncationError);
+                    locationJS.put("note", truncExtentNote);
+                }
+            }
+
             // put all the records together now
             containerJS.put("container_locations", locationsJA);
         }
