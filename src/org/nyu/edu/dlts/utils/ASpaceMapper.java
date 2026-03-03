@@ -1375,7 +1375,7 @@ public class ASpaceMapper {
      * @throws JSONException 
      */
     public JSONObject mapExtentType(String inputExtent) throws JSONException {
-        String cleanInput = inputExtent.toLowerCase().replace("_", " ");
+        String cleanInput = inputExtent.toLowerCase().trim().replace("_", " ");
         //all of the archon extents should have already been added to ASpace. Keeping this 
         //here for now in case we want to test
         ArrayList<String> allExtents = enumUtil.getAllArchonExtents();
