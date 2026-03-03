@@ -1521,7 +1521,7 @@ public class ASpaceMapper {
             }
             if ( ! errors.isEmpty()){
                 for (String error : errors){
-                    String message = String.format("Alt Extent error: %s. Collection %s, Archon ID %s", error, collectionIdentifier, archonID);
+                    String message = String.format("Alt Extent error (%s): %s. Collection %s, Archon ID %s", altExtent, error, collectionIdentifier, archonID);
                     if(aspaceCopyUtil != null){
                         aspaceCopyUtil.addErrorMessage(message); 
                     } else {
