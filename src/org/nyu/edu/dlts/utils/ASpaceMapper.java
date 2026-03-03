@@ -1437,9 +1437,15 @@ public class ASpaceMapper {
             
         }
 
+        //check if the alt extent is fully in parentheses
+        Boolean allInParens = false;
+        if(alternativeExtent.trim().startsWith("(") && alternativeExtent.trim().endsWith(")")){
+            allInParens = true;
+        }
+
         altExtentJsonObject.put("processedExtents", processedExtents);
         altExtentJsonObject.put("cantParseAny", cantParseAny);
-
+        altExtentJsonObject.put("allInParens", allInParens);
 
         return altExtentJsonObject;
     }
@@ -1470,10 +1476,13 @@ public class ASpaceMapper {
             ArrayList<String> errors = new ArrayList<>();
 
             //case 1: couldn't parse the alt extent, so add it as a container summary to the main extent
-            if (parsedAltExtent.getBoolean("cantParseAny")) {
+            //case 1b, if the alt extent is fully in parentheses and should be in the container summary
+            if (parsedAltExtent.getBoolean("cantParseAny") || parsedAltExtent.getBoolean("allInParens")) {
                 mainExtent.put("portion", "whole");
                 mainExtent.put("container_summary", altExtent);
+                if(parsedAltExtent.getBoolean("cantParseAny")){
                 errors.add( "the entire alt extent couldn't be parsed at all and was added to the main extent container_summary.");
+                }
             } else {
                 mainExtent.put("portion", "part");
 
