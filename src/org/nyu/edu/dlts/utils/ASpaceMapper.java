@@ -1338,7 +1338,7 @@ public class ASpaceMapper {
         String unit;
         Boolean exactMatch = false;
         Boolean cantParsePart = false;
-
+        String parsedPhrase;
 
         //if there is a match, map the components 
         if (matcher.find()) {
@@ -1349,11 +1349,20 @@ public class ASpaceMapper {
             matchJsonObject = mapExtentType(matcher.group(2));
             unit = matchJsonObject.getString("mapping");
             exactMatch = matchJsonObject.getBoolean("exactMatch");
+
+            parsedPhrase = matcher.group(1)+" " + unit.replace("_"," ");
             
         } else {
             unitValue = "";
             unit = "";
             cantParsePart = true;
+            parsedPhrase = "";
+        }
+
+        //check if the unit value and unit encompass the full extent statement
+        String extentRemainder = extent;
+        if(!cantParsePart){
+            extentRemainder = extent.replace(parsedPhrase,"").trim();
         }
 
         structuredExtent.put("unit", unit);
@@ -1361,6 +1370,7 @@ public class ASpaceMapper {
         structuredExtent.put("exactMatch", exactMatch);
         structuredExtent.put("extent", extent);
         structuredExtent.put("cantParse", cantParsePart);
+        structuredExtent.put("extentRemainder", extentRemainder);
 
         return structuredExtent;
     }
@@ -1500,6 +1510,17 @@ public class ASpaceMapper {
                         if ( ! structuredExtent.getBoolean("exactMatch")) {
                             altExtentJS.put("container_summary", structuredExtent.getString("extent")); //if we don't want to include the number, use key "unit"
                             errors.add("there was a partial match for an alt extent unit using the 'includes' method");
+                        } else {
+                            //put any remaining text in the container summary, after the exact match
+                            String extentStringRemaining = structuredExtent.getString("extentRemainder");
+                            if(extentStringRemaining.contains("()")){
+                                errors.add("check alt extent found within parenthesis, remaining text added to container summary");
+                                extentStringRemaining = extentStringRemaining.replace("()","").trim();
+                            } else if(extentStringRemaining.startsWith("; ")){
+                                errors.add("check alt extent with semicolon, remaining text added to container summary");
+                                extentStringRemaining = extentStringRemaining.substring(2);
+                            }
+                            altExtentJS.put("container_summary", extentStringRemaining);
                         }
                     
                     //case 3: the extent unit didn't match anything    
