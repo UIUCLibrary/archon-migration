@@ -1532,10 +1532,15 @@ public class ASpaceMapper {
 
                     //case 4: one of the alt extent statements couldn't be parsed into 'unit + text' format
                     } else {
-                        altExtentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
-                        altExtentJS.put("number", "0");
-                        altExtentJS.put("container_summary", structuredExtent.getString("extent")); 
-                        errors.add("there was an alt extent statment that couldn't be parsed into 'number + unit' format: " + structuredExtent.getString("extent"));
+                        String extentString = structuredExtent.getString("extent");
+                        if(!extentString.equals("")){
+                            altExtentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
+                            altExtentJS.put("number", "0");
+                            altExtentJS.put("container_summary", structuredExtent.getString("extent")); 
+                            errors.add("there was an alt extent statment that couldn't be parsed into 'number + unit' format: " + structuredExtent.getString("extent"));
+                        } else {
+                            continue;
+                        }
                     }
                     allExtents.put(altExtentJS);
                 }
@@ -1545,10 +1550,10 @@ public class ASpaceMapper {
                 for (String error : errors){
                     message += error +"\n";
                 }
-                    if(aspaceCopyUtil != null){
-                        aspaceCopyUtil.addErrorMessage(message); 
-                    } else {
-                        System.out.println(message);
+                if(aspaceCopyUtil != null){
+                    aspaceCopyUtil.addErrorMessage(message); 
+                } else {
+                    System.out.println(message);
                 }
             }
         } else {
