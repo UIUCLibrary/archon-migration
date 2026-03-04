@@ -1541,13 +1541,14 @@ public class ASpaceMapper {
                 }
             }
             if ( ! errors.isEmpty()){
+                String message = String.format("\nAlt Extent error(s) for Collection %s, Archon ID %s (%s):\n", collectionIdentifier, archonID, altExtent);
                 for (String error : errors){
-                    String message = String.format("Alt Extent error (%s): %s. Collection %s, Archon ID %s", altExtent, error, collectionIdentifier, archonID);
+                    message += error +"\n";
+                }
                     if(aspaceCopyUtil != null){
                         aspaceCopyUtil.addErrorMessage(message); 
                     } else {
                         System.out.println(message);
-                    }
                 }
             }
         } else {
