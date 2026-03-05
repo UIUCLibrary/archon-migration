@@ -3325,6 +3325,24 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // since this should never occur in a properly formatted AT database
         if(repoID != null && !repoID.isEmpty() && repositoryURIMap.containsKey(repoID)) {
             return repositoryURIMap.get(repoID);
+        } else if(repositoryURIMap.size()>1){
+            Integer minRepoKey = null;
+            for (String repoKey : repositoryURIMap.keySet()) {
+                try {
+                    int repoKeyVal = Integer.parseInt(repoKey);
+                    if (minRepoKey == null || repoKeyVal < minRepoKey) {
+                        minRepoKey = repoKeyVal;
+                    }
+                } catch(Exception e){
+                    continue;
+                }
+            }
+            if(minRepoKey != null){
+                repoID = String.valueOf(minRepoKey);
+                return repositoryURIMap.get(repoID);
+            } else {
+                return "/repositories/2";
+            }
         } else {
             return "/repositories/2";
         }
