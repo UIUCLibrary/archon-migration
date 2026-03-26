@@ -1950,16 +1950,38 @@ public class ASpaceMapper {
         addMultipartNote(notesJA, "custodhist", "Custodial History", record.getString("CustodialHistory"));
 
 //        noteContent = record.getString("OrigCopiesNote") + "\n\n" + record.get("OrigCopiesURL");
-        if (!record.getString("OrigCopiesURL").isEmpty()) {
-            noteContent = "<a href=\"" + record.getString("OrigCopiesURL") + "\">" + record.getString("OrigCopiesNote") + "</a>";
-        } else {
-            noteContent = record.getString("OrigCopiesNote");
+        noteContent = record.getString("OrigCopiesNote");        
+        if (!record.getString("OrigCopiesURL").isEmpty()) { 
+            String labelOrigCopiesURL = "View more information about these materials";
+            if(!record.getString("OrigCopiesNote").isEmpty()){
+                if(!record.getString("OrigCopiesNote").contains("\n\t") && !record.getString("OrigCopiesNote").contains("[url=") && !record.getString("OrigCopiesNote").contains("<extref href=")){
+                    //if no line breaks or internal URLs, use the full note as the URL label
+                    labelOrigCopiesURL = record.getString("OrigCopiesNote");
+                    noteContent = "";
+                } else {
+                    //otherwise, add a line break between the note and the url to be added
+                    noteContent += "\n\n";
+                }
+                noteContent += "<extref href=\"" + record.getString("OrigCopiesURL") + "\">" + labelOrigCopiesURL + "</extref>";
+            }
         }
         addMultipartNote(notesJA, "originalsloc", "Existence and Location of Originals", noteContent);
 
 //        noteContent = record.getString("RelatedMaterials") + "\n\n" + record.get("RelatedMaterialsURL");
+        noteContent = record.getString("RelatedMaterials");
         if (!record.getString("RelatedMaterialsURL").isEmpty()) {
-            noteContent = "<a href=\"" + record.getString("RelatedMaterialsURL") + "\">" + record.getString("RelatedMaterials") + "</a>";
+            String labelRelatedMaterialsURL = "View more information about these related materials";
+            if(!record.getString("RelatedMaterials").isEmpty()){
+                if(!record.getString("RelatedMaterials").contains("\n\t") && !record.getString("RelatedMaterials").contains("[url=") && !record.getString("RelatedMaterials").contains("<extref href=")){
+                    //if no line breaks or internal URLs, use the full note as the URL label
+                    labelRelatedMaterialsURL = record.getString("RelatedMaterials");
+                    noteContent = "";
+                } else {
+                    //otherwise, add a line break between the note and the url to be added
+                    noteContent += "\n\n";
+                }
+                noteContent += "<extref href=\"" + record.getString("RelatedMaterialsURL") + "\">" + labelRelatedMaterialsURL + "</extref>";
+            }
         } else {
             noteContent = record.getString("RelatedMaterials");
         }
