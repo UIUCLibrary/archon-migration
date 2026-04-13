@@ -3712,19 +3712,26 @@ public class ASpaceCopyUtil implements  PrintConsole {
     /**
      * Method to return the keys in inverted order. Used to correctly assign creator
      * relationships, otherwise a relationship is created to an agent that's not yet created
+     * Sorts those records coming from subject records last in the array since they likely
+     * have less information than the creator records.
      *
      * @param records
      * @return
      */
     private String[] getKeysInInvertedOrder(JSONObject records) {
-        String[] invertedKeys = new String[records.length()];
-        int start = records.length() - 1;
-
-        Iterator<String> keys = records.sortedKeys();
+        Iterator<String> keys = records.keys();
+        
+        List<String> keyList = new ArrayList<>();
         while (keys.hasNext()) {
-            invertedKeys[start] = keys.next();
-            start--;
+            keyList.add(keys.next());
         }
+        
+        keyList.sort(
+            Comparator.comparing((String k) -> k.startsWith("subject"))
+              .thenComparing(Comparator.reverseOrder())
+        );
+
+        String[] invertedKeys = keyList.toArray(new String[0]);
 
         return invertedKeys;
     }
