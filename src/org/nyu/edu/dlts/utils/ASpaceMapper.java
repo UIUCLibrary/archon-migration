@@ -491,7 +491,7 @@ public class ASpaceMapper {
 
         // add the biog-history note to the agent object
         if(record.has("BiogHist") && !record.getString("BiogHist").isEmpty()) {
-            addBiologicalHistoryNote(agentJS, record, creatorTypeId);
+            addBiographicalHistoryNote(agentJS, record, creatorTypeId);
         }
 
         // add the agent date
@@ -871,7 +871,7 @@ public class ASpaceMapper {
      * @param creatorTypeId
      * @throws Exception
      */
-    public void addBiologicalHistoryNote(JSONObject agentJS, JSONObject record, int creatorTypeId) throws Exception {
+    public void addBiographicalHistoryNote(JSONObject agentJS, JSONObject record, int creatorTypeId) throws Exception {
         JSONArray notesJA = new JSONArray();
         JSONObject noteJS = new JSONObject();
 
