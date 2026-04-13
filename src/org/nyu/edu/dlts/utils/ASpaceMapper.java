@@ -92,6 +92,9 @@ public class ASpaceMapper {
     private Boolean convertOpenEndDate = true;
     private int defaultOpenEndDate = 2025;
 
+    //whether to add a creator's archon id as a note
+    private Boolean addNoteForCreatorArchonID = true;
+
     /**
      *  Main constructor
      */
@@ -601,6 +604,13 @@ public class ASpaceMapper {
 
         agentJS.put("names", namesJA);
 
+        //add an unpublished note with the archon record id since aspace 2.6 doesn't save external ids for agents
+        if(addNoteForCreatorArchonID){
+            String legacyIDString = "Archon Instance::Creator Record ID " + record.getInt("ID");
+            if(identifierPrefix != null && !identifierPrefix.isEmpty()) legacyIDString = identifierPrefix + " " + legacyIDString;
+            addAgentNote(agentJS, "Legacy Archon ID", legacyIDString, false);
+        }
+
         return agentJS;
     }
 
@@ -872,7 +882,8 @@ public class ASpaceMapper {
      * @throws Exception
      */
     public void addBiographicalHistoryNote(JSONObject agentJS, JSONObject record, int creatorTypeId) throws Exception {
-        JSONArray notesJA = new JSONArray();
+        JSONArray notesJA = (agentJS.has("notes")) ? agentJS.getJSONArray("notes") : new JSONArray();
+
         JSONObject noteJS = new JSONObject();
 
         noteJS.put("jsonmodel_type", "note_bioghist");
@@ -930,6 +941,38 @@ public class ASpaceMapper {
             subnoteJS.put("publish", publishRecord);
             subnotesJA.put(subnoteJS);
         }
+
+        noteJS.put("subnotes", subnotesJA);
+        notesJA.put(noteJS);
+        agentJS.put("notes", notesJA);
+    }
+
+    /**
+     * Method to add a general note to the agent. Putting into the biohist field with an appropriate label
+     * because no other note fields are available in version 2.6 for agents.
+     * 
+     * @param agentJS
+     * @param agentNoteLabel
+     * @param agentNoteText
+     * @param publishAgentNote
+     * @throws Exception
+     */
+    private void addAgentNote(JSONObject agentJS, String agentNoteLabel, String agentNoteText, Boolean publishAgentNote) throws Exception {
+        JSONArray notesJA = (agentJS.has("notes")) ? agentJS.getJSONArray("notes") : new JSONArray();
+        JSONObject noteJS = new JSONObject();
+
+        noteJS.put("jsonmodel_type", "note_bioghist");
+        noteJS.put("label", agentNoteLabel);
+        noteJS.put("publish", publishAgentNote);
+
+        JSONArray subnotesJA = new JSONArray();
+
+        JSONObject textNoteJS = new JSONObject();
+        textNoteJS.put("jsonmodel_type", "note_text");
+        textNoteJS.put("publish", publishAgentNote);
+        textNoteJS.put("content", agentNoteText);
+        
+        subnotesJA.put(textNoteJS);
 
         noteJS.put("subnotes", subnotesJA);
         notesJA.put(noteJS);
