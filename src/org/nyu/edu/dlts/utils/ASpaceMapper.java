@@ -92,6 +92,9 @@ public class ASpaceMapper {
     private Boolean convertOpenEndDate = true;
     private int defaultOpenEndDate = 2025;
 
+    //whether donor notes in archon should be added to the accession rather than the donor record
+    private Boolean addDonorNotesToAccession = true;
+
     /**
      *  Main constructor
      */
@@ -649,7 +652,7 @@ public class ASpaceMapper {
 
             contactsJS.put("name", sortName);
             contactsJS.put("address_1", record.get("DonorContactInformation"));
-            contactsJS.put("note", record.get("DonorNotes"));
+            if(!addDonorNotesToAccession) contactsJS.put("note", record.get("DonorNotes"));
 
             contactsJA.put(contactsJS);
             agentJS.put("agent_contacts", contactsJA);
@@ -759,7 +762,39 @@ public class ASpaceMapper {
 
         json.put("condition_description", record.get("PhysicalDescription"));
 
-        json.put("general_note", record.get("Comments"));
+        String accessionNoteString = "";
+        if(addDonorNotesToAccession){
+            if(record.has("Comments") && !record.getString("Comments").equals("")) {
+                accessionNoteString = "Comments: " + record.getString("Comments");
+                if(record.has("DonorNotes") && !record.getString("DonorNotes").equals("")) accessionNoteString += "; ";
+            }
+            if(record.has("DonorNotes") && !record.getString("DonorNotes").equals("")){
+                if(record.has("Donor") && !record.getString("Donor").equals("")) {
+                    accessionNoteString += "Donor Notes (for " + record.getString("Donor") + "): ";
+                } else {
+                    accessionNoteString += "Donor Notes: ";
+                }
+                accessionNoteString += record.getString("DonorNotes");
+            }
+            
+        } else {
+            accessionNoteString = record.getString("Comments");
+        }
+
+        //add any orphaned contact information (and/or notes, if not already added) to general note
+        if(!record.has("Donor") || record.getString("Donor").equals("")){
+            if(record.has("DonorContactInformation") && !record.getString("DonorContactInformation").equals("")){
+                if(!accessionNoteString.equals("")) accessionNoteString += "; ";
+                accessionNoteString += "Donor contact information: " + record.getString("DonorContactInformation");
+            }
+            //also add any orphaned donor notes here, if not added earlier
+            if(!addDonorNotesToAccession && record.has("DonorNotes") && !record.getString("DonorNotes").equals("")){
+                if(!accessionNoteString.equals("")) accessionNoteString += "; ";
+                accessionNoteString += "Donor notes: " + record.getString("DonorNotes");
+            }
+        }
+
+        json.put("general_note", accessionNoteString);
 
         if(record.has("MaterialTypeID")) {
             json.put("resource_type", enumUtil.getASpaceAccessionType(record.getString("MaterialTypeID")));
