@@ -280,6 +280,12 @@ public class ArchonRecordInspector {
                 try {
                     JSONObject convertedAccession  = mapper.convertAccession(recordJS);
                     System.out.println(convertedAccession.toString(2));
+
+                    if(recordJS.has("Donor") && !recordJS.getString("Donor").isEmpty()){
+                    JSONObject convertedDonor = mapper.convertAccessionDonor(recordJS);
+                        System.out.println("Donor agent record:");
+                    System.out.println(convertedDonor.toString(2));
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
