@@ -1,6 +1,5 @@
 package org.nyu.edu.dlts.utils;
 
-import org.apache.commons.lang.WordUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -9,6 +8,8 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,6 +36,8 @@ public class ASpaceMapper {
     private HashSet<String> resourceIDs = new HashSet<String>();
     private HashSet<String> eadIDs = new HashSet<String>();
 
+    private final String[] aSpaceExtents = enumUtil.getAllASpaceExtentTypes();
+
     // variable to keep track of filenames and their ids to make sure we have unique names
     private HashSet<String> digitalObjectFilenames = new HashSet<String>();
     private HashMap<String, String> fileIDsToFilenamesMap = new HashMap<String, String>();
@@ -55,6 +58,11 @@ public class ASpaceMapper {
     // date formatter used to convert date string to date object
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
 
+    //default date string for use when there is no other date to use for the collection record
+    private String defaultDateExpression = "Unidentified date";
+    //default date type
+    private String defaultDateLabel = "other";
+
     // booleans used to convert some bbcode to html or blanks
     private boolean bbcodeToHTML = false;
     private boolean bbcodeToBlank = true;
@@ -62,8 +70,27 @@ public class ASpaceMapper {
     // boolean to specify whether to publish the notes
     private Boolean publishRecord = false;
 
+    // boolean to specify whether processed accessions should be unpublished
+    private Boolean unpublishProcessedAccessions = true;
+
     // variable to store the base uri for digital objects
     private String digitalObjectBaseURI = "";
+
+    // boolean to determine whether the sources field on admin history for corporate creators should be set as a note type of "abstract" instead of the default of "citation"
+    private Boolean setCorpCreatorHistSourceAsAbstract = false;
+    
+    // boolean to specify whether the digital file name should be the digital component title
+    private Boolean useFileNameAsDigitalComponentTitle = true;
+
+    //for appending to ids to aid in testing
+    private String appendTestIdentifier = "";
+    
+    //prefix to add before identifier to make unique when combining multiple instances of Archon
+    private String identifierPrefix = "";
+
+    //whether to convert 9999 dates
+    private Boolean convertOpenEndDate = true;
+    private int defaultOpenEndDate = 2025;
 
     /**
      *  Main constructor
@@ -103,12 +130,59 @@ public class ASpaceMapper {
     }
 
     /**
+     * Method to set the default date expression and label (for when there is no date)
+     *
+     * @param defaultDateExpression
+     * @param defaultDateLabel
+     */
+    public void setDefaultDateOptions(String dateExpression, String dateLabel) {
+        if(!defaultDateExpression.isEmpty()) defaultDateExpression = dateExpression;
+        if(!defaultDateLabel.isEmpty()) defaultDateLabel = dateLabel;
+    }
+
+    /**
      * Method to set the base URI for digital objects
      *
      * @param baseURI
      */
     public void setDigitalObjectBaseURI(String baseURI) {
         digitalObjectBaseURI = baseURI;
+    }
+
+    /**
+     * Method to set whether the digital object component title should be the file name
+     *
+     * @param option
+     */
+    public void setUseFileNameAsDigitalComponentTitle(Boolean option) {
+        useFileNameAsDigitalComponentTitle = option;
+    }
+
+    /**
+     * Method to set a string to create unique identifiers for testing
+     *
+     * @param testString
+     */
+    public void setAppendTestIdentifier(String testString) {
+        appendTestIdentifier = "_" + testString;
+    }
+
+    /** 
+     * Method to set the identifier prefix for collections
+     *
+     * @param prefix
+     */
+    public void setIdentifierPrefix(String prefix) {
+        identifierPrefix = prefix;
+    }
+
+    /**
+     * Method to get the identifier prefix for collections
+     *
+     * @return
+     */
+    public String getIdentifierPrefix() {
+        return identifierPrefix;
     }
 
     /**
@@ -183,6 +257,12 @@ public class ASpaceMapper {
             // need to add other to extent unit type enum list
             if (endpoint.contains("extentunits")) {
                 valuesJA.put(ASpaceEnumUtil.UNMAPPED);
+            }
+
+            // need to add default to processing priorities enum list
+            if (endpoint.contains("processingpriorities")) {
+                valuesJA.put("default");
+                count++;
             }
 
 
@@ -402,7 +482,8 @@ public class ASpaceMapper {
 
         agentJS.put("vocabulary", vocabularyURI);
 
-        agentJS.put("publish", true);
+        publishRecord = true; //all creators are public in Archon
+        agentJS.put("publish", publishRecord);
 
         // hold name information
         JSONArray namesJA = new JSONArray();
@@ -417,9 +498,27 @@ public class ASpaceMapper {
         if(record.has("Dates") && !record.getString("Dates").isEmpty()) {
             JSONArray datesJA = new JSONArray();
             JSONObject dateJS = new JSONObject();
-            dateJS.put("date_type", "single");
+            String creatorDates = record.getString("Dates");
+
+            //check date expression for date type and begin/end dates
+            HashMap<String, Integer> normalDate = getNormalDate(creatorDates);
+            if(!normalDate.isEmpty()){
+                Integer dateBegin = normalDate.get("start");
+                Integer dateEnd = normalDate.get("end");
+                if(dateBegin < dateEnd){
+                    dateJS.put("begin", dateBegin.toString());
+                    dateJS.put("end", dateEnd.toString());
+                    dateJS.put("date_type", "range");
+                } else {
+                    dateJS.put("begin", dateBegin.toString());
+                    dateJS.put("date_type", "single");
+                }
+            } else {
+                dateJS.put("date_type", "single");
+            }
+            
             dateJS.put("label", "existence");
-            dateJS.put("expression", record.get("Dates"));
+            dateJS.put("expression", creatorDates);
             datesJA.put(dateJS);
             agentJS.put("dates_of_existence", datesJA);
         }
@@ -478,6 +577,26 @@ public class ASpaceMapper {
             }
 
             namesJA.put(namesVariantJS);
+        }
+
+        // check corporate and family names for additional variants in the fuller name field
+        if(creatorTypeId == 20 || creatorTypeId == 22){
+            if(record.has("NameFullerForm") && !record.getString("NameFullerForm").isEmpty()) {
+                String nameFuller = record.getString("NameFullerForm");
+
+                JSONObject nameFullerJS = new JSONObject();
+
+                nameFullerJS.put("name_order", "direct");
+                nameFullerJS.put("sort_name", nameFuller);
+
+                if(namesJS.has("primary_name")) {
+                    nameFullerJS.put("primary_name", nameFuller);
+                } else {
+                    nameFullerJS.put("family_name", nameFuller);
+                }
+
+                namesJA.put(nameFullerJS);
+            }
         }
 
         agentJS.put("names", namesJA);
@@ -549,19 +668,27 @@ public class ASpaceMapper {
     public JSONObject convertClassification(JSONObject record) throws Exception {
         // Main json object
         JSONObject json = new JSONObject();
+        String classificationIdentifier = record.getString("ClassificationIdentifier");
 
         // set the model type
         if(record.getString("ParentID").equals("0")) {
             json.put("jsonmodel_type", "classification");
+            //add identifier prefix for the parent classification
+            classificationIdentifier = identifierPrefix + " " + classificationIdentifier;
         } else {
             json.put("jsonmodel_type", "classification_term");
             /*TODO 10/8/2015 Below code causes bug in ASpace v1.4.0*/
             //json.put("position", record.getInt("Position"));
+            try {
+                json.put("position", Integer.parseInt((String)record.get("ClassificationIdentifier")));
+            } catch (NumberFormatException e) {}
         }
 
-        json.put("identifier", record.get("ClassificationIdentifier"));
+        json.put("identifier", classificationIdentifier);
         json.put("title", record.get("Title"));
-        json.put("description", record.get("Description"));
+        if(record.has("Description") && !record.isNull("Description")){
+            json.put("description", bbCodeToHtmlLinks(record.getString("Description")));
+        }
 
         return json;
     }
@@ -588,8 +715,19 @@ public class ASpaceMapper {
         String id_0 = record.getString("Identifier");
         String id_1 = getUniqueID(ASpaceClient.ACCESSION_ENDPOINT, id_0, null, title);
 
+        String id_2 = "";
+        if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+            id_2 = id_1;
+            id_1 = id_0;
+            id_0 = identifierPrefix;
+        }
+
         if (makeUnique) {
             id_0 = randomStringLong.nextString();
+        }
+
+        if(!appendTestIdentifier.isEmpty()){
+            id_0 += appendTestIdentifier;
         }
 
         Date date = getDate(record.getString("AccessionDate"));
@@ -599,7 +737,11 @@ public class ASpaceMapper {
             date = getDate("99990101");
 
             // add an error message about this
-            String message = "Invalid Accession Date for" + id_0 + "\n";
+            String accessionIdentifier = id_0;
+            if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+                accessionIdentifier += "." + id_1;
+            }
+            String message = "Invalid Accession Date for" + accessionIdentifier + "\n";
             aspaceCopyUtil.addErrorMessage(message);
         }
 
@@ -608,7 +750,10 @@ public class ASpaceMapper {
         json.put("accession_date", date);
 
         json.put("id_0", id_0);
-        json.put("id_1", id_1); // This is only used to make sure the ids are unique
+        json.put("id_1", id_1); // This is only used to make sure the ids are unique (when identifier prefix is not used)
+        if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+            json.put("id_2", id_2); // This is only used to make sure the ids are unique (when identifier prefix is used)
+        }
 
         json.put("content_description", record.get("ScopeContent"));
 
@@ -617,31 +762,51 @@ public class ASpaceMapper {
         json.put("general_note", record.get("Comments"));
 
         if(record.has("MaterialTypeID")) {
-            json.put("resource_type", enumUtil.getASpaceResourceType(record.getString("MaterialTypeID")));
+            json.put("resource_type", enumUtil.getASpaceAccessionType(record.getString("MaterialTypeID")));
         }
 
         /* add linked records (extents, dates, rights statement)*/
 
         // add the extent array containing one object or many depending if we using multiple extents
-        if(record.has("ReceivedExtent") && record.getDouble("ReceivedExtent") != 0) {
+        if(record.has("ReceivedExtent") || record.has("UnprocessedExtent")) {
             JSONArray extentJA = new JSONArray();
-            JSONObject extentJS = new JSONObject();
 
-            extentJS.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ReceivedExtentUnitID")));
-            extentJS.put("number", record.getString("ReceivedExtent"));
-            extentJS.put("portion", "whole");
-            extentJS.put("container_summary", "Received Extent");
+            if(record.has("ReceivedExtent") && record.getDouble("ReceivedExtent") != 0){
+                JSONObject extentJS = new JSONObject();
 
-            extentJA.put(extentJS);
+                extentJS.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ReceivedExtentUnitID")));
+                extentJS.put("number", record.getString("ReceivedExtent"));
+                extentJS.put("portion", "whole");
+                extentJS.put("container_summary", "Received Extent");
+
+                extentJA.put(extentJS);
+            }
+
+            if(record.has("UnprocessedExtent")){
+                JSONObject unprocExtentJS = new JSONObject();
+
+                unprocExtentJS.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("UnprocessedExtentUnitID")));
+                unprocExtentJS.put("number", record.getString("UnprocessedExtent"));
+                unprocExtentJS.put("portion", "whole");
+                unprocExtentJS.put("container_summary", "Unprocessed Extent");
+
+                extentJA.put(unprocExtentJS);
+            }
+
             json.put("extents", extentJA);
         }
 
+
         // add the inclusive dates
-        addDate(record.getString("InclusiveDates"), json, "inclusive", "other");
+        addDate(record.getString("InclusiveDates"), json, "inclusive", "creation");
 
         // add the collection management record now
-        if(record.has("ExpectedCompletionDate") && !record.getString("ExpectedCompletionDate").isEmpty()) {
+        if((record.has("ExpectedCompletionDate") && !record.getString("ExpectedCompletionDate").isEmpty()) || (record.has("UnprocessedExtent") && record.getDouble("UnprocessedExtent")== 0) || record.has("ProcessingPriorityID")) {
             addCollectionManagementRecord(record, json);
+        }
+
+        if(unpublishProcessedAccessions && (record.has("UnprocessedExtent") && record.getDouble("UnprocessedExtent")== 0)){
+            json.put("publish", false);
         }
 
         /*
@@ -682,10 +847,16 @@ public class ASpaceMapper {
         // Main json object
         JSONObject json = new JSONObject();
 
-        json.put("processing_plan", "Expected Completion Date: " + record.get("ExpectedCompletionDate"));
+        if(record.has("ExpectedCompletionDate")){
+            json.put("processing_plan", "Expected Completion Date: " + record.get("ExpectedCompletionDate"));
+        }
 
-        if (record.has("ProcessingPriorityID")) {
+        if (record.has("ProcessingPriorityID") && record.getInt("ProcessingPriorityID") != 0) {
             json.put("processing_priority", enumUtil.getASpaceCollectionManagementRecordProcessingPriority(record.getInt("ProcessingPriorityID")));
+        }
+
+        if(record.has("UnprocessedExtent") && record.getDouble("UnprocessedExtent") == 0){
+            json.put("processing_status","completed");
         }
 
         recordJS.put("collection_management", json);
@@ -705,7 +876,27 @@ public class ASpaceMapper {
         JSONObject noteJS = new JSONObject();
 
         noteJS.put("jsonmodel_type", "note_bioghist");
-        noteJS.put("label", "biographical statement");
+        String noteLabel = "";
+        switch (creatorTypeId) {
+            case 19:
+            case 21:
+            case 23:
+                //personal name
+                noteLabel = "Biographical Note";
+                break;
+            case 20:
+                //family name
+                noteLabel = "Family History";
+                break;
+            case 22:
+                //corporate body
+                noteLabel = "Historical Note";
+                break;
+            default:
+                noteLabel = "Historical Note";
+        }
+        noteJS.put("label", noteLabel);
+        noteJS.put("publish", publishRecord);
 
         JSONArray subnotesJA = new JSONArray();
 
@@ -718,23 +909,25 @@ public class ASpaceMapper {
             JSONObject citationJS = new JSONObject();
             citationJS.put("jsonmodel_type", "note_citation");
             JSONArray contentJA = new JSONArray();
-            contentJA.put("Author: " + record.get("BiogHistAuthor"));
+            contentJA.put("Author: " + bbCodeToHtmlLinks((String)record.get("BiogHistAuthor")));
             citationJS.put("content", contentJA);
+            citationJS.put("publish", publishRecord);
             subnotesJA.put(citationJS);
         }
 
         // add the subnote which hold the source information
         if(!record.getString("Sources").isEmpty()) {
             String noteType = "note_citation";
-            if(creatorTypeId == 22) {
+            if(creatorTypeId ==  22 && setCorpCreatorHistSourceAsAbstract) {
                 noteType = "note_abstract";
             }
 
             JSONObject subnoteJS = new JSONObject();
             subnoteJS.put("jsonmodel_type", noteType);
             JSONArray contentJA = new JSONArray();
-            contentJA.put(record.get("Sources"));
+            contentJA.put(bbCodeToHtmlLinks((String)record.get("Sources")));
             subnoteJS.put("content", contentJA);
+            subnoteJS.put("publish", publishRecord);
             subnotesJA.put(subnoteJS);
         }
 
@@ -761,7 +954,7 @@ public class ASpaceMapper {
         String title = record.getString("Title");
         json.put("title", title);
 
-        boolean dateAdded = addDate(record.getString("Date"), json, null, "digitized");
+        boolean dateAdded = addDate(record.getString("Date"), json, null, "creation");
 
         // need to add title if no date or title
         if(title.isEmpty() && !dateAdded) {
@@ -801,22 +994,34 @@ public class ASpaceMapper {
 
         json.put("publish", publishRecord);
 
+        String archonFileTitle = record.getString("Title");
+        String archonFileName = record.getString("Filename");
+
         /* add the fields required for abstract_archival_object.rb */
-        String title = record.getString("Title");
-        json.put("title", fixEmptyString(title));
+        if(useFileNameAsDigitalComponentTitle){
+            json.put("title", fixEmptyString(archonFileName));
+        } else {
+            json.put("title", fixEmptyString(archonFileTitle));
+        }
 
         /* add fields required for digital object component*/
         JSONArray fileVersionsJA = new JSONArray();
         addFileVersion(fileVersionsJA, record, "Digital Object Component");
         json.put("file_versions", fileVersionsJA);
 
-        String label = title;
-        json.put("label", label);
+        if(useFileNameAsDigitalComponentTitle && !archonFileTitle.equalsIgnoreCase(archonFileName)){
+            json.put("label", archonFileTitle);
+        } else {
+            json.put("label", "");
+        }
 
         json.put("position", record.getInt("DisplayOrder"));
 
-        json.put("component_id", fixEmptyString(record.getString("ID"), "ID_" + randomString.nextString()));
-
+        if(appendTestIdentifier.isEmpty()){
+            json.put("component_id", fixEmptyString(record.getString("ID"), "ID_" + randomString.nextString()));
+        } else {
+            json.put("component_id", fixEmptyString(record.getString("ID") + appendTestIdentifier, "ID_" + randomString.nextString() + appendTestIdentifier));
+        }
         return json;
     }
 
@@ -830,9 +1035,10 @@ public class ASpaceMapper {
             JSONObject fileVersionJS = new JSONObject();
 
             fileVersionJS.put("file_uri", record.getString("ContentURL"));
-            fileVersionJS.put("use_statement", "image-master");
+            //fileVersionJS.put("use_statement", "image-master");
             fileVersionJS.put("xlink_actuate_attribute", "none");
             fileVersionJS.put("xlink_show_attribute", "none");
+            fileVersionJS.put("publish", publishRecord);
 
             fileVersionsJA.put(fileVersionJS);
         } else if(record.has("Filename") && !record.getString("Filename").isEmpty()) {
@@ -840,11 +1046,17 @@ public class ASpaceMapper {
 
             JSONObject fileVersionJS = new JSONObject();
             fileVersionJS.put("file_uri", digitalObjectBaseURI + filename);
-            fileVersionJS.put("use_statement", "image-master");
+            //fileVersionJS.put("use_statement", "image-master");
             fileVersionJS.put("xlink_actuate_attribute", "none");
             fileVersionJS.put("xlink_show_attribute", "none");
-            fileVersionJS.put("file_format_name", record.get("FileTypeID"));
+            fileVersionJS.put("file_format_name", enumUtil.getASpaceFileType(record.getInt("FileTypeID")));
             fileVersionJS.put("file_size_bytes", NumberUtils.toInt((String) record.get("Bytes"), 0));
+            if(record.has("AccessLevel") && record.getInt("AccessLevel") == 0){
+                //if AccessLevel in archon is 0, then there is no access to the file
+                fileVersionJS.put("publish", false);
+            } else {
+                fileVersionJS.put("publish", publishRecord);
+            }
 
             fileVersionsJA.put(fileVersionJS);
         } else {
@@ -921,8 +1133,11 @@ public class ASpaceMapper {
 
         json.put("title", title);
 
-        // add the language code
-        json.put("language", getLanguageCode(null, "eng"));
+        // add English as the default language code if no language specified in Archon
+        // (otherwise, add language later using a language of materials note)
+        if(!record.has("Languages") || record.getJSONArray("Languages").length() == 0){
+            json.put("language", getLanguageCode(null, "eng"));
+        }
 
         // add the extent array containing one object or many depending if we using multiple extents
         addResourceExtent(record, json);
@@ -947,7 +1162,8 @@ public class ASpaceMapper {
             while (resourceIDs.contains(id)) {
                 id = "##" + randomString.nextString();
             }
-            aspaceCopyUtil.addErrorMessage("Empty collection ID. Changed to " + id + "\n");
+            String archonID = record.getString("ID");
+            aspaceCopyUtil.addErrorMessage("Empty collection ID for collection with Archon ID " + archonID + ". Changed to " + id + "\n");
         }
 
         String classificationID = record.getString("ClassificationID");
@@ -963,11 +1179,20 @@ public class ASpaceMapper {
             cId = classificationParents.get(cId);
         }
 
-        idParts[0] = fullId.pop();
-        if (!fullId.isEmpty()) idParts[1] = fullId.pop();
-        if (!fullId.isEmpty()) idParts[2] = fullId.pop();
-        while (fullId.size() > 1) idParts[2] += "-" + fullId.pop();
-        if (!fullId.isEmpty()) idParts[3] = fullId.pop();
+        //if there is an identifier prefix, add it to the front of the existing identifier
+        if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+            idParts[0] = identifierPrefix;
+            idParts[1] = fullId.pop();
+            if (!fullId.isEmpty()) idParts[2] = fullId.pop();
+            while (fullId.size() > 1) idParts[2] += "-" + fullId.pop();
+            if (!fullId.isEmpty()) idParts[3] = fullId.pop();
+        } else {
+            idParts[0] = fullId.pop();
+            if (!fullId.isEmpty()) idParts[1] = fullId.pop();
+            if (!fullId.isEmpty()) idParts[2] = fullId.pop();
+            while (fullId.size() > 1) idParts[2] += "-" + fullId.pop();
+            if (!fullId.isEmpty()) idParts[3] = fullId.pop();
+        }
 
         // make sure the id is unique
         getUniqueID(ASpaceClient.RESOURCE_ENDPOINT, "", idParts, title);
@@ -978,6 +1203,10 @@ public class ASpaceMapper {
             idParts[1] = randomString.nextString();
             idParts[2] = randomString.nextString();
             idParts[3] = randomString.nextString();
+        }
+
+        if(!appendTestIdentifier.isEmpty()){
+            idParts[0] += appendTestIdentifier;
         }
 
         json.put("id_0", idParts[0]);
@@ -1000,17 +1229,30 @@ public class ASpaceMapper {
 
         // add fields for EAD
         json.put("ead_id", concatIdParts(idParts));
-        json.put("ead_location", "Archon Finding Aid location");
-        json.put("finding_aid_title", "Archon Finding Aid Title");
+        String findingAidTitle = "Guide to the " + title;
+        if(record.has("InclusiveDates")){
+            findingAidTitle += ", " + record.getString("InclusiveDates");
+        }
+        json.put("finding_aid_title", findingAidTitle);
         json.put("finding_aid_date", getHumanReadableDate(record.getString("PublicationDate")));
         json.put("finding_aid_author", record.get("FindingAidAuthor"));
 
+        String sortTitle = record.getString("SortTitle");
+        if(!sortTitle.isEmpty()){
+            json.put("finding_aid_filing_title", sortTitle);
+        }
+
         Integer descriptiveRulesID = record.getInt("DescriptiveRulesID");
-        if(descriptiveRulesID != null) {
+        if(descriptiveRulesID != null && descriptiveRulesID != 0) {
             json.put("finding_aid_description_rules", enumUtil.getASpaceFindingAidDescriptionRule(descriptiveRulesID));
         }
 
-        json.put("finding_aid_language", enumUtil.getASpaceLanguageCode(record.getString("FindingLanguageID")));
+        String findingLanguageCode = enumUtil.getASpaceLanguageCode(record.getString("FindingLanguageID"));
+        String findingScriptCode = enumUtil.getScriptCode(findingLanguageCode);
+        String findingLanguageLong = enumUtil.getLanguageLong(findingLanguageCode);
+        String findingLanguageString = "<language langcode='" + findingLanguageCode + "' scriptcode='" + findingScriptCode + "'>" + findingLanguageLong + "</language>";
+        json.put("finding_aid_language", findingLanguageString);
+        
         json.put("finding_aid_note", record.get("PublicationNote"));
 
         // add any reversion statements
@@ -1023,40 +1265,311 @@ public class ASpaceMapper {
     }
 
     /**
+     * Takes a natural language alternative extent statement that may 
+     * containt many individual extent statments seperated by an "and"
+     * a "," or a "." and splits them into individual statements
+     * 
+     * @param alternativeExtent string containing list of extent statements
+     * @return an array of extent statements
+     */
+    public String[] splitAlternativeExtent(String alternativeExtent)
+    {
+        alternativeExtent = alternativeExtent.replaceAll("^and ", "");
+        String regex = "\\s?and\\s|\\.\\s|,\\s";
+        return alternativeExtent.split(regex);
+
+    }
+
+    /**
+     * Takes a written value and returns the corresponding number as a string
+     * Examples: 
+     *  input: an => output: 1
+     *  input: seven => output: 7
+     *  input: a single => output: 1
+     * @param writtenValue
+     * @return
+     */
+    public String getNumber(String writtenValue) {
+        HashMap<String, String> numberTranslator = new HashMap<String, String>();
+        numberTranslator.put("a", "1");
+        numberTranslator.put("an", "1");
+        numberTranslator.put("a single", "1");
+        numberTranslator.put("one", "1");
+        numberTranslator.put("two", "2");
+        numberTranslator.put("three", "3");
+        numberTranslator.put("four", "4");
+        numberTranslator.put("five", "5");
+        numberTranslator.put("six", "6");
+        numberTranslator.put("seven", "7");
+        numberTranslator.put("eight", "8");
+        numberTranslator.put("nine", "9");
+        numberTranslator.put("ten", "10");
+
+        if (numberTranslator.containsKey(writtenValue)) {
+            return numberTranslator.get(writtenValue);
+        } else {
+            return "";
+        }
+        
+    }
+
+    /**
+     * This takes a natural langauge extent statement that is expected to have
+     * a single unit expressed a digits, decimal number, indefinate article, or 
+     * written number followed by a single unpunctuated string which is the unit. 
+     * If matching fails, error key is set to true and the failing string is
+     * added
+     * 
+     * @param extent a natural language extent statement 
+     * @return parsed extent as JSONObject with keys for unit, value, and error
+     * @throws JSONException
+     */
+    public JSONObject parseExtentStatement(String extent) throws JSONException
+    {
+     
+        JSONObject structuredExtent = new JSONObject();
+
+        String regex = "(^\\.\\d+|\\d+|\\d+\\.\\d+|a|an|a single|one|two|three|four|five|six|seven|eight|nine|ten)\\s([A-z\s]+)";
+
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher  = pattern.matcher(extent);
+        String unitValue;
+        JSONObject matchJsonObject;
+        String unit;
+        Boolean exactMatch = false;
+        Boolean cantParsePart = false;
+        String parsedPhrase;
+
+        //if there is a match, map the components 
+        if (matcher.find()) {
+            //use the digit form of the unit value (e.g., convert a/an/one to digits)
+            unitValue = getNumber(matcher.group(1)).isEmpty() ? matcher.group(1) : getNumber(matcher.group(1)) ;
+            
+            //get the closest matching unit and indicate if not an exact match
+            matchJsonObject = mapExtentType(matcher.group(2));
+            unit = matchJsonObject.getString("mapping");
+            exactMatch = matchJsonObject.getBoolean("exactMatch");
+
+            parsedPhrase = matcher.group(1)+" " + unit.replace("_"," ");
+            
+        } else {
+            unitValue = "";
+            unit = "";
+            cantParsePart = true;
+            parsedPhrase = "";
+        }
+
+        //check if the unit value and unit encompass the full extent statement
+        String extentRemainder = extent;
+        if(!cantParsePart){
+            extentRemainder = extent.replace(parsedPhrase,"").trim();
+        }
+
+        structuredExtent.put("unit", unit);
+        structuredExtent.put("unitValue", unitValue);
+        structuredExtent.put("exactMatch", exactMatch);
+        structuredExtent.put("extent", extent);
+        structuredExtent.put("cantParse", cantParsePart);
+        structuredExtent.put("extentRemainder", extentRemainder);
+
+        return structuredExtent;
+    }
+
+    /**
+     * This takes a natural language string and tries to find a good 
+     * match among the existing extent types. It returns a JSONObject
+     * with the best match and a score to indicate how good of a match
+     *  
+     * @param inputExtent a natural langugae expression of extent type
+     * @return
+     * @throws JSONException 
+     */
+    public JSONObject mapExtentType(String inputExtent) throws JSONException {
+        String cleanInput = inputExtent.toLowerCase().trim().replace("_", " ");
+        //all of the archon extents should have already been added to ASpace. Keeping this 
+        //here for now in case we want to test
+        ArrayList<String> allExtents = enumUtil.getAllArchonExtents();
+
+        for (String aSpaceExtent : aSpaceExtents ) {
+            allExtents.add(aSpaceExtent);
+        }
+
+        JSONObject match  = new JSONObject();
+        String mapping = "";
+        Boolean exactMatch = false;
+
+        //this is fine, but we need to flag non-exact matches
+        for (String extent : allExtents) {
+            String cleanExtent = extent.toLowerCase().replace("_", " ");
+
+            //just for debugging, know for sure what the inputs are
+            match.put("clean_input", cleanInput);
+
+            if (cleanInput.equals(cleanExtent)){
+                mapping = extent;
+                exactMatch = true;
+                break;
+            }
+
+            //this should catch most common pluralizations,
+            else if (cleanInput.contains(cleanExtent) || cleanExtent.contains(cleanInput)) {
+                //prefer the longest match, e.g. don't match "microfilm_reels" to "reel" just because "reel" comes after "microfilm_reel"
+                mapping = mapping.length() < cleanExtent.length() ? extent : mapping;
+            }
+
+        }
+
+        match.put("exactMatch", exactMatch);
+        match.put("mapping", mapping);
+        return match;
+
+    }
+
+    public JSONObject annotateParsedAltExtents(String alternativeExtent) throws JSONException {
+
+        Boolean cantParseAny = true;
+        JSONArray processedExtents = new JSONArray();
+        JSONObject altExtentJsonObject = new JSONObject();
+        
+        //get an array of all the extents listed in the alternative extent statement
+        String[] extents = splitAlternativeExtent(alternativeExtent);
+
+
+        //parse each of the extent statements into a structure extent JSONObject 
+        for (String extent : extents) {
+            JSONObject parsedExtent = parseExtentStatement(extent);
+            processedExtents.put(parsedExtent);
+
+            //update flag if the extent statement will parse
+            if ( ! parsedExtent.getBoolean("cantParse") ) {
+                cantParseAny = false;
+            }
+            
+        }
+
+        //check if the alt extent is fully in parentheses
+        Boolean allInParens = false;
+        if(alternativeExtent.trim().startsWith("(") && alternativeExtent.trim().endsWith(")")){
+            allInParens = true;
+        }
+
+        altExtentJsonObject.put("processedExtents", processedExtents);
+        altExtentJsonObject.put("cantParseAny", cantParseAny);
+        altExtentJsonObject.put("allInParens", allInParens);
+
+        return altExtentJsonObject;
+    }
+
+    /**
      * Method to add extent information
      *
      * @param record
      * @param json
      * @throws Exception
      */
-    private void addResourceExtent(JSONObject record, JSONObject json) throws Exception {
-        JSONArray extentJA = new JSONArray();
-        JSONObject extentJS = new JSONObject();
-
-        extentJS.put("portion", "whole");
-        extentJS.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ExtentUnitID")));
-
-        if (!record.getString("Extent").isEmpty()) {
-            extentJS.put("number", record.getString("Extent"));
-        } else {
-            extentJS.put("number", "0");
-        }
-
-        extentJA.put(extentJS);
-
-        // add the alternative extent statement
+    public void addResourceExtent(JSONObject record, JSONObject json) throws Exception {
+        JSONArray allExtents = new JSONArray();
+        JSONObject mainExtent = new JSONObject();
+        JSONObject parsedAltExtent = new JSONObject();
+        
+        String collectionIdentifier = record.getString("CollectionIdentifier");
+        String archonID = record.getString("ID");
         String altExtent = record.getString("AltExtentStatement");
-        if(!altExtent.isEmpty()) {
-            extentJS = new JSONObject();
 
-            extentJS.put("portion", "whole");
-            extentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
-            extentJS.put("number", altExtent);
+        if( ! altExtent.isEmpty()) {
+            // mainExtent needs to be first in the allExtents array (its data will be updated later)
+            allExtents.put(0, mainExtent);
+            
+            parsedAltExtent = annotateParsedAltExtents(altExtent);
+            JSONArray structuredExtents = parsedAltExtent.getJSONArray("processedExtents");
 
-            extentJA.put(extentJS);
+            ArrayList<String> errors = new ArrayList<>();
+
+            //case 1: couldn't parse the alt extent, so add it as a container summary to the main extent
+            //case 1b, if the alt extent is fully in parentheses and should be in the container summary
+            if (parsedAltExtent.getBoolean("cantParseAny") || parsedAltExtent.getBoolean("allInParens")) {
+                mainExtent.put("portion", "whole");
+                mainExtent.put("container_summary", altExtent);
+                if(parsedAltExtent.getBoolean("cantParseAny")){
+                errors.add( "the entire alt extent couldn't be parsed at all and was added to the main extent container_summary.");
+                }
+            } else {
+                mainExtent.put("portion", "part");
+
+                for (int i=0; i < structuredExtents.length(); i++) { 
+                    JSONObject altExtentJS = new JSONObject();
+                    altExtentJS.put("portion", "part");
+
+                    JSONObject structuredExtent = structuredExtents.getJSONObject(i);
+
+                    if ( ! structuredExtent.getString("unit").isEmpty() && ! structuredExtent.getString("unitValue").isEmpty()) {
+                        altExtentJS.put("extent_type", structuredExtent.getString("unit"));
+                        altExtentJS.put("number", structuredExtent.getString("unitValue"));
+                        
+                        //case 2: it matches through "includes" matching
+                        if ( ! structuredExtent.getBoolean("exactMatch")) {
+                            altExtentJS.put("container_summary", structuredExtent.getString("extent")); //if we don't want to include the number, use key "unit"
+                            errors.add("there was a partial match for an alt extent unit using the 'includes' method");
+                        } else {
+                            //put any remaining text in the container summary, after the exact match
+                            String extentStringRemaining = structuredExtent.getString("extentRemainder");
+                            if(extentStringRemaining.contains("()")){
+                                errors.add("check alt extent found within parenthesis, remaining text added to container summary");
+                                extentStringRemaining = extentStringRemaining.replace("()","").trim();
+                            } else if(extentStringRemaining.startsWith("; ")){
+                                errors.add("check alt extent with semicolon, remaining text added to container summary");
+                                extentStringRemaining = extentStringRemaining.substring(2);
+                            }
+                            altExtentJS.put("container_summary", extentStringRemaining);
+                        }
+                    
+                    //case 3: the extent unit didn't match anything    
+                    } else if (structuredExtent.getString("unit").isEmpty() && ! structuredExtent.getString("unitValue").isEmpty()) {
+                        altExtentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
+                        altExtentJS.put("number", structuredExtent.getString("unitValue"));
+                        altExtentJS.put("container_summary", structuredExtent.getString("extent")); //if we don't want to include the number, use key "unit"
+                        errors.add("there was no match for an alt extent unit");
+
+                    //case 4: one of the alt extent statements couldn't be parsed into 'unit + text' format
+                    } else {
+                        String extentString = structuredExtent.getString("extent");
+                        if(!extentString.equals("")){
+                            altExtentJS.put("extent_type", ASpaceEnumUtil.UNMAPPED);
+                            altExtentJS.put("number", "0");
+                            altExtentJS.put("container_summary", structuredExtent.getString("extent")); 
+                            errors.add("there was an alt extent statment that couldn't be parsed into 'number + unit' format: " + structuredExtent.getString("extent"));
+                        } else {
+                            continue;
+                        }
+                    }
+                    allExtents.put(altExtentJS);
+                }
+            }
+            if ( ! errors.isEmpty()){
+                String message = String.format("\nAlt Extent error(s) for Collection %s, Archon ID %s (%s):\n", collectionIdentifier, archonID, altExtent);
+                for (String error : errors){
+                    message += error +"\n";
+                }
+                if(aspaceCopyUtil != null){
+                    aspaceCopyUtil.addErrorMessage(message); 
+                } else {
+                    System.out.println(message);
+                }
+            }
+        } else {
+            mainExtent.put("portion", "whole");
         }
 
-        json.put("extents", extentJA);
+        mainExtent.put("extent_type", enumUtil.getASpaceExtentType(record.getInt("ExtentUnitID")));
+        if (!record.getString("Extent").isEmpty()) {
+            mainExtent.put("number", record.getString("Extent"));
+        } else {
+            mainExtent.put("number", "0");
+        }
+
+        allExtents.put(0, mainExtent);
+
+        json.put("extents", allExtents);
     }
 
     /**
@@ -1071,7 +1584,7 @@ public class ASpaceMapper {
         JSONObject dateJS = new JSONObject();
 
         dateJS.put("date_type", "single");
-        dateJS.put("label", "created");
+        dateJS.put("label", "creation");
 
         String dateExpression = record.getString("InclusiveDates");
         dateJS.put("expression", dateExpression);
@@ -1079,6 +1592,11 @@ public class ASpaceMapper {
         Integer dateBegin = convertToInteger(record.getString("NormalDateBegin"));
         Integer dateEnd = convertToInteger(record.getString("NormalDateEnd"));
 
+        if(convertOpenEndDate && dateEnd != null && dateEnd == 9999){
+            dateEnd = defaultOpenEndDate;
+        }
+
+        String archonID = record.getString("ID");//for error messages
         if (dateBegin != null) {
             dateJS.put("date_type", "inclusive");
 
@@ -1090,11 +1608,24 @@ public class ASpaceMapper {
                 } else {
                     dateJS.put("end", dateBegin.toString());
 
-                    String message = "End date: " + dateEnd + " before begin date: " + dateBegin + ", ignoring end date\n" + recordIdentifier;
-                    aspaceCopyUtil.addErrorMessage(message);
+                    String message = "End date: " + dateEnd + " before begin date: " + dateBegin + ", ignoring end date. Archon ID" + archonID;
+                    if(aspaceCopyUtil != null){
+                        aspaceCopyUtil.addErrorMessage(message);
+                    } else {
+                        System.out.println(message);
+                    }
                 }
             } else {
                 dateJS.put("end", dateBegin.toString());
+            }
+        } else {
+            if(addNormalDateFromExpression(dateExpression, dateJS)){
+                String message = "No normal date for record with Archon ID "+ archonID + "; adding calculated normal date using date expression " + dateExpression;
+                if(aspaceCopyUtil != null){
+                    aspaceCopyUtil.addChangeMessage(message);
+                } else {
+                    System.out.println(message);
+                }
             }
         }
 
@@ -1110,7 +1641,7 @@ public class ASpaceMapper {
 
             dateJS.put("date_type", "bulk");
 
-            dateJS.put("label", "other");
+            dateJS.put("label", "creation");
 
             dateExpression = bulkDates;
             dateJS.put("expression", dateExpression);
@@ -1119,6 +1650,7 @@ public class ASpaceMapper {
         }
 
         // add the acquisition date
+        /** 
         String acquisitionDate = record.getString("AcquisitionDate");
         if(!acquisitionDate.isEmpty()) {
             dateJS = new JSONObject();
@@ -1136,18 +1668,18 @@ public class ASpaceMapper {
 
             dateJA.put(dateJS);
         }
+        */
 
-        // it is still possible to get to this point without any dates so just hard a dummy
+        // it is still possible to get to this point without any dates so just add a dummy
         // date so that the record can be saved.
         if(dateJA.length() == 0) {
             dateJS = new JSONObject();
 
             dateJS.put("date_type", "single");
 
-            dateJS.put("label", "other");
+            dateJS.put("label", defaultDateLabel);
 
-            dateExpression = "Dummy Date";
-            dateJS.put("expression", dateExpression);
+            dateJS.put("expression", defaultDateExpression);
 
             dateJA.put(dateJS);
         }
@@ -1165,7 +1697,13 @@ public class ASpaceMapper {
         if(revisionHistory.isEmpty()) return;
 
         JSONObject revisionStatementJS = new JSONObject();
-        revisionStatementJS.put("date", "09099999");
+        String revisionDate = "Undated";
+        //find the normal dates (year only) from the revision statement, if any, and use the latest one as the revision date
+        HashMap<String, Integer> revisionDates = getNormalDate(revisionHistory);
+        if(!revisionDates.isEmpty()){
+            revisionDate = revisionDates.get("end").toString();
+        }
+        revisionStatementJS.put("date", revisionDate);
         revisionStatementJS.put("description", revisionHistory);
 
         JSONArray revisionStatementsJA = new JSONArray();
@@ -1195,7 +1733,7 @@ public class ASpaceMapper {
         String title = cleanTitle(record.getString("Title"));
         json.put("title", title);
 
-        boolean dateAdded = addDate(record.getString("Date"), json, null, "created");
+        boolean dateAdded = addDate(record.getString("Date"), json, null, "creation");
 
         // need to add title if no date or title
         String uniqueId = record.getString("UniqueID");
@@ -1255,10 +1793,33 @@ public class ASpaceMapper {
         dateJS.put("label", label);
         dateJS.put("expression", dateExpression);
 
+        addNormalDateFromExpression(dateExpression, dateJS);
+
         dateJA.put(dateJS);
         json.put("dates", dateJA);
 
         return true;
+    }
+
+    /**
+     * Method to add a normal dates to json date object by parsing the date expression
+     *
+     * @param dateExpression
+     * @param dateJS
+     */
+    private Boolean addNormalDateFromExpression(String dateExpression, JSONObject dateJS) throws Exception{
+        //determine normal begin and end dates from date expression if possible
+        HashMap<String, Integer> normalDate = getNormalDate(dateExpression);
+        if(!normalDate.isEmpty()){
+            Integer dateBegin = normalDate.get("start");
+            Integer dateEnd = normalDate.get("end");
+            dateJS.put("begin", dateBegin.toString());
+            dateJS.put("end", dateEnd.toString());
+            dateJS.put("date_type", "inclusive");
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -1347,7 +1908,38 @@ public class ASpaceMapper {
 
         addMultipartNote(notesJA, "phystech", "Technical Access Requirements", record.getString("TechnicalAccess"));
 
-        addMultipartNote(notesJA, "acqinfo", "Source of Acquisition", record.getString("AcquisitionSource"));
+        String acquisitionDate = record.getString("AcquisitionDate");
+        if(!acquisitionDate.isEmpty()) {
+            String readableAcquisitionDate = getHumanReadableDate(acquisitionDate);
+            String formattedAcquisitionDate = "";
+            String isoAcquisitionDate = getISODate(acquisitionDate);
+            if(isoAcquisitionDate != ""){
+                formattedAcquisitionDate += "<date normal=" + '"' + isoAcquisitionDate + '"' +">";
+            } else {
+                formattedAcquisitionDate += "<date>";
+            }
+            formattedAcquisitionDate += readableAcquisitionDate + "</date>";
+            addMultipartNote(notesJA, "acqinfo", "Date of Acquisition", formattedAcquisitionDate);
+        }
+        
+        //add language of materials note for all languages identified at the collection level
+        if(record.has("Languages")) {
+            JSONArray languageIds = record.getJSONArray("Languages");
+            String langNoteContent = "";
+            for (int i = 0; i < languageIds.length(); i++) {
+                String languageCode = languageIds.getString(i);
+                String languageLong = enumUtil.getLanguageLong(languageCode);
+                String aspaceLangCode = enumUtil.getASpaceLanguageCodeForArchonCode(languageCode);
+                String separator = (i > 0) ? ", " :  "";
+
+                //should produce "<language langcode='eng'>English</language>" for English, as an example
+                langNoteContent += separator + "<language langcode='" + aspaceLangCode +"'>" + languageLong + "</language>";
+            }
+            addSinglePartNote(notesJA, "langmaterial", "Language of Materials", langNoteContent);
+        }
+
+        String acqSource = cleanNote(record, "AcquisitionSource");
+        addMultipartNote(notesJA, "acqinfo", "Source of Acquisition", acqSource);
 
         addMultipartNote(notesJA, "acqinfo", "Method of Acquisition", record.getString("AcquisitionMethod"));
 
@@ -1357,10 +1949,20 @@ public class ASpaceMapper {
 
         addMultipartNote(notesJA, "custodhist", "Custodial History", record.getString("CustodialHistory"));
 
-        noteContent = record.getString("OrigCopiesNote") + "\n\n" + record.get("OrigCopiesURL");
+//        noteContent = record.getString("OrigCopiesNote") + "\n\n" + record.get("OrigCopiesURL");
+        if (!record.getString("OrigCopiesURL").isEmpty()) {
+            noteContent = "<a href=\"" + record.getString("OrigCopiesURL") + "\">" + record.getString("OrigCopiesNote") + "</a>";
+        } else {
+            noteContent = record.getString("OrigCopiesNote");
+        }
         addMultipartNote(notesJA, "originalsloc", "Existence and Location of Originals", noteContent);
 
-        noteContent = record.getString("RelatedMaterials") + "\n\n" + record.get("RelatedMaterialsURL");
+//        noteContent = record.getString("RelatedMaterials") + "\n\n" + record.get("RelatedMaterialsURL");
+        if (!record.getString("RelatedMaterialsURL").isEmpty()) {
+            noteContent = "<a href=\"" + record.getString("RelatedMaterialsURL") + "\">" + record.getString("RelatedMaterials") + "</a>";
+        } else {
+            noteContent = record.getString("RelatedMaterials");
+        }
         addMultipartNote(notesJA, "relatedmaterial", "Related Materials", noteContent);
 
         addMultipartNote(notesJA, "relatedmaterial", "Related Publications", record.getString("RelatedPublications"));
@@ -1369,12 +1971,17 @@ public class ASpaceMapper {
 
         addMultipartNote(notesJA, "prefercite", "Preferred Citation", record.getString("PreferredCitation"));
 
-        addMultipartNote(notesJA, "odd", "Other Descriptive Information", record.getString("OtherNote"));
+        String otherNote = cleanNote(record, "OtherNote");
+        addMultipartNote(notesJA, "odd", "Other Descriptive Information", otherNote);
 
-        addMultipartNote(notesJA, "processinfo", "Processing Information", record.getString("ProcessingInfo"));
+        String processingInfo = cleanNote(record, "ProcessingInfo");
+        addMultipartNote(notesJA, "processinfo", "Processing Information", processingInfo);
 
-        noteContent = record.getString("BiogHist") + "\n\nNote written by " + record.get("BiogHistAuthor");
-        if(!noteContent.trim().equals("Note written by")) {
+        noteContent = record.getString("BiogHist");
+        if(!record.getString("BiogHistAuthor").isEmpty() && !record.getString("BiogHist").isEmpty()){
+            noteContent += "\n\nNote written by " + record.get("BiogHistAuthor");
+        }
+        if(!noteContent.trim().isEmpty()) {
             addMultipartNote(notesJA, "bioghist", "Biographical or Historical Information", noteContent);
         }
 
@@ -1429,7 +2036,7 @@ public class ASpaceMapper {
         noteJS.put("publish", publishRecord);
 
         JSONArray contentJA = new JSONArray();
-        contentJA.put(noteContent);
+        contentJA.put(bbCodeToHtmlLinks(noteContent));
         noteJS.put("content", contentJA);
 
         notesJA.put(noteJS);
@@ -1448,12 +2055,12 @@ public class ASpaceMapper {
         if(noteContent.trim().isEmpty() || noteType.isEmpty()) return;
 
         // these note types don't exist in ASpace
-        if (noteType.equals("unitid") || noteType.equals("origination") || noteType.equals("note")) noteType = "odd";
+        if (noteType.equals("unitid") || noteType.equals("origination") || noteType.equals("note") || noteType.equals("null")) noteType = "odd";
 
         // these note types should be single part
         if (noteType.equals("physfacet") || noteType.equals("physdesc") || noteType.equals("langmaterial") ||
                 noteType.equals("materialspec")) {
-            addSinglePartNote(notesJA, noteType, noteLabel, noteContent);
+            addSinglePartNote(notesJA, noteType, noteLabel, bbCodeToHtmlLinks(noteContent));
             return;
         }
 
@@ -1468,7 +2075,7 @@ public class ASpaceMapper {
 
         // add the default text note
         JSONObject textNoteJS = new JSONObject();
-        addTextNote(textNoteJS, fixEmptyString(noteContent, "multi-part note content"));
+        addTextNote(textNoteJS, fixEmptyString(bbCodeToHtmlLinks(noteContent), "multi-part note content"));
         subnotesJA.put(textNoteJS);
 
         noteJS.put("subnotes", subnotesJA);
@@ -1486,7 +2093,7 @@ public class ASpaceMapper {
     private void addTextNote(JSONObject noteJS, String content) throws Exception {
         noteJS.put("jsonmodel_type", "note_text");
         noteJS.put("publish", publishRecord);
-        noteJS.put("content", content);
+        noteJS.put("content", bbCodeToHtmlLinks(content));
     }
 
     /**
@@ -1509,10 +2116,60 @@ public class ASpaceMapper {
         noteJS.put("publish", publishRecord);
 
         JSONArray contentJA = new JSONArray();
-        contentJA.put(noteContent);
+        contentJA.put(bbCodeToHtmlLinks(noteContent));
         noteJS.put("content", contentJA);
 
         notesJA.put(noteJS);
+    }
+
+    /**
+     * Method to check a note text against patterns of data not to copy to ASpace
+     * Need to customize by institution
+     *
+     * @param record
+     * @param noteType
+     * @throws JSONException 
+     */
+    private String cleanNote(JSONObject record, String noteType) throws JSONException{
+        String existingNote = "";
+        String cleanNote = "";
+        if(record.has(noteType)){
+            existingNote = record.getString(noteType);
+        }
+        String regex = "";
+        String message = "";
+
+        if(noteType.equals("OtherNote")){
+            regex = "(\\d+ )(Pages|Page|pages|page)";
+            message = "Other note";
+        }
+        if(noteType.equals("ProcessingInfo")){
+            regex = "\\[url=https:\\/\\/wiki\\.cites\\.uiuc\\.edu\\/wiki\\/display\\/librare\\/Home\\]https:\\/\\/wiki\\.cites\\.uiuc\\.edu\\/wiki\\/display\\/librare\\/Home\\[\\/url\\]";
+            message = "Processing info";
+        }
+        if(noteType.equals("AcquisitionSource")){
+            regex = "</?p>";
+            message= "Source of Acquisition";
+        }
+        if(!regex.isEmpty()){
+            if(existingNote.matches(regex)){
+                cleanNote = "";
+                message += " '" + existingNote + "' removed from record with Archon ID " + record.getString("ID");
+            } else {
+                cleanNote = existingNote.replaceAll(regex,"");
+                message += " '" + existingNote + "' changed to '" + cleanNote + "' in record with Archon ID " + record.getString("ID");
+            }
+            if(!existingNote.equals(cleanNote)){
+                if(aspaceCopyUtil != null){
+                    aspaceCopyUtil.addChangeMessage(message);
+                } else {
+                    System.out.println(message);
+                }
+            }
+        } else {
+            cleanNote = existingNote;
+        }
+        return cleanNote;
     }
 
     /**
@@ -1523,6 +2180,10 @@ public class ASpaceMapper {
      */
     public void addExternalId(JSONObject record, JSONObject recordJS, String source) throws Exception {
         source = "Archon Instance::" + source.toUpperCase();
+
+        if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
+            source = identifierPrefix + " " + source;
+        }
 
         JSONArray externalIdsJA = new JSONArray();
         JSONObject externalIdJS = new JSONObject();
@@ -1647,18 +2308,32 @@ public class ASpaceMapper {
             // if id is empty add text
             if(id.isEmpty()) {
                 id = "Digital Object ID ##"+ randomStringLong.nextString();
+                String message = "Empty Digital Object Identifier for " + title +  ", added as " + id + "\n";
+                System.out.println(message);
+                aspaceCopyUtil.addErrorMessage(message);
+            }
+            
+            if(!appendTestIdentifier.isEmpty()){
+                id += appendTestIdentifier;
             }
 
             if(!digitalObjectIDs.contains(id)) {
                 digitalObjectIDs.add(id);
             } else {
-                id += " ##" + randomStringLong.nextString();
-                digitalObjectIDs.add(id);
+                String nid = id + " ##" + randomStringLong.nextString();
+                digitalObjectIDs.add(nid);
+                String message = "Duplicate Digital Object (" + title +  ") Id: "  + id  + " Added: " + nid + "\n";
+                System.out.println(message);
+                aspaceCopyUtil.addErrorMessage(message);
             }
 
             return id;
         } else if(endpoint.equals(ASpaceClient.ACCESSION_ENDPOINT)) {
             String message;
+
+            if(!appendTestIdentifier.isEmpty()){
+                id += appendTestIdentifier;
+            }
 
             if(!accessionIDs.contains(id)) {
                 accessionIDs.add(id);
@@ -1669,6 +2344,10 @@ public class ASpaceMapper {
                 do {
                     nid = "##" + randomStringLong.nextString();
                 } while (accessionIDs.contains(nid));
+
+                if(!appendTestIdentifier.isEmpty()){
+                    nid += appendTestIdentifier;
+                }
 
                 accessionIDs.add(nid);
 
@@ -1696,7 +2375,7 @@ public class ASpaceMapper {
 
                 resourceIDs.add(fullId);
 
-                message = "Duplicate Resource Id: " + id + " Changed to: " + fullId + "\n";
+                message = "Duplicate Resource Id: " + id +"(Title: " + title + ") Changed to: " + fullId + "\n";
                 aspaceCopyUtil.addErrorMessage(message);
             }
 
@@ -1708,6 +2387,10 @@ public class ASpaceMapper {
                 return "";
             }
 
+            if(!appendTestIdentifier.isEmpty()){
+                id += appendTestIdentifier;
+            }
+
             if(!eadIDs.contains(id)) {
                 eadIDs.add(id);
             } else {
@@ -1716,6 +2399,10 @@ public class ASpaceMapper {
                 do {
                     nid = id + " ##" + randomString.nextString();
                 } while(eadIDs.contains(nid));
+
+                if(!appendTestIdentifier.isEmpty()){
+                    nid += appendTestIdentifier;
+                }
 
                 eadIDs.add(nid);
 
@@ -1747,6 +2434,9 @@ public class ASpaceMapper {
                 fullId += "."  + ids[i];
             }
         }
+        
+        //remove any spaces
+        fullId = fullId.replaceAll("\\s", "");
 
         return fullId;
     }
@@ -1777,6 +2467,20 @@ public class ASpaceMapper {
         }
 
         return title;
+    }
+
+    /**
+     * A Method to convert BBCode "url" to HTML "a" tags
+     *
+     * @param inputString
+     */
+    private String bbCodeToHtmlLinks(String inputString) {
+        String output = inputString;
+        if (output != null && !output.isEmpty()) {
+            output = output.replaceAll("\\[url\\](.*?)\\[\\/url\\]", "<a href=\"$1\">$1</a>");
+            output = output.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "<a href=\"$1\">$2</a>");
+        }
+        return output;
     }
 
     /**
@@ -1836,10 +2540,238 @@ public class ASpaceMapper {
             String year = dateString.substring(0, 4);
             String month = dateString.substring(4, 6);
             String day = dateString.substring(6);
-            return month + "/" + day + "/" + year;
+            String readableDateString = "";
+            if(!month.equals("00")){
+                readableDateString += month + "/";
+                if(!day.equals("00")){
+                    //only add the day if it is not "00"
+                    readableDateString += day + "/";
+                }
+            } else {
+                if(!day.equals("00")){
+                    //if in the unlikely case that the day but not the month is filled out, use the full string with the zereos for the month
+                    readableDateString += month + "/" + day + "/";
+                }
+            }
+            readableDateString += year;
+            return readableDateString;
         } catch (Exception e) {
             return dateString;
         }
+    }
+
+    /**
+     * Method to return the iso date given a date string formatted as YYYYMMDD
+     *
+     * @param dateString
+     * @return
+     */
+    private String getISODate(String dateString) {
+        try {
+            String year = dateString.substring(0, 4);
+            String month = dateString.substring(4, 6);
+            String day = dateString.substring(6);
+            String isoDateString = year;
+            if(!month.equals("00")){
+                isoDateString += "-" + month;
+                if(!day.equals("00")){
+                    //only add the day if it is not "00"
+                    isoDateString += "-" + day;
+                }
+            } else {
+                if(!day.equals("00")){
+                    //if in the unlikely case that the day but not the month is filled out, use the full string with the zereos for the month
+                    isoDateString += "-" + month + "-" + day;
+                }
+            }
+            return isoDateString;
+        } catch (Exception e) {
+            return "";
+        }
+    }
+    
+    /**
+     * Method to return the normal date (start and end year) from a date string
+     * 
+     * Example formats accepted:
+     * 1890, 1899, and undated
+     * circa 1960s and 1970s
+     * 1884-98 (interpreted as 1884-1898)
+     * 1903-5 (interpreted as 1903-1905)
+     * May 9, 1923
+     * 
+     * Does not work with dates formatted as:
+     * 8/4/89
+     * 12-03-37
+     * 
+     * Returns an empty HashMap if no years are found.
+     *
+     * @param dateString
+     * @return
+     */
+    private HashMap<String,Integer> getNormalDate(String dateString) {
+        HashMap<String, Integer> normalDate = new HashMap<>();
+
+        List<Integer> years = new ArrayList<>();
+        Integer lastFullYear = null;
+
+        //normalize text
+        dateString = dateString.replace("‑", "-");
+        dateString = dateString.replace("–", "-");
+        dateString = dateString.replace("‘", "'");
+        dateString = dateString.replace("’", "'");
+        dateString = dateString.toLowerCase();
+
+        // Find all full years and partial year ranges
+        Pattern pattern = Pattern.compile("\\b(\\d{4})(?:-(\\d{1,2}))?\\b(?!'s)(?!\\/)");
+        Matcher matcher = pattern.matcher(dateString);
+
+        while (matcher.find()) {
+            int fullYear = Integer.parseInt(matcher.group(1));
+            lastFullYear = fullYear;
+            years.add(fullYear);
+            String partialYear = matcher.group(2);
+            if (partialYear != null) {
+                int endYear;
+                if (partialYear.length() == 1) {
+                    endYear = (fullYear / 10) * 10 + Integer.parseInt(partialYear);
+                    if (endYear < fullYear) {
+                        endYear += 10;
+                    }
+                } else {
+                    endYear = (fullYear / 100) * 100 + Integer.parseInt(partialYear);
+                    if (endYear < fullYear) {
+                        endYear += 100;
+                    }
+                    if (endYear - fullYear > 10 && Integer.parseInt(partialYear) < 13){
+                        continue; //more likely a month
+                    }
+                }
+                years.add(endYear);
+            }
+        }
+
+        // Century matching
+        Pattern centuryPattern = Pattern.compile("(mid-|mid|late|early)?\\s?(\\b\\d{2}00\\'?s\\b)");
+        Matcher centuryMatcher = centuryPattern.matcher(dateString);
+
+        while (centuryMatcher.find()) {
+            String rangeTerm = centuryMatcher.group(1) != null ? centuryMatcher.group(1) : "";
+            String matchText = centuryMatcher.group(2).replace("'", "");
+            int centuryStart = Integer.parseInt(matchText.substring(0, 4));
+            int centuryEnd = centuryStart + 99;
+
+            if (!rangeTerm.isEmpty()) {
+                if (rangeTerm.startsWith("mid")) {
+                    centuryStart += 30;
+                    centuryEnd -= 20;
+                } else if (rangeTerm.equals("late")) {
+                    centuryStart += 70;
+                } else if (rangeTerm.equals("early")) {
+                    centuryEnd -= 60;
+                }
+            }
+
+            years.add(centuryStart);
+            years.add(centuryEnd);
+        }
+
+        // Decade matching
+        Pattern decadePattern = Pattern.compile("(mid-|mid|late|early)?\\s?(\\b(?:\\d{2}[1-9]0'?s|\\d{1}0'?s)\\b)");
+        Matcher decadeMatcher = decadePattern.matcher(dateString);
+
+        while (decadeMatcher.find()) {
+            String rangeTerm = decadeMatcher.group(1) != null ? decadeMatcher.group(1) : "";
+            String matchText = decadeMatcher.group(2).replace("'", "");
+            int yearStart;
+            if (matchText.length() == 5) {
+                yearStart = Integer.parseInt(matchText.substring(0, 4));
+                lastFullYear = yearStart;
+            } else {
+                if (lastFullYear != null) {
+                    int century = (lastFullYear / 100) * 100;
+                    yearStart = century + Integer.parseInt(matchText.substring(0, 2));
+                    if (yearStart < lastFullYear) {
+                        yearStart += 100;
+                    }
+                } else {
+                    Boolean assume20thCentury = false;
+                    if(assume20thCentury){
+                        yearStart = Integer.parseInt("19" + matchText.substring(0, 2));
+                    } else {
+                        yearStart = 0;
+                    }
+                }
+            }
+
+            if(yearStart != 0) {
+                int yearEnd = yearStart + 9;
+
+                if (!rangeTerm.isEmpty()) {
+                    if (rangeTerm.startsWith("mid")) {
+                        yearStart += 3;
+                        yearEnd -= 2;
+                    } else if (rangeTerm.equals("late")) {
+                        yearStart += 7;
+                    } else if (rangeTerm.equals("early")) {
+                        yearEnd -= 6;
+                    }
+                }
+
+                years.add(yearStart);
+                years.add(yearEnd);
+            }
+        }
+
+        // Abbreviated years
+        Pattern abbrevYearPattern = Pattern.compile("'\\d{2}\\b");
+        Matcher abbrevYearMatcher = abbrevYearPattern.matcher(dateString);
+
+        while (abbrevYearMatcher.find()) {
+            String matchText = abbrevYearMatcher.group().replace("'", "");
+            int abbrevYear;
+            if (lastFullYear != null) {
+                int century = (lastFullYear / 100) * 100;
+                abbrevYear = century + Integer.parseInt(matchText);
+                if (abbrevYear < lastFullYear) {
+                    abbrevYear += 100;
+                }
+            } else {
+                abbrevYear = Integer.parseInt("19" + matchText);
+            }
+            years.add(abbrevYear);
+        }
+
+        // Uncertain years
+        Pattern uncertainYearPattern = Pattern.compile("\\b\\d{3}[xu]\\b");
+        Matcher uncertainYearMatcher = uncertainYearPattern.matcher(dateString);
+
+        while (uncertainYearMatcher.find()) {
+            int yearStart = Integer.parseInt(uncertainYearMatcher.group().substring(0, 3) + "0");
+            int yearEnd = yearStart + 9;
+            years.add(yearStart);
+            years.add(yearEnd);
+        }
+
+        // Uncertain decades
+        Pattern uncertainDecadePattern = Pattern.compile("\\b\\d{2}[xu]{2}\\b");
+        Matcher uncertainDecadeMatcher = uncertainDecadePattern.matcher(dateString);
+
+        while (uncertainDecadeMatcher.find()) {
+            int yearStart = Integer.parseInt(uncertainDecadeMatcher.group().substring(0, 2) + "00");
+            int yearEnd = yearStart + 99;
+            years.add(yearStart);
+            years.add(yearEnd);
+        }
+
+        if (!years.isEmpty()) {
+            int minYear = Collections.min(years);
+            int maxYear = Collections.max(years);
+            normalDate.put("start",minYear);
+            normalDate.put("end",maxYear);
+        }
+
+        return normalDate;
     }
 
     /**

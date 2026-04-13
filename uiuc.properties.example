@@ -1,0 +1,10 @@
+# Archon credentials
+archon.source=
+archon.user=
+archon.password=
+archon.prefix=
+
+# ArchivesSpace credentials
+aspace.host=
+aspace.admin=
+aspace.password=

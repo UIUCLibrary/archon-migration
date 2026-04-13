@@ -47,6 +47,7 @@ public class ASpaceEnumUtil {
     private String[] ASpaceDateEnums = null;
     private String[] ASpaceCollectionManagementRecordEnums = null;
     private String[] ASpaceDigitalObjectTypes = null;
+    private String[] ASpaceFileTypeEnums = null;
     private String[] ASpaceNoteTypes = null;
     private String[] ASpaceResourceLevels = null;
     private String[] ASpaceFindingAidDescriptionRules = null;
@@ -62,6 +63,9 @@ public class ASpaceEnumUtil {
 
     public boolean returnATValue = true; // set this to return the AT value instead of UNMAPPED
 
+    //Use to look up long version of language from three letter code
+    private JSONObject textLanguagesJS;
+
     /**
      * Main constructor
      */
@@ -75,6 +79,7 @@ public class ASpaceEnumUtil {
         initASpaceCollectionManagementRecordEnums();
         initASpaceLinkedAgentRole();
         initASpaceDigitalObjectType();
+        initASpaceFileTypeEnums();
         initASpaceFileVersionUseStatements();
         initASpaceNoteTypes();
         initASpaceResourceLevels();
@@ -86,6 +91,7 @@ public class ASpaceEnumUtil {
         initASpaceAccessionResourceTypes();
 
         loadLanguageCodes();
+        loadLanguageText();
     }
 
     /**
@@ -95,6 +101,20 @@ public class ASpaceEnumUtil {
         try {
             String text = IOUtils.toString(this.getClass().getResourceAsStream("languages.json"), "UTF-8");
             languagesJS = new JSONObject(text);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Method to load the language text json object
+     */
+    private void loadLanguageText() {
+        try {
+            String text = IOUtils.toString(this.getClass().getResourceAsStream("languageTextCodes.json"), "UTF-8");
+            textLanguagesJS = new JSONObject(text);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
@@ -227,6 +247,18 @@ public class ASpaceEnumUtil {
     }
 
     /**
+     * Map the name source specifying a default value for extent.
+     * If nothing is matched using the archon extent id, use the default provided
+     *
+     * @param arID the id of the archon extent type
+     * @return
+     */
+    public String getASpaceExtentType(int arID, String defaultExtentType) {
+        String key = "extent_type_" + arID;
+        return getEnumValueForID(key, defaultExtentType);
+    }
+
+    /**
      * Map the aspace resource type
      *
      * @param arID
@@ -234,6 +266,17 @@ public class ASpaceEnumUtil {
      */
     public String getASpaceResourceType(String arID) {
         String key = "resource_type_" + arID;
+        return getEnumValueForID(key, "records");
+    }
+
+    /**
+     * Map the aspace accession type for a given archon id
+     *
+     * @param arID
+     * @return
+     */
+    public String getASpaceAccessionType(String arID) {
+        String key = "accession_type_" + arID;
         return getEnumValueForID(key, "records");
     }
 
@@ -355,6 +398,26 @@ public class ASpaceEnumUtil {
         }
     }
 
+    public String[] getAllASpaceExtentTypes() {
+        return ASpaceExtentTypes;
+    }
+
+    /**
+     * Get all of the extent types stored from Archon and retrn as an ArrayList
+     * @return
+     */
+    public ArrayList<String> getAllArchonExtents() {
+
+       ArrayList<String> archonExtentStrings = new ArrayList<>();
+        for (String key : enumListIDsToValues.keySet()) {
+            if (key.startsWith("extent_type_"))
+            archonExtentStrings.add(enumListIDsToValues.get(key));
+        }
+
+        return archonExtentStrings;
+
+    }
+
     /**
      * Method init ASpace the array the hold information on dates
      */
@@ -468,7 +531,16 @@ public class ASpaceEnumUtil {
      */
     public String getASpaceCollectionManagementRecordProcessingPriority(int arID) {
         String key = "processing_priority_" + arID;
-        return getEnumValueForID(key, "low");
+        String arValue = getEnumValueForID(key, "default");
+        if (arValue.contains("high")) {
+            return ASpaceCollectionManagementRecordEnums[0];
+        } else if(arValue.contains("medium")) {
+            return ASpaceCollectionManagementRecordEnums[1];
+        } else if(arValue.contains("low")) {
+            return ASpaceCollectionManagementRecordEnums[2];
+        } else {
+            return arValue;
+        }
     }
 
     /**
@@ -549,17 +621,78 @@ public class ASpaceEnumUtil {
      * @return
      */
     public String getASpaceLanguageCode(String arId) {
-        if(arId.isEmpty()) return "und";
+        String defaultLanguageCode = "eng";
+        if(arId.isEmpty()) return defaultLanguageCode;
 
         if(languagesJS.has(arId)) {
             try {
                 JSONObject languageJS = languagesJS.getJSONObject(arId);
-                return languageJS.getString("LanguageShort");
+                return languageJS.getString("ASpaceCode");
+            } catch (JSONException e) {
+                return "und";
+            }
+        } else {
+            return defaultLanguageCode;
+        }
+    }
+
+    /**
+     * Method to return an appropriate script code (ISO 15924), given the 3-letter language code
+     * Set only to work with English currently, but could be extended to more languages
+     * Returns "Zyyy" (code for undetermined script) if the script is unknown
+     *
+     * @param langaugeShort
+     * @return
+     */
+    public String getScriptCode(String languageShort) {
+        if(languageShort.equals("eng")){
+            return "Latn";
+        } else {
+            return "Zyyy";
+        }
+
+    }
+
+    /**
+     * Method to return the ASpace language code when given the Archon 3 letter code.
+     * For most language codes this is the same code for each, but not for all.
+     *
+     * @param languageShort
+     * @return
+     */
+    public String getASpaceLanguageCodeForArchonCode(String languageShort) {
+        if(languageShort.isEmpty()) return "und";
+
+        if(textLanguagesJS.has(languageShort)) {
+            try {
+                JSONObject languageJS = textLanguagesJS.getJSONObject(languageShort);
+                return languageJS.getString("ASpaceCode");
             } catch (JSONException e) {
                 return "und";
             }
         } else {
             return "und";
+        }
+    }
+
+    /**
+     * Method to return the long version of the language name
+     *
+     * @param langaugeShort
+     * @return
+     */
+    public String getLanguageLong(String languageShort) {
+        if(languageShort.isEmpty())  return "undefined";
+
+        if(textLanguagesJS.has(languageShort)) {
+            try {
+                JSONObject languageJS = textLanguagesJS.getJSONObject(languageShort);
+                return languageJS.getString("LanguageLong");
+            } catch (JSONException e) {
+                return "undedfined";
+            }
+        } else {
+            return "undefined";
         }
     }
 
@@ -614,6 +747,53 @@ public class ASpaceEnumUtil {
             return atValue;
         } else {
             return UNMAPPED;
+        }
+    }
+
+    /**
+     * Method to initASpaceialize array that holds enums of file types
+     */
+    private void initASpaceFileTypeEnums() {
+        ASpaceFileTypeEnums = new String[] {
+                "aiff",  // 0
+                "avi",   // 1
+                "gif",   // 2
+                "jpeg",  // 3
+                "mp3",   // 4
+                "pdf",   // 5
+                "tiff",  // 6
+                "txt",   // 7
+        };
+    }
+
+    /**
+     * Map an AR value to a file type record enum
+     *
+     * @param arID
+     * @return
+     */
+    public String getASpaceFileType(int arID) {
+        String key = "file_type_" + arID;
+        String arValue = getEnumValueForID(key, UNMAPPED);
+        //use existing aspace enum if available
+        if (arValue.contains("aiff")) {
+            return ASpaceFileTypeEnums[0];
+        } else if(arValue.contains("avi")) {
+            return ASpaceFileTypeEnums[1];
+        } else if(arValue.contains("gif")) {
+            return ASpaceFileTypeEnums[2];
+        } else if(arValue.contains("jpeg") || arValue.contains("jpg")) {
+            return ASpaceFileTypeEnums[3];
+        } else if(arValue.contains("mp3")) {
+            return ASpaceFileTypeEnums[4];
+        } else if(arValue.contains("pdf")) {
+            return ASpaceFileTypeEnums[5];
+        } else if(arValue.contains("tiff")) {
+            return ASpaceFileTypeEnums[6];
+        } else if(arValue.contains("txt")) {
+            return ASpaceFileTypeEnums[7];
+        } else {
+            return arValue;
         }
     }
 
@@ -1193,7 +1373,8 @@ public class ASpaceEnumUtil {
     }
 
     /**
-     * Method to return the AccessionResourceType
+     * Method to return the AccessionResourceType, given the string version of the type
+     * Note: Appears to be written for Archivist Toolkit migrations rather than Archon ones
      *
      * @param atValue
      * @return
@@ -1317,6 +1498,16 @@ public class ASpaceEnumUtil {
         } else {
             return defaultValue;
         }
+    }
+
+    /**
+     * Get method for enumListIDsToValues
+     * for testing/debugging
+     * 
+     * @return
+     */
+    public HashMap<String, String> getEnumListIDsToValues(){
+        return enumListIDsToValues;
     }
 
     // used for testing

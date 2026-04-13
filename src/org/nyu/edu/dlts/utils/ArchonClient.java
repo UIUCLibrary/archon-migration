@@ -43,7 +43,7 @@ public class ArchonClient {
     public static final String ENUM_CREATOR_SOURCES_ENDPOINT = "?p=core/enums&enum_type=creatorsources";
     public static final String ENUM_EXTENT_UNITS_ENDPOINT = "?p=core/enums&enum_type=extentunits";
     public static final String ENUM_MATERIAL_TYPES_ENDPOINT = "?p=core/enums&enum_type=materialtypes";
-    public static final String ENUM_ACCESSION_TYPES_ENDPOINT = "?p=core/enums&enum_type=materialtypes";
+    public static final String ENUM_ACCESSION_TYPES_ENDPOINT = "?p=core/enums&enum_type=materialtypes&accessiontype=true";
     public static final String ENUM_CONTAINER_TYPES_ENDPOINT = "?p=core/enums&enum_type=containertypes";
     public static final String ENUM_FILE_TYPES_ENDPOINT = "?p=core/enums&enum_type=filetypes";
     public static final String ENUM_PROCESSING_PRIORITIES_ENDPOINT = "?p=core/enums&enum_type=processingpriorities";
@@ -853,6 +853,15 @@ public class ArchonClient {
      */
     public void setPrintConsole(PrintConsole printConsole) {
         this.printConsole = printConsole;
+    }
+
+    /**
+     * Set the debug mode
+     *
+     * @param debugOption
+     */
+    public void setDebugMode(Boolean debugOption) {
+        this.debug = debugOption;
     }
 
     /**
