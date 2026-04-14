@@ -2948,7 +2948,19 @@ public class ASpaceCopyUtil implements  PrintConsole {
                             modifiedIndicators.add(containerIndicator.substring(1));
                         }
                     }
-                    
+                    //try a version(s) without parenthetical note at end if there is a barcode
+                    if (hasBarcode && containerIndicator.contains("(") && !containerIndicator.startsWith("(") && containerIndicator.endsWith(")")) {
+                        modifiedIndicators.add(containerIndicator.replaceAll("\\s?\\(.*?\\)$",""));
+                        if(modifiedIndicators.size() > 1){
+                            ArrayList<String> tempModifiedIndicators = new ArrayList<String>();
+                            for(String modifiedIndicator : modifiedIndicators){
+                                if(modifiedIndicator.endsWith(")")){
+                                        tempModifiedIndicators.add(modifiedIndicator.replaceAll("\\s?\\(.*?\\)$",""));
+                                }
+                            }
+                            modifiedIndicators.addAll(tempModifiedIndicators);
+                        }
+                    }
                     //try adding in leading zeroes if it resulted from splitting up a longer indicator string
                     if(containerIndicators.size()>1){
                         Boolean indicatorIsInteger = false;
