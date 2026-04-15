@@ -2144,7 +2144,7 @@ public class ASpaceMapper {
             message = "Other note";
         }
         if(noteType.equals("ProcessingInfo")){
-            regex = "\\[url=https:\\/\\/wiki\\.cites\\.uiuc\\.edu\\/wiki\\/display\\/librare\\/Home\\]https:\\/\\/wiki\\.cites\\.uiuc\\.edu\\/wiki\\/display\\/librare\\/Home\\[\\/url\\]";
+            regex = "(?:\\[url=https:\\/\\/wiki\\.cites\\.uiuc\\.edu\\/wiki\\/display\\/librare\\/Home\\]https:\\/\\/wiki\\.cites\\.uiuc\\.edu\\/wiki\\/display\\/librare\\/Home\\[\\/url\\])|(?:<extref href='https:\\/\\/wiki.cites.uiuc.edu\\/wiki\\/display\\/librare\\/Home'>https:\\/\\/wiki.cites.uiuc.edu\\/wiki\\/display\\/librare\\/Home<\\/extref>)";
             message = "Processing info";
         }
         if(noteType.equals("AcquisitionSource")){
