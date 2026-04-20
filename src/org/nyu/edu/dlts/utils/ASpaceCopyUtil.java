@@ -2504,8 +2504,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
             coordinate3 = "";
         }
         //if using custom location mapper, split section on separator into coordinate 2 or 3 if there is a barcode
+        //or if it is set to always split the section value
         if(checkCustomArchonLocationMapper() && coordinate2 != null && coordinate2.length()>1){
-            if(hasBarcode){
+            if(hasBarcode || archonLocationMapper.getAlwaysSplitSectionValue()){
                 String[] splitSection = coordinate2.split(archonLocationMapper.getSectionSeparator(),2);
                 coordinate2 = splitSection[0].trim();
                 if(splitSection.length==2 && coordinate3.isEmpty()){
