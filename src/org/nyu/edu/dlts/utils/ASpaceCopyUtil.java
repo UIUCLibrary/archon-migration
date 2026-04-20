@@ -1787,9 +1787,6 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 // add any archival objects here
                 JSONObject resourceComponents = archonClient.getCollectionContentRecords(dbId);
 
-                if(resourceComponents != null && resourceComponents.length()>0){
-                    countWithCollContent++;
-                }
                 //for tracking whether any content is added
                 Boolean addedCollContent = false;
 
@@ -1820,6 +1817,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
                 // store physical content IDs we may not need to add an instance for since they have child physical content
                 HashSet<String> skipParentInstanceFor = new HashSet<String>();
+
+                // reference map of digital objects for the collection
+                HashMap<Integer, ArrayList<JSONArray>> collectionDOMap = digitalObjectMap.get(intID);
+
+                if(resourceComponents != null && resourceComponents.length()>0){
+                    countWithCollContent++;
+                }
 
                 Iterator<String> ckeys = resourceComponents.sortedKeys();
                 while (ckeys.hasNext()) {
@@ -2054,7 +2058,6 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 }
 
                 // add any digital instances that were attached to a component that was not found
-                HashMap<Integer, ArrayList<JSONArray>> collectionDOMap = digitalObjectMap.get(intID);
                 if (collectionDOMap != null) {
                     Integer[] notFoundKeys = collectionDOMap.keySet().toArray(new Integer[0]);
                     for (int id : notFoundKeys) {
