@@ -2544,8 +2544,15 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     }
                     if(existingLocationJS.has("ref")){
                         if(!existingLocationJS.getString("ref").equals(locationURI)){
-                            //prefer the existing location if there is nothing in the shelf field
-                            if(location.getString("Shelf").isEmpty()||location.getString("Shelf").equals("null")){
+                            Boolean retainExistingLocation = false;
+                            if(hasBarcode){
+                                //prefer new location for anything with a barcode
+                                retainExistingLocation = false;
+                            } else if(location.getString("Shelf").isEmpty()||location.getString("Shelf").equals("null")){
+                                //prefer the existing location if there is nothing in the shelf field
+                                retainExistingLocation = true;
+                            }
+                            if(retainExistingLocation){
                                 locationJS.put("ref", existingLocationJS.getString("ref"));
                             }
                         }
