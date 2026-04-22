@@ -54,6 +54,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
     // hashmap that maps location from the old database with copy in new database
     private HashMap<String, String> locationURIMap = new HashMap<String, String>();
+    //hashmap that maps the uri in new database to the location in the old database
+    private HashMap<String, String> locationURIKeyMap = new HashMap<String, String>();
 
     // hashmap that maps subjects from old database with copy in new database
     private HashMap<String, String> subjectURIMap = new HashMap<String, String>();
@@ -2490,9 +2492,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         Boolean hasBarcode = checkShelfForBarcode && isBarcode(location.getString("Shelf"));
 
+        String currentRecordInfo = currentRecordType + ", ArchonID " + currentRecordDBID + " ("+ location.getString("Content") +")";
+
         //if shelf field for the location is a barcode, add that to the top container instead
         if (hasBarcode) {
-            String currentRecordInfo = currentRecordType + ", ArchonID " + currentRecordDBID + " ("+ location.getString("Content") +")";
             String existingBarcodeInfo = barcodesAddedMap.putIfAbsent(coordinate3, currentRecordInfo);
             if(existingBarcodeInfo == null){
                 containerJS.put("barcode", coordinate3);
@@ -2543,13 +2546,24 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         locationJS.put("note", combinedExtentNote);
                     }
                     if(existingLocationJS.has("ref")){
-                        if(!existingLocationJS.getString("ref").equals(locationURI)){
+                        String existingLocationURI = existingLocationJS.getString("ref");
+                        
+                        if(!existingLocationURI.equals(locationURI)){
                             Boolean retainExistingLocation = false;
+                            String existingLocationKey = locationURIKeyMap.get(existingLocationURI);
+                            String newLocationKey = locationURIKeyMap.get(locationURI);
                             if(hasBarcode){
-                                //prefer new location for anything with a barcode
-                                retainExistingLocation = false;
+                                //prefer new location for anything with a barcode, unless the old location is a more specific version of the new one
+                                if(existingLocationKey.startsWith(newLocationKey)){
+                                    retainExistingLocation = true;
+                                } else {
+                                    retainExistingLocation = false;
+                                }
                             } else if(location.getString("Shelf").isEmpty()||location.getString("Shelf").equals("null")){
-                                //prefer the existing location if there is nothing in the shelf field
+                                //prefer the existing location if there is nothing in the shelf field for the new one
+                                if(!existingLocationKey.startsWith(newLocationKey)){
+                                    addErrorMessage("Contradictory locations found for " + currentRecordInfo + ": "+ existingLocationKey + " vs. " + newLocationKey);
+                                }
                                 retainExistingLocation = true;
                             }
                             if(retainExistingLocation){
@@ -3195,6 +3209,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             if (!id.equalsIgnoreCase(NO_ID)) {
                 String uri = ASpaceClient.LOCATION_ENDPOINT + "/" + id;
                 locationURIMap.put(key, uri);
+                locationURIKeyMap.put(uri, key);
                 locationSuccess++;
                 print("Copied Location: " + key + " :: " + id);
                 return uri;
