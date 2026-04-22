@@ -3113,6 +3113,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         String key = building;
 
+        String keySeparator = "_";
+
         // lets create a JSON object for the location in case we need to save it
         JSONObject locationJS = new JSONObject();
 
@@ -3146,15 +3148,15 @@ public class ASpaceCopyUtil implements  PrintConsole {
             }
             if (!floor.equals("null") && !floor.isEmpty()) {
                 locationJS.put("floor", floor);
-                key += "-" + floor;
+                key += keySeparator + floor;
             }
             if (!room.equals("null") && !room.isEmpty()) {
                 locationJS.put("room", room);
-                key += "-" + room;
+                key += keySeparator + room;
             }
             if (!area.equals("null") && !area.isEmpty()) {
                 locationJS.put("area", area);
-                key += "-" + area;
+                key += keySeparator + area;
             }
         }
 
@@ -3163,24 +3165,24 @@ public class ASpaceCopyUtil implements  PrintConsole {
         if (!coordinate1.equals("null") && !coordinate1.isEmpty()) {
             locationJS.put("coordinate_1_label", "Range");
             locationJS.put("coordinate_1_indicator", coordinate1);
-            key += "-" + coordinate1;
+            key += keySeparator + coordinate1;
         } else {
             // put in dummy range so record saves
             locationJS.put("coordinate_1_label", "Range");
             locationJS.put("coordinate_1_indicator", "n/a");
-            key += "-na";
+            key += keySeparator + "na";
         }
 
         if (!coordinate2.equals("null") && !coordinate2.isEmpty()) {
             locationJS.put("coordinate_2_label", "Section");
             locationJS.put("coordinate_2_indicator", coordinate2);
-            key += "-" + coordinate2;
+            key += keySeparator + coordinate2;
         }
 
         if (!coordinate3.equals("null") && !coordinate3.isEmpty()) {
             locationJS.put("coordinate_3_label", "Shelf");
             locationJS.put("coordinate_3_indicator", coordinate3);
-            key += "-" + coordinate3;
+            key += keySeparator + coordinate3;
         }
 
         if(locationURIMap.containsKey(key)) {
