@@ -605,8 +605,14 @@ public class ASpaceMapper {
         agentJS.put("names", namesJA);
 
         //add an unpublished note with the archon record id since aspace 2.6 doesn't save external ids for agents
-        if(addNoteForCreatorArchonID){
-            String legacyIDString = "Archon Instance::Creator Record ID " + record.getInt("ID");
+        if(addNoteForCreatorArchonID && record.has("ID")){
+            String strRecordID = record.getString("ID");
+            String legacyIDString = "";
+            if(strRecordID.startsWith("subject_")){
+                legacyIDString = "Archon Instance::Subject Record ID " + strRecordID.substring(8);
+            } else {
+                legacyIDString = "Archon Instance::Creator Record ID " + strRecordID;
+            }
             if(identifierPrefix != null && !identifierPrefix.isEmpty()) legacyIDString = identifierPrefix + " " + legacyIDString;
             addAgentNote(agentJS, "Legacy Archon ID", legacyIDString, false);
         }
