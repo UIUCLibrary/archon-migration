@@ -2949,7 +2949,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         }
                     }
                     //try a version(s) without parenthetical note at end if there is a barcode
-                    if (hasBarcode && containerIndicator.contains("(") && !containerIndicator.startsWith("(") && containerIndicator.endsWith(")")) {
+                    if (isUniqueIndicatorWithParenthetical(hasBarcode, containerIndicator)) {
                         modifiedIndicators.add(containerIndicator.replaceAll("\\s?\\(.*?\\)$",""));
                         if(modifiedIndicators.size() > 1){
                             ArrayList<String> tempModifiedIndicators = new ArrayList<String>();
@@ -3011,6 +3011,18 @@ public class ASpaceCopyUtil implements  PrintConsole {
         if (instancesJA.length() != 0) {
             recordJS.put("instances", instancesJA);
         }
+    }
+
+    /**
+     * Assesses whether the indicator has a parenthetical note at the end and is likely unique
+     * (due to having a barcode or barcode equivalent)
+     *
+     * @param hasBarcode
+     * @param containerIndicator
+     * @return
+     */
+    private boolean isUniqueIndicatorWithParenthetical(Boolean hasBarcode, String containerIndicator) {
+        return hasBarcode && containerIndicator.contains("(") && !containerIndicator.startsWith("(") && containerIndicator.endsWith(")");
     }
 
     /**
