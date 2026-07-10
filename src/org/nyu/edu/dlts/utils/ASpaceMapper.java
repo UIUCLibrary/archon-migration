@@ -94,6 +94,8 @@ public class ASpaceMapper {
 
     //whether to add a creator's archon id as a note
     private Boolean addNoteForCreatorArchonID = true;
+    //whether to also add a note for subject term agent records if adding a note for the creator archon id
+    private Boolean addNoteForAgentSubjectTermArchonID = false;
 
     /**
      *  Main constructor
@@ -614,7 +616,9 @@ public class ASpaceMapper {
                 legacyIDString = "Archon Instance::Creator Record ID " + strRecordID;
             }
             if(identifierPrefix != null && !identifierPrefix.isEmpty()) legacyIDString = identifierPrefix + " " + legacyIDString;
-            addAgentNote(agentJS, "Legacy Archon ID", legacyIDString, false);
+            if(!strRecordID.startsWith("subject_") || addNoteForAgentSubjectTermArchonID){
+                addAgentNote(agentJS, "Legacy Archon ID", legacyIDString, false);
+            }
         }
 
         return agentJS;
