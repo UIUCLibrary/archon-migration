@@ -2990,6 +2990,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     try {
                         JSONObject containerJS = new JSONObject(aspaceClient.get(topContainerURI, null));
                         addLocationInfo(containerJS, location);
+                        //overwrite existing indicator with the parenthetical version
+                        if (isUniqueIndicatorWithParenthetical(hasBarcode, containerIndicator)){
+                            containerJS.put("indicator", containerIndicator);
+                        }
                         String id = saveRecord(topContainerURI, containerJS.toString(), null);
                         if (!id.equalsIgnoreCase(NO_ID)) {
                             print("Added Location to Top Container: " + containerKey);
