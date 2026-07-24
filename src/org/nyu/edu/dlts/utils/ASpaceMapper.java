@@ -909,7 +909,7 @@ public class ASpaceMapper {
             JSONObject citationJS = new JSONObject();
             citationJS.put("jsonmodel_type", "note_citation");
             JSONArray contentJA = new JSONArray();
-            contentJA.put("Author: " + bbCodeToHtmlLinks((String)record.get("BiogHistAuthor")));
+            contentJA.put("Author: " + bbCodeToXmlLinks((String)record.get("BiogHistAuthor")));
             citationJS.put("content", contentJA);
             citationJS.put("publish", publishRecord);
             subnotesJA.put(citationJS);
@@ -925,7 +925,7 @@ public class ASpaceMapper {
             JSONObject subnoteJS = new JSONObject();
             subnoteJS.put("jsonmodel_type", noteType);
             JSONArray contentJA = new JSONArray();
-            contentJA.put(bbCodeToHtmlLinks((String)record.get("Sources")));
+            contentJA.put(bbCodeToXmlLinks((String)record.get("Sources")));
             subnoteJS.put("content", contentJA);
             subnoteJS.put("publish", publishRecord);
             subnotesJA.put(subnoteJS);
@@ -2058,7 +2058,7 @@ public class ASpaceMapper {
         noteJS.put("publish", publishRecord);
 
         JSONArray contentJA = new JSONArray();
-        contentJA.put(bbCodeToHtmlLinks(noteContent));
+        contentJA.put(bbCodeToXmlLinks(noteContent));
         noteJS.put("content", contentJA);
 
         notesJA.put(noteJS);
@@ -2082,7 +2082,7 @@ public class ASpaceMapper {
         // these note types should be single part
         if (noteType.equals("physfacet") || noteType.equals("physdesc") || noteType.equals("langmaterial") ||
                 noteType.equals("materialspec")) {
-            addSinglePartNote(notesJA, noteType, noteLabel, bbCodeToHtmlLinks(noteContent));
+            addSinglePartNote(notesJA, noteType, noteLabel, bbCodeToXmlLinks(noteContent));
             return;
         }
 
@@ -2097,7 +2097,7 @@ public class ASpaceMapper {
 
         // add the default text note
         JSONObject textNoteJS = new JSONObject();
-        addTextNote(textNoteJS, fixEmptyString(bbCodeToHtmlLinks(noteContent), "multi-part note content"));
+        addTextNote(textNoteJS, fixEmptyString(bbCodeToXmlLinks(noteContent), "multi-part note content"));
         subnotesJA.put(textNoteJS);
 
         noteJS.put("subnotes", subnotesJA);
@@ -2115,7 +2115,7 @@ public class ASpaceMapper {
     private void addTextNote(JSONObject noteJS, String content) throws Exception {
         noteJS.put("jsonmodel_type", "note_text");
         noteJS.put("publish", publishRecord);
-        noteJS.put("content", bbCodeToHtmlLinks(content));
+        noteJS.put("content", bbCodeToXmlLinks(content));
     }
 
     /**
@@ -2138,7 +2138,7 @@ public class ASpaceMapper {
         noteJS.put("publish", publishRecord);
 
         JSONArray contentJA = new JSONArray();
-        contentJA.put(bbCodeToHtmlLinks(noteContent));
+        contentJA.put(bbCodeToXmlLinks(noteContent));
         noteJS.put("content", contentJA);
 
         notesJA.put(noteJS);
@@ -2492,7 +2492,7 @@ public class ASpaceMapper {
     }
 
     /**
-     * A Method to convert BBCode "url" to HTML "a" tags
+     * A Method to convert BBCode "url" to XML "extref" tags
      *
      * @param inputString
      */
@@ -2501,6 +2501,21 @@ public class ASpaceMapper {
         if (output != null && !output.isEmpty()) {
             output = output.replaceAll("\\[url\\](.*?)\\[\\/url\\]", "<a href=\"$1\">$1</a>");
             output = output.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "<a href=\"$1\">$2</a>");
+        }
+        return output;
+    }
+
+        /**
+     * A Method to convert BBCode "url" to XML "extref" tags
+     * For use for fields forming an EAD document.
+     *
+     * @param inputString
+     */
+    private String bbCodeToXmlLinks(String inputString) {
+        String output = inputString;
+        if (output != null && !output.isEmpty()) {
+            output = output.replaceAll("\\[url\\](.*?)\\[\\/url\\]", "<extref href=\"$1\">$1</extref>");
+            output = output.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "<extref href=\"$1\">$2</extref>");
         }
         return output;
     }
