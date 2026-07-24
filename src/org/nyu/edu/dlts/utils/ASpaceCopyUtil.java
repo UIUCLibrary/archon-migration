@@ -2509,7 +2509,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             if(hasBarcode || archonLocationMapper.getAlwaysSplitSectionValue()){
                 String[] splitSection = coordinate2.split(archonLocationMapper.getSectionSeparator(),2);
                 coordinate2 = splitSection[0].trim();
-                if(splitSection.length==2 && coordinate3.isEmpty()){
+                if(splitSection.length==2 && (coordinate3.isEmpty() || coordinate3 == "null")){
                     coordinate3 = splitSection[1].trim();
                 }
             }
