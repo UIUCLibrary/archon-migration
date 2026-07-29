@@ -262,6 +262,7 @@ public class ArchonRecordInspector {
                 e.printStackTrace();
             }
         }
+        System.out.println("collection record list length: " + collectionRecordsJS.length());
     }
 
    /**
@@ -410,7 +411,10 @@ public class ArchonRecordInspector {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+        } else {
+            System.out.println("Digital object " + archonID + " not found");
         }
+        System.out.println("Digital object list length: " + digitalObjectRecordsJS.length());
     }
 
     /**
@@ -472,7 +476,7 @@ public class ArchonRecordInspector {
         System.out.println("Classification hashmap size: " + testClassificationIdentifiers.size() + "\n\n");
         System.out.println("Classification parents hashmap size: " + testClassificationParents.size() + "\n\n");
         
-        String archonIDtoTest = "8753";//"7394";
+         String archonIDtoTest = "8753";//"7394";
         loadCollectionByArchonID(archonIDtoTest);
         testConvertCollection(archonIDtoTest, mapper);
         
@@ -480,7 +484,7 @@ public class ArchonRecordInspector {
         loadCreatorByArchonID(archonCreatorIDtoTest);
         testConvertCreator(archonCreatorIDtoTest, mapper);
         
-        String archonDigitalIDtoTest = "3540";//"188";
+        String archonDigitalIDtoTest = "18979";//"916";//"3540";//"188";
         testConvertDigitalObject(archonDigitalIDtoTest, mapper);
 
         String archonAccesionIDtoTest = "142";

@@ -1061,7 +1061,13 @@ public class ASpaceMapper {
         addFileVersion(fileVersionsJA, record, "Digital Object");
         json.put("file_versions", fileVersionsJA);
 
-        json.put("digital_object_id", getUniqueID(ASpaceClient.DIGITAL_OBJECT_ENDPOINT, record.getString("Identifier"), null, title));
+        String digitalObjIdentifier = record.getString("Identifier");
+        if(digitalObjIdentifier.isEmpty()){
+            digitalObjIdentifier = "digital_ar" + record.get("ID");
+            if (!identifierPrefix.isEmpty()) digitalObjIdentifier = identifierPrefix + "_" + digitalObjIdentifier;
+        }
+
+        json.put("digital_object_id", getUniqueID(ASpaceClient.DIGITAL_OBJECT_ENDPOINT, digitalObjIdentifier, null, title));
 
         // set the digital object type
         json.put("digital_object_type", "mixed_materials");
