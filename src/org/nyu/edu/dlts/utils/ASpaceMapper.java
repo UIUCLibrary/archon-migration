@@ -100,6 +100,9 @@ public class ASpaceMapper {
     //whether donor notes in archon should be added to the accession rather than the donor record
     private Boolean addDonorNotesToAccession = true;
 
+    //add prefix to donor name; set to empty string
+    private String prefixDonorName = "Donor";
+
     /**
      *  Main constructor
      */
@@ -655,6 +658,9 @@ public class ASpaceMapper {
 
         // add basic information to the names record
         String sortName = record.getString("Donor");
+        if(prefixDonorName != null && !prefixDonorName.equals("")){
+            sortName = prefixDonorName + ": " + sortName;
+        }
         namesJS.put("sort_name", sortName);
         namesJS.put("name_order", "direct");
 
@@ -670,7 +676,7 @@ public class ASpaceMapper {
             JSONArray contactsJA = new JSONArray();
             JSONObject contactsJS = new JSONObject();
 
-            contactsJS.put("name", sortName);
+            contactsJS.put("name", record.getString("Donor"));
             contactsJS.put("address_1", record.get("DonorContactInformation"));
             if(!addDonorNotesToAccession) contactsJS.put("note", record.get("DonorNotes"));
 
