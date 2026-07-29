@@ -15,6 +15,7 @@ public class CustomArchonLocationMapper {
     private JSONObject archonLocationsMap;
     private String archonSectionSeparator = "";
     private String locationMapFileName = "";
+    private Boolean alwaysSplitSectionValue = false;
 
     /**
      * Default constructor 
@@ -53,6 +54,7 @@ public class CustomArchonLocationMapper {
                 JSONObject optionCodeJS = customInfo.getJSONObject(optionCode);
                 if(optionCodeJS.has("FileName")) locationMapFileName = optionCodeJS.getString("FileName");
                 if(optionCodeJS.has("SectionSeparator")) archonSectionSeparator = optionCodeJS.getString("SectionSeparator");
+                if(optionCodeJS.has("AlwaysSplitSectionValue")) alwaysSplitSectionValue = optionCodeJS.getBoolean("AlwaysSplitSectionValue");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -114,15 +116,29 @@ public class CustomArchonLocationMapper {
     }
 
     /**
+     * Method to get whether to always split on section separator
+     * @return
+     */
+    public Boolean getAlwaysSplitSectionValue(){
+        return alwaysSplitSectionValue;
+    }
+
+    /**
      * Method to test the class without running the whole process
      *
      * @param args
      */
     public static void main(String[] args) throws JSONException {
-        CustomArchonLocationMapper customMapper = new CustomArchonLocationMapper("ALA");
+        CustomArchonLocationMapper customMapper = new CustomArchonLocationMapper("UA");
         String separator = customMapper.getSectionSeparator();
+        Boolean alwaysSplitSectionValue = customMapper.getAlwaysSplitSectionValue();
         if(separator != null){
             System.out.println("Separator: " + separator);
+        }else{
+            System.out.println("separator is null");
+        }
+        if(alwaysSplitSectionValue != null){
+            System.out.println("Always split section value: " + alwaysSplitSectionValue);
         }else{
             System.out.println("separator is null");
         }
@@ -132,10 +148,14 @@ public class CustomArchonLocationMapper {
             if(locationsMap != null){
                 System.out.println("locations map is not null!");
                 //System.out.println(locationsMap.toString(2));
-                JSONObject locationComponents = customMapper.getLocationComponents("AS2: 201 ARC (Second Floor Stacks)");
-                System.out.println(locationComponents.toString(2));
-                System.out.println(locationComponents.length());
-                System.out.println(locationComponents.getString("Area2"));
+                JSONObject locationComponents = customMapper.getLocationComponents("Test location text");
+                if(locationComponents != null){
+                    System.out.println(locationComponents.toString(2));
+                    System.out.println(locationComponents.length());
+                    System.out.println(locationComponents.getString("Area"));
+                } else {
+                    System.out.println("location component is null");
+                }
             }else{
                 System.out.println("locations map is null");
             }

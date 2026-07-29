@@ -2488,8 +2488,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
         String coordinate2 = location.getString("Section");
         String coordinate3 = location.getString("Shelf");
 
+        Boolean hasBarcode = checkShelfForBarcode && isBarcode(location.getString("Shelf"));
+
         //if shelf field for the location is a barcode, add that to the top container instead
-        if (checkShelfForBarcode && isBarcode(coordinate3)) {
+        if (hasBarcode) {
             String currentRecordInfo = currentRecordType + ", ArchonID " + currentRecordDBID + " ("+ location.getString("Content") +")";
             String existingBarcodeInfo = barcodesAddedMap.putIfAbsent(coordinate3, currentRecordInfo);
             if(existingBarcodeInfo == null){
@@ -2500,12 +2502,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 extentNote += " (shared barcode with " + existingBarcodeInfo + ": " + coordinate3 +")";
             }
             coordinate3 = "";
-
-            //if using custom location mapper, split section on separator into coordinate 2 or 3
-            if(checkCustomArchonLocationMapper() && coordinate2 != null && coordinate2.length()>1){
+        }
+        //if using custom location mapper, split section on separator into coordinate 2 or 3 if there is a barcode
+        //or if it is set to always split the section value
+        if(checkCustomArchonLocationMapper() && coordinate2 != null && coordinate2.length()>1){
+            if(hasBarcode || archonLocationMapper.getAlwaysSplitSectionValue()){
                 String[] splitSection = coordinate2.split(archonLocationMapper.getSectionSeparator(),2);
                 coordinate2 = splitSection[0].trim();
-                if(splitSection.length==2){
+                if(splitSection.length==2 && (coordinate3.isEmpty() || coordinate3 == "null")){
                     coordinate3 = splitSection[1].trim();
                 }
             }
