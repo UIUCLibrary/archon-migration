@@ -92,6 +92,11 @@ public class ASpaceMapper {
     private Boolean convertOpenEndDate = true;
     private int defaultOpenEndDate = 2025;
 
+    //whether to add a creator's archon id as a note
+    private Boolean addNoteForCreatorArchonID = true;
+    //whether to also add a note for subject term agent records if adding a note for the creator archon id
+    private Boolean addNoteForAgentSubjectTermArchonID = false;
+
     /**
      *  Main constructor
      */
@@ -491,7 +496,7 @@ public class ASpaceMapper {
 
         // add the biog-history note to the agent object
         if(record.has("BiogHist") && !record.getString("BiogHist").isEmpty()) {
-            addBiologicalHistoryNote(agentJS, record, creatorTypeId);
+            addBiographicalHistoryNote(agentJS, record, creatorTypeId);
         }
 
         // add the agent date
@@ -600,6 +605,21 @@ public class ASpaceMapper {
         }
 
         agentJS.put("names", namesJA);
+
+        //add an unpublished note with the archon record id since aspace 2.6 doesn't save external ids for agents
+        if(addNoteForCreatorArchonID && record.has("ID")){
+            String strRecordID = record.getString("ID");
+            String legacyIDString = "";
+            if(strRecordID.startsWith("subject_")){
+                legacyIDString = "Archon Instance::Subject Record ID " + strRecordID.substring(8);
+            } else {
+                legacyIDString = "Archon Instance::Creator Record ID " + strRecordID;
+            }
+            if(identifierPrefix != null && !identifierPrefix.isEmpty()) legacyIDString = identifierPrefix + " " + legacyIDString;
+            if(!strRecordID.startsWith("subject_") || addNoteForAgentSubjectTermArchonID){
+                addAgentNote(agentJS, "Legacy Archon ID", legacyIDString, false);
+            }
+        }
 
         return agentJS;
     }
@@ -871,8 +891,9 @@ public class ASpaceMapper {
      * @param creatorTypeId
      * @throws Exception
      */
-    public void addBiologicalHistoryNote(JSONObject agentJS, JSONObject record, int creatorTypeId) throws Exception {
-        JSONArray notesJA = new JSONArray();
+    public void addBiographicalHistoryNote(JSONObject agentJS, JSONObject record, int creatorTypeId) throws Exception {
+        JSONArray notesJA = (agentJS.has("notes")) ? agentJS.getJSONArray("notes") : new JSONArray();
+
         JSONObject noteJS = new JSONObject();
 
         noteJS.put("jsonmodel_type", "note_bioghist");
@@ -930,6 +951,38 @@ public class ASpaceMapper {
             subnoteJS.put("publish", publishRecord);
             subnotesJA.put(subnoteJS);
         }
+
+        noteJS.put("subnotes", subnotesJA);
+        notesJA.put(noteJS);
+        agentJS.put("notes", notesJA);
+    }
+
+    /**
+     * Method to add a general note to the agent. Putting into the biohist field with an appropriate label
+     * because no other note fields are available in version 2.6 for agents.
+     * 
+     * @param agentJS
+     * @param agentNoteLabel
+     * @param agentNoteText
+     * @param publishAgentNote
+     * @throws Exception
+     */
+    private void addAgentNote(JSONObject agentJS, String agentNoteLabel, String agentNoteText, Boolean publishAgentNote) throws Exception {
+        JSONArray notesJA = (agentJS.has("notes")) ? agentJS.getJSONArray("notes") : new JSONArray();
+        JSONObject noteJS = new JSONObject();
+
+        noteJS.put("jsonmodel_type", "note_bioghist");
+        noteJS.put("label", agentNoteLabel);
+        noteJS.put("publish", publishAgentNote);
+
+        JSONArray subnotesJA = new JSONArray();
+
+        JSONObject textNoteJS = new JSONObject();
+        textNoteJS.put("jsonmodel_type", "note_text");
+        textNoteJS.put("publish", publishAgentNote);
+        textNoteJS.put("content", agentNoteText);
+        
+        subnotesJA.put(textNoteJS);
 
         noteJS.put("subnotes", subnotesJA);
         notesJA.put(noteJS);
