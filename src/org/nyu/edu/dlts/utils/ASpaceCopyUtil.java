@@ -220,6 +220,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     //substring to indicate that a collection record should not be migrated when in the title
     private String toSkipSubstring = "//DO NOT MIGRATE//";
 
+    //whether to update content type if both physical and intellectual but has no descriptive metadata
+    private Boolean adjustCollectionContentType = true;
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -1787,9 +1790,6 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 // add any archival objects here
                 JSONObject resourceComponents = archonClient.getCollectionContentRecords(dbId);
 
-                if(resourceComponents != null && resourceComponents.length()>0){
-                    countWithCollContent++;
-                }
                 //for tracking whether any content is added
                 Boolean addedCollContent = false;
 
@@ -1820,6 +1820,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
                 // store physical content IDs we may not need to add an instance for since they have child physical content
                 HashSet<String> skipParentInstanceFor = new HashSet<String>();
+
+                // reference map of digital objects for the collection
+                HashMap<Integer, ArrayList<JSONArray>> collectionDOMap = digitalObjectMap.get(intID);
+
+                if(resourceComponents != null && resourceComponents.length()>0){
+                    countWithCollContent++;
+                    if(adjustCollectionContentType) updateCollectionContentTypes(resourceComponents, collectionDOMap);
+                }
 
                 Iterator<String> ckeys = resourceComponents.sortedKeys();
                 while (ckeys.hasNext()) {
@@ -2054,7 +2062,6 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 }
 
                 // add any digital instances that were attached to a component that was not found
-                HashMap<Integer, ArrayList<JSONArray>> collectionDOMap = digitalObjectMap.get(intID);
                 if (collectionDOMap != null) {
                     Integer[] notFoundKeys = collectionDOMap.keySet().toArray(new Integer[0]);
                     for (int id : notFoundKeys) {
@@ -2231,6 +2238,57 @@ public class ASpaceCopyUtil implements  PrintConsole {
             // add the component to the batch array and the set of IDs that have already been added
             batchJA.put(intellectualComponents.get(cid));
             added.add(cid);
+        }
+    }
+
+    /**
+     * Method to adjust collection content to check if a physical and intellectual content type is
+     * both in the particular context or only physical.
+     * 
+     * 
+     * @param resourceComponents
+     * @throws Exception
+     */
+    public void updateCollectionContentTypes(JSONObject resourceComponents, HashMap<Integer, ArrayList<JSONArray>> collectionDOMap) throws Exception{
+        Iterator<String> ckeys = resourceComponents.sortedKeys();
+        while (ckeys.hasNext()) {
+            JSONObject component = resourceComponents.getJSONObject(ckeys.next());
+            int contentID = component.getInt("ID");
+            int contentType = component.getInt("ContentType");
+            if(contentType == 3){
+                Boolean physicalOnly = true;
+                String[] stringFieldsToCheck = {"Title","Description","Date"};
+                String[] arrayFieldsToCheck = {"Creators","Subjects"};
+                for(String strFieldName : stringFieldsToCheck){
+                    if(!component.getString(strFieldName).isEmpty()){
+                        physicalOnly = false;
+                        break;
+                    }
+                }
+                if(physicalOnly){
+                    for(String arrFieldName : arrayFieldsToCheck){
+                        if(component.getJSONArray(arrFieldName).length()>0){
+                            physicalOnly = false;
+                            break;
+                        }
+                    }
+                }
+                if(physicalOnly){
+                    Object object = component.get("Notes");
+                    if(object instanceof JSONObject) {
+                        physicalOnly = false;
+                    }
+                }
+                if(physicalOnly){
+                   if (collectionDOMap != null && collectionDOMap.get(contentID) != null){
+                        physicalOnly = false;
+                   }
+                }
+                //if no intellectual metadata found for the component, update content type to be 2 (only physical)
+                if(physicalOnly){
+                    component.put("ContentType","2");
+                }
+            }
         }
     }
 
