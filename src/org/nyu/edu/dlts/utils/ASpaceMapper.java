@@ -1973,7 +1973,16 @@ public class ASpaceMapper {
             addDigitalObjectNote(notesJA, "note", "Contributor Note", noteContent);
         }
 
-        addDigitalObjectNote(notesJA, "userestrict", "Rights Statement Note", record.getString("RightsStatement"));
+        if(record.has("RightsStatementsOrgText") && !record.getString("RightsStatementsOrgText").isEmpty()){
+            if(record.has("RightsStatementsOrgURI") && !record.getString("RightsStatementsOrgURI").isEmpty()){
+                noteContent = "<exref href='" + record.getString("RightsStatementsOrgURI") + "'>" + record.getString("RightsStatementsOrgText") + "</exref>";
+            } else {
+                noteContent = record.getString("RightsStatementsOrgText");
+            }
+            addDigitalObjectNote(notesJA, "userestrict", "Rights Statement", noteContent);
+        }
+
+        addDigitalObjectNote(notesJA, "userestrict", "Rights Description", record.getString("RightsStatement"));
 
         json.put("notes", notesJA);
     }
