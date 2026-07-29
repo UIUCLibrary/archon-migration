@@ -2916,8 +2916,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
             String containerType = info[0];
 
             ArrayList<String> containerIndicators;
+
+            Boolean hasBarcode = checkShelfForBarcode && isBarcode(location.getString("Shelf"));
             
-            if (checkShelfForBarcode && isBarcode(location.getString("Shelf"))) {
+            if (hasBarcode) {
                 //keep the whole indicator string together if there is a barcode
                 containerIndicators = new ArrayList<String>();
                 containerIndicators.add(info[1]);
@@ -2933,36 +2935,51 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
                 topContainerURI = topContainerURIs.get(containerKey);
 
-                //if top container isn't found, try looking for 1 or 2 leading zeroes to remove from the indicator (don't convert to int because an indicator could be 043A or something similiar)
-                if(topContainerURI == null && !topContainerURIs.isEmpty() && containerIndicator.length()>1 && containerIndicator.charAt(0)=='0'){
-                    String modifiedIndicator = "";
-                    if(containerIndicator.charAt(1)=='0' && containerIndicator.length() >= 3){
-                        //if two leading zeros
-                        modifiedIndicator = containerIndicator.substring(2);                        
-                    } else {
-                        //if one leading zero
-                        modifiedIndicator = containerIndicator.substring(1);
-                    }
-                    String modifiedContainerKey = (containerType + " " + modifiedIndicator).toLowerCase();
-                    topContainerURI = topContainerURIs.get(modifiedContainerKey);
-                }
-
-                //try adding in leading zeroes if it resulted from splitting up a longer indicator string
-                if(topContainerURI == null && !topContainerURIs.isEmpty() && containerIndicators.size()>1){
-                    Boolean indicatorIsInteger = false;
-                    try {
-                        Integer indicatorInt = Integer.parseInt(containerIndicator);
-                        if(indicatorInt > 0 ) indicatorIsInteger = true;
-                    } catch (NumberFormatException e) {
-                        indicatorIsInteger = false;
-                    }
-                    if(indicatorIsInteger){
-                        String paddedContainerKey = (containerType + " 0" + containerIndicator).toLowerCase();
-                        topContainerURI = topContainerURIs.get(paddedContainerKey);
-                        if(topContainerURI == null){
-                            paddedContainerKey = (containerType + " 00" + containerIndicator).toLowerCase();
-                            topContainerURI = topContainerURIs.get(paddedContainerKey);
+                //try alternative versions of the indicator to see if a match can be found
+                if(topContainerURI == null && !topContainerURIs.isEmpty()){
+                    ArrayList<String> modifiedIndicators = new ArrayList<String>();
+                    if(containerIndicator.length()>1 && containerIndicator.charAt(0)=='0'){
+                        //try looking for 1 or 2 leading zeroes to remove from the indicator (don't convert to int because an indicator could be 043A or something similiar)
+                        if(containerIndicator.charAt(1)=='0' && containerIndicator.length() >= 3){
+                            //if two leading zeros
+                            modifiedIndicators.add(containerIndicator.substring(2));                        
+                        } else {
+                            //if one leading zero
+                            modifiedIndicators.add(containerIndicator.substring(1));
                         }
+                    }
+                    //try a version(s) without parenthetical note at end if there is a barcode
+                    if (isUniqueIndicatorWithParenthetical(hasBarcode, containerIndicator)) {
+                        modifiedIndicators.add(containerIndicator.replaceAll("\\s?\\(.*?\\)$",""));
+                        if(modifiedIndicators.size() > 1){
+                            ArrayList<String> tempModifiedIndicators = new ArrayList<String>();
+                            for(String modifiedIndicator : modifiedIndicators){
+                                if(modifiedIndicator.endsWith(")")){
+                                        tempModifiedIndicators.add(modifiedIndicator.replaceAll("\\s?\\(.*?\\)$",""));
+                                }
+                            }
+                            modifiedIndicators.addAll(tempModifiedIndicators);
+                        }
+                    }
+                    //try adding in leading zeroes if it resulted from splitting up a longer indicator string
+                    if(containerIndicators.size()>1){
+                        Boolean indicatorIsInteger = false;
+                        try {
+                            Integer indicatorInt = Integer.parseInt(containerIndicator);
+                            if(indicatorInt > 0 ) indicatorIsInteger = true;
+                        } catch (NumberFormatException e) {
+                            indicatorIsInteger = false;
+                        }
+                        if(indicatorIsInteger){
+                            modifiedIndicators.add("0" + containerIndicator);
+                            modifiedIndicators.add("00" + containerIndicator);
+                        }
+                    }
+                    //try these alternative equivalent indicators, stopping if a match is found
+                    for(String modifiedIndicator : modifiedIndicators){
+                        String modifiedContainerKey = (containerType + " " + modifiedIndicator).toLowerCase();
+                        topContainerURI = topContainerURIs.get(modifiedContainerKey);
+                        if(topContainerURI != null) break;
                     }
                 }
 
@@ -2973,6 +2990,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     try {
                         JSONObject containerJS = new JSONObject(aspaceClient.get(topContainerURI, null));
                         addLocationInfo(containerJS, location);
+                        //overwrite existing indicator with the parenthetical version
+                        if (isUniqueIndicatorWithParenthetical(hasBarcode, containerIndicator)){
+                            containerJS.put("indicator", containerIndicator);
+                        }
                         String id = saveRecord(topContainerURI, containerJS.toString(), null);
                         if (!id.equalsIgnoreCase(NO_ID)) {
                             print("Added Location to Top Container: " + containerKey);
@@ -2994,6 +3015,18 @@ public class ASpaceCopyUtil implements  PrintConsole {
         if (instancesJA.length() != 0) {
             recordJS.put("instances", instancesJA);
         }
+    }
+
+    /**
+     * Assesses whether the indicator has a parenthetical note at the end and is likely unique
+     * (due to having a barcode or barcode equivalent)
+     *
+     * @param hasBarcode
+     * @param containerIndicator
+     * @return
+     */
+    private boolean isUniqueIndicatorWithParenthetical(Boolean hasBarcode, String containerIndicator) {
+        return hasBarcode && containerIndicator.contains("(") && !containerIndicator.startsWith("(") && containerIndicator.endsWith(")");
     }
 
     /**
