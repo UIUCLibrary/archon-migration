@@ -54,6 +54,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
     // hashmap that maps location from the old database with copy in new database
     private HashMap<String, String> locationURIMap = new HashMap<String, String>();
+    //hashmap that maps the uri in new database to the location in the old database
+    private HashMap<String, String> locationURIKeyMap = new HashMap<String, String>();
 
     // hashmap that maps subjects from old database with copy in new database
     private HashMap<String, String> subjectURIMap = new HashMap<String, String>();
@@ -2548,9 +2550,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         Boolean hasBarcode = checkShelfForBarcode && isBarcode(location.getString("Shelf"));
 
+        String currentRecordInfo = currentRecordType + ", ArchonID " + currentRecordDBID + " ("+ location.getString("Content") +")";
+
         //if shelf field for the location is a barcode, add that to the top container instead
         if (hasBarcode) {
-            String currentRecordInfo = currentRecordType + ", ArchonID " + currentRecordDBID + " ("+ location.getString("Content") +")";
             String existingBarcodeInfo = barcodesAddedMap.putIfAbsent(coordinate3, currentRecordInfo);
             if(existingBarcodeInfo == null){
                 containerJS.put("barcode", coordinate3);
@@ -2601,9 +2604,27 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         locationJS.put("note", combinedExtentNote);
                     }
                     if(existingLocationJS.has("ref")){
-                        if(!existingLocationJS.getString("ref").equals(locationURI)){
-                            //prefer the existing location if there is nothing in the shelf field
-                            if(location.getString("Shelf").isEmpty()||location.getString("Shelf").equals("null")){
+                        String existingLocationURI = existingLocationJS.getString("ref");
+                        
+                        if(!existingLocationURI.equals(locationURI)){
+                            Boolean retainExistingLocation = false;
+                            String existingLocationKey = locationURIKeyMap.get(existingLocationURI);
+                            String newLocationKey = locationURIKeyMap.get(locationURI);
+                            if(hasBarcode){
+                                //prefer new location for anything with a barcode, unless the old location is a more specific version of the new one
+                                if(existingLocationKey.startsWith(newLocationKey)){
+                                    retainExistingLocation = true;
+                                } else {
+                                    retainExistingLocation = false;
+                                }
+                            } else if(location.getString("Shelf").isEmpty()||location.getString("Shelf").equals("null")){
+                                //prefer the existing location if there is nothing in the shelf field for the new one
+                                if(!existingLocationKey.startsWith(newLocationKey)){
+                                    addErrorMessage("Contradictory locations found for " + currentRecordInfo + ": "+ existingLocationKey + " vs. " + newLocationKey);
+                                }
+                                retainExistingLocation = true;
+                            }
+                            if(retainExistingLocation){
                                 locationJS.put("ref", existingLocationJS.getString("ref"));
                             }
                         }
@@ -3180,6 +3201,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         String key = building;
 
+        String keySeparator = "_";
+
         // lets create a JSON object for the location in case we need to save it
         JSONObject locationJS = new JSONObject();
 
@@ -3213,15 +3236,15 @@ public class ASpaceCopyUtil implements  PrintConsole {
             }
             if (!floor.equals("null") && !floor.isEmpty()) {
                 locationJS.put("floor", floor);
-                key += "-" + floor;
+                key += keySeparator + floor;
             }
             if (!room.equals("null") && !room.isEmpty()) {
                 locationJS.put("room", room);
-                key += "-" + room;
+                key += keySeparator + room;
             }
             if (!area.equals("null") && !area.isEmpty()) {
                 locationJS.put("area", area);
-                key += "-" + area;
+                key += keySeparator + area;
             }
         }
 
@@ -3230,24 +3253,24 @@ public class ASpaceCopyUtil implements  PrintConsole {
         if (!coordinate1.equals("null") && !coordinate1.isEmpty()) {
             locationJS.put("coordinate_1_label", "Range");
             locationJS.put("coordinate_1_indicator", coordinate1);
-            key += "-" + coordinate1;
+            key += keySeparator + coordinate1;
         } else {
             // put in dummy range so record saves
             locationJS.put("coordinate_1_label", "Range");
             locationJS.put("coordinate_1_indicator", "n/a");
-            key += "-na";
+            key += keySeparator + "na";
         }
 
         if (!coordinate2.equals("null") && !coordinate2.isEmpty()) {
             locationJS.put("coordinate_2_label", "Section");
             locationJS.put("coordinate_2_indicator", coordinate2);
-            key += "-" + coordinate2;
+            key += keySeparator + coordinate2;
         }
 
         if (!coordinate3.equals("null") && !coordinate3.isEmpty()) {
             locationJS.put("coordinate_3_label", "Shelf");
             locationJS.put("coordinate_3_indicator", coordinate3);
-            key += "-" + coordinate3;
+            key += keySeparator + coordinate3;
         }
 
         if(locationURIMap.containsKey(key)) {
@@ -3260,6 +3283,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             if (!id.equalsIgnoreCase(NO_ID)) {
                 String uri = ASpaceClient.LOCATION_ENDPOINT + "/" + id;
                 locationURIMap.put(key, uri);
+                locationURIKeyMap.put(uri, key);
                 locationSuccess++;
                 print("Copied Location: " + key + " :: " + id);
                 return uri;
