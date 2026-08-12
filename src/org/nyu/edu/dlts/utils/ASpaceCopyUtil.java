@@ -853,21 +853,35 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // now add the relationships between creators
         print("Adding related creator relationships ...");
+        // track progress for relationships
+        int totalRelationships = 0;
+        int successRelationships = 0;
         for (String key : invertedKeys) {
             JSONObject creator = records.getJSONObject(key);
             // add any relationships if needed
             if(creator.has("CreatorRelationships") && !creator.getString("CreatorRelationships").equals("null")) {
+                totalRelationships += 1;
                 try {
                     String arId = creator.getString("ID");
                     String uri = nameURIMap.get(arId);
-                    JSONObject agentJS = new JSONObject(aspaceClient.get(uri, null));
-                    addCreatorRelationShips(records, creator, agentJS);
-                    saveRecord(uri, agentJS.toString(), "Creator->" + creator.getString("Name"));
+                    String asAgentJSON = aspaceClient.get(uri, null);
+                    if(asAgentJSON == null){
+                        print("Error in retrieving agent from aspace for ArchonID " + arId + " using uri " + uri + "; relationships not added for " + creator.getString("Name"));
+                    } else {
+                        JSONObject agentJS = new JSONObject(asAgentJSON);
+                        addCreatorRelationShips(records, creator, agentJS);
+                        saveRecord(uri, agentJS.toString(), "Creator->" + creator.getString("Name"));
+
+                        successRelationships += 1;
+                    }
                 } catch(Exception e) {
-                    print("Invalid Relationship Record For: " + creator.getString("Name"));
+                    String errorMessage = "Invalid Relationship Record For: " + creator.getString("Name") + ", ArchonID: " + creator.getInt("ID") +"; error: " + e.toString();
+                    print(errorMessage);
+                    addErrorMessage(errorMessage);
                 }
             }
         }
+        updateRecordTotals("Creators with Relationships", totalRelationships, successRelationships);
 
         // refresh the database connection to prevent heap space error
         freeMemory();
