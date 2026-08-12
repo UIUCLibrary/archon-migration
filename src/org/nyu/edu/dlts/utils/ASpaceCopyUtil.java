@@ -834,6 +834,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     }
                     break;
                 default:
+                    String errorMessage = "Invalid CreatorTypeID for: " + creator.getString("Name") + ", Archon ID: " + arId;
+                    print(errorMessage);
+                    addErrorMessage(errorMessage);
                     break;
             }
 
