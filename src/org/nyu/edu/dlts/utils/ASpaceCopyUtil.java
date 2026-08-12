@@ -811,15 +811,27 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 case 21:
                 case 23:
                     id = saveRecord(ASpaceClient.AGENT_PEOPLE_ENDPOINT, agentJS.toString(), "Creator_Person->" + creator.getString("Name"));
-                    uri = ASpaceClient.AGENT_PEOPLE_ENDPOINT + "/" + id;
+                    if(!id.startsWith(ASpaceClient.AGENT_PEOPLE_ENDPOINT + "/")){
+                        uri = ASpaceClient.AGENT_PEOPLE_ENDPOINT + "/" + id;
+                    } else {
+                        uri = id;
+                    }
                     break;
                 case 20:
                     id = saveRecord(ASpaceClient.AGENT_FAMILY_ENDPOINT, agentJS.toString(), "Creator_Family->" + creator.getString("Name"));
-                    uri = ASpaceClient.AGENT_FAMILY_ENDPOINT + "/" + id;
+                    if(!id.startsWith(ASpaceClient.AGENT_FAMILY_ENDPOINT + "/")){
+                        uri = ASpaceClient.AGENT_FAMILY_ENDPOINT + "/" + id;
+                    } else {
+                        uri = id;
+                    }
                     break;
                 case 22:
                     id = saveRecord(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT, agentJS.toString(), "Creator_Corporate->" + creator.getString("Name"));
-                    uri = ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT + "/" + id;
+                    if(!id.startsWith(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT + "/")){
+                        uri = ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT + "/" + id;
+                    } else {
+                        uri = id;
+                    }
                     break;
                 default:
                     break;
