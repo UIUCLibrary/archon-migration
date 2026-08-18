@@ -334,7 +334,7 @@ public class ASpaceClient {
 
             if (get.getStatusCode() == HttpStatus.SC_OK) {
                 try {
-                    responseBody = get.getResponseBodyAsString();
+                    responseBody = new String(get.getResponseBody(), "UTF-8");
 
                     if (debug) System.out.println("response: " + responseBody);
                 } catch (Exception e) {
