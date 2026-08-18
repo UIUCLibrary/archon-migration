@@ -900,8 +900,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private void addCreatorRelationShips(JSONObject records, JSONObject creator, JSONObject agentJS) throws Exception {
         JSONArray relationships = creator.getJSONArray("CreatorRelationships");
         int creatorTypeID = creator.getInt("CreatorTypeID");
-
-        JSONArray relatedAgentsJA = new JSONArray();
+        JSONArray relatedAgentsJA;
+        if(agentJS.has("related_agents")){
+            relatedAgentsJA = agentJS.getJSONArray("related_agents");
+        } else {
+            relatedAgentsJA = new JSONArray();
+        }
 
         for(int i = 0; i < relationships.length(); i++) {
             JSONObject relationship = relationships.getJSONObject(i);
@@ -975,14 +979,49 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     agentRelationJS.put("relator", "is_associative_with");
             }
 
-            relatedAgentsJA.put(agentRelationJS);
+            if(!agentRelationshipExists(relatedAgentsJA, agentRelationJS)){
+                relatedAgentsJA.put(agentRelationJS);
+                System.out.println("Adding relationship " + relationship.toString());
+            } else {
+                System.out.println("Not adding relationship (already exists) " + relationship.toString());
+            }
 
-            System.out.println("Adding relationship " + relationship.toString());
         }
 
         if(relatedAgentsJA.length() > 0) {
             agentJS.put("related_agents", relatedAgentsJA);
         }
+    }
+
+
+    /**
+     * Check whether a relationship is already in the agent record (for when the related creator
+     * already established the relationship)
+     * @param relatedAgents
+     * @param agentRelationJS
+     * @throws JSONException 
+     */
+    private boolean agentRelationshipExists(JSONArray relatedAgents, JSONObject agentRelationJS) throws JSONException {
+        String ref = agentRelationJS.getString("ref");
+        String jsonModelType = agentRelationJS.getString("jsonmodel_type");
+        String relator = agentRelationJS.getString("relator");
+        
+        for (int i = 0; i < relatedAgents.length(); i++) {
+            JSONObject relatedAgent = relatedAgents.getJSONObject(i);
+
+            if (ref.equals(relatedAgent.optString("ref"))
+                    && jsonModelType.equals(relatedAgent.optString("jsonmodel_type"))
+                    && relator.equals(relatedAgent.optString("relator"))) {
+                if(relatedAgent.has("Description") && agentRelationJS.has("Description")){
+                    if (!relatedAgent.getString("Description").equals(agentRelationJS.getString("Description"))){
+                        addErrorMessage("Conflicting relationship description for " + ref);
+                    }
+                }
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
