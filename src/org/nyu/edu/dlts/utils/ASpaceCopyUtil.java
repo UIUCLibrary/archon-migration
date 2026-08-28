@@ -198,6 +198,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
     //Boolean to set whether location content ranges (e.g. Box 1-10) should be expanded into individual boxes
     private Boolean expandLocationContentRange = true;
+
+    //Boolean to block splitting accession location content descriptions
+    private Boolean doNotSplitAccessionLocationContent = true;
     
     // whether to check if the shelf field in the location holds the barcode for the box
     private Boolean checkShelfForBarcode = true;
@@ -3070,8 +3073,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             Boolean hasBarcode = checkShelfForBarcode && isBarcode(location.getString("Shelf"));
             
-            if (hasBarcode) {
-                //keep the whole indicator string together if there is a barcode
+            if (hasBarcode || (instanceType.equals("accession") && doNotSplitAccessionLocationContent)) {
+                //keep the whole indicator string together
                 containerIndicators = new ArrayList<String>();
                 containerIndicators.add(info[1]);
             } else {
