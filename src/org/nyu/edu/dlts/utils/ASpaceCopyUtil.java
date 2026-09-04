@@ -228,6 +228,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     //whether to update content type if both physical and intellectual but has no descriptive metadata
     private Boolean adjustCollectionContentType = true;
 
+    //create single line error messages
+    private Boolean createSingleLineErrorMessages = true;
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -3742,6 +3745,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @param message
      */
     public void addErrorMessage(String message) {
+        if(createSingleLineErrorMessages){
+            message = message.replaceAll("(?<=.)\\n(?=.)","; ").replaceAll(":;",":");
+        }
         errorBuffer.append(message).append("\n");
         incrementASpaceErrorCount();
     }
