@@ -2152,8 +2152,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 // add warning about any component IDs that were missing from Archon
                 if (notFoundIDs.size() != 0) {
                     StringBuilder errorMessage = new StringBuilder();
-                    errorMessage.append("Could not find ").append(notFoundIDs.size())
-                            .append(" component(s) for resource: ").append(arId);
+                    errorMessage.append("Components not found for ArchonID " + dbId + " -- could not find ").append(notFoundIDs.size())
+                            .append(" component(s) for collection with identifier: ").append(arId);
                     if (notFoundIDs.size() <= 20) {
                         errorMessage.append("\nNot found components:");
                         for (String id : notFoundIDs) errorMessage.append(" ").append(id);
@@ -2175,7 +2175,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 if (invalidParentIDs.size() != 0) {
                     StringBuilder errorMessage = new StringBuilder();
                     errorMessage.append("Invalid parent relationships found for ").append(invalidParentIDs.size())
-                            .append(" component(s) for resource: ").append(arId);
+                            .append(" component(s) for collection with identifier: ").append(arId).append(" (ArchonID " + dbId +")");
                     if (invalidParentIDs.size() <= 20) {
                         errorMessage.append("\nInvalid relationships found for components:");
                         for (String id : invalidParentIDs) errorMessage.append(" ").append(id);
@@ -2633,7 +2633,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 containerJS.put("barcode", coordinate3);
             } else {
                 String barcodeError = "Barcode for " + currentRecordInfo + " already in use for " + existingBarcodeInfo + "; barcode not added to container";
-                addErrorMessage(barcodeError);
+                addErrorMessage(barcodeError + "\n");
                 extentNote += " (shared barcode with " + existingBarcodeInfo + ": " + coordinate3 +")";
             }
             coordinate3 = "";
@@ -2694,7 +2694,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                             } else if(location.getString("Shelf").isEmpty()||location.getString("Shelf").equals("null")){
                                 //prefer the existing location if there is nothing in the shelf field for the new one
                                 if(!existingLocationKey.startsWith(newLocationKey)){
-                                    addErrorMessage("Contradictory locations found for " + currentRecordInfo + ": "+ existingLocationKey + " vs. " + newLocationKey);
+                                    addErrorMessage("Contradictory locations found for " + currentRecordInfo + ": "+ existingLocationKey + " (retained) vs. " + newLocationKey + " (not migrated; no barcode)\n");
                                 }
                                 retainExistingLocation = true;
                             }
@@ -2711,8 +2711,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 String fullExtentNote = locationJS.getString("note");
                 if(fullExtentNote.length() > 255){
                     String truncExtentNote = fullExtentNote.substring(0,250)+"[...]";
-                    String truncationError = "Extent note too long for " + currentRecordType + " with ArchonID " + currentRecordDBID + ". Migrated in truncated form. Full note: " + fullExtentNote;
-                    addErrorMessage(truncationError);
+                    String truncationError = "Extent note too long for " + currentRecordType + " with ArchonID " + currentRecordDBID + " ("+ fullExtentNote.length() +" characters). Migrated in truncated form. Full note: " + fullExtentNote;
+                    addErrorMessage(truncationError + "\n");
                     locationJS.put("note", truncExtentNote);
                 }
             }
