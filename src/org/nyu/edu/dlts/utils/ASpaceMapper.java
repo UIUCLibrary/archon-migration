@@ -450,7 +450,7 @@ public class ASpaceMapper {
             json.put("terms", termsJA);
         } catch(Exception e) {
             String message = "Invalid subject terms for " + record + "\n";
-            aspaceCopyUtil.addErrorMessage(message);
+            addErrorMessage(message);
             return null;
         }
 
@@ -565,7 +565,7 @@ public class ASpaceMapper {
                 break;
             default:
                 String message = sortName + ":: Unknown name type: " + creatorTypeId + "\n";
-                aspaceCopyUtil.addErrorMessage(message);
+                addErrorMessage(message);
                 return null;
         }
 
@@ -771,7 +771,7 @@ public class ASpaceMapper {
                 accessionIdentifier += "." + id_1;
             }
             String message = "Invalid Accession Date for" + accessionIdentifier + "\n";
-            aspaceCopyUtil.addErrorMessage(message);
+            addErrorMessage(message);
         }
 
         json.put("title", title);
@@ -1189,7 +1189,7 @@ public class ASpaceMapper {
             }
 
             String message = "Duplicate Digital Object Filename: "  + filename  + " Changed To: " + uniqueFilename + "\n";
-            aspaceCopyUtil.addErrorMessage(message);
+            addErrorMessage(message);
 
             filename = uniqueFilename;
             digitalObjectFilenames.add(filename);
@@ -1263,7 +1263,7 @@ public class ASpaceMapper {
                 id = "##" + randomString.nextString();
             }
             String archonID = record.getString("ID");
-            aspaceCopyUtil.addErrorMessage("Empty collection ID for collection with Archon ID " + archonID + ". Changed to " + id + "\n");
+            addErrorMessage("Empty collection ID for collection with Archon ID " + archonID + ". Changed to " + id + "\n");
         }
 
         String classificationID = record.getString("ClassificationID");
@@ -1650,11 +1650,7 @@ public class ASpaceMapper {
                 for (String error : errors){
                     message += error +"\n";
                 }
-                if(aspaceCopyUtil != null){
-                    aspaceCopyUtil.addErrorMessage(message); 
-                } else {
-                    System.out.println(message);
-                }
+                addErrorMessage(message);
             }
         } else {
             mainExtent.put("portion", "whole");
@@ -1670,6 +1666,34 @@ public class ASpaceMapper {
         allExtents.put(0, mainExtent);
 
         json.put("extents", allExtents);
+    }
+
+    /**
+     * Add error message using the apaceCopyUtil or print error message if aspaceCopyUtil is null
+     * (aspaceCopyUtil will be null when using ArchonRecordInspector)
+     * 
+     * @param message
+     */
+    private void addErrorMessage(String message) {
+        if(aspaceCopyUtil != null){
+            aspaceCopyUtil.addErrorMessage(message); 
+        } else {
+            System.out.println(message);
+        }
+    }
+
+    /**
+     * Add change message using the apaceCopyUtil or print change message if aspaceCopyUtil is null
+     * (aspaceCopyUtil will be null when using ArchonRecordInspector)
+     * 
+     * @param message
+     */
+    private void addChangeMessage(String message) {
+        if(aspaceCopyUtil != null){
+            aspaceCopyUtil.addChangeMessage(message);
+        } else {
+            System.out.println(message);
+        }
     }
 
     /**
@@ -1709,11 +1733,7 @@ public class ASpaceMapper {
                     dateJS.put("end", dateBegin.toString());
 
                     String message = "End date: " + dateEnd + " before begin date: " + dateBegin + ", ignoring end date. Archon ID" + archonID;
-                    if(aspaceCopyUtil != null){
-                        aspaceCopyUtil.addErrorMessage(message);
-                    } else {
-                        System.out.println(message);
-                    }
+                    addErrorMessage(message);
                 }
             } else {
                 dateJS.put("end", dateBegin.toString());
@@ -1721,11 +1741,7 @@ public class ASpaceMapper {
         } else {
             if(addNormalDateFromExpression(dateExpression, dateJS)){
                 String message = "No normal date for record with Archon ID "+ archonID + "; adding calculated normal date using date expression " + dateExpression;
-                if(aspaceCopyUtil != null){
-                    aspaceCopyUtil.addChangeMessage(message);
-                } else {
-                    System.out.println(message);
-                }
+                addChangeMessage(message);
             }
         }
 
@@ -2291,11 +2307,7 @@ public class ASpaceMapper {
                 message += " '" + existingNote + "' changed to '" + cleanNote + "' in record with Archon ID " + record.getString("ID");
             }
             if(!existingNote.equals(cleanNote)){
-                if(aspaceCopyUtil != null){
-                    aspaceCopyUtil.addChangeMessage(message);
-                } else {
-                    System.out.println(message);
-                }
+                addChangeMessage(message);
             }
         } else {
             cleanNote = existingNote;
@@ -2441,7 +2453,7 @@ public class ASpaceMapper {
                 id = "Digital Object ID ##"+ randomStringLong.nextString();
                 String message = "Empty Digital Object Identifier for " + title +  ", added as " + id + "\n";
                 System.out.println(message);
-                aspaceCopyUtil.addErrorMessage(message);
+                addErrorMessage(message);
             }
             
             if(!appendTestIdentifier.isEmpty()){
@@ -2455,7 +2467,7 @@ public class ASpaceMapper {
                 digitalObjectIDs.add(nid);
                 String message = "Duplicate Digital Object (" + title +  ") Id: "  + id  + " Added: " + nid + "\n";
                 System.out.println(message);
-                aspaceCopyUtil.addErrorMessage(message);
+                addErrorMessage(message);
             }
 
             return id;
@@ -2484,7 +2496,7 @@ public class ASpaceMapper {
 
                 message = "Duplicate Accession (" + title +  ") Id: "  + id  + " Added: " + nid + "\n";
                 System.out.println(message);
-                aspaceCopyUtil.addErrorMessage(message);
+                addErrorMessage(message);
 
                 return nid;
             }
@@ -2507,7 +2519,7 @@ public class ASpaceMapper {
                 resourceIDs.add(fullId);
 
                 message = "Duplicate Resource Id: " + id +"(Title: " + title + ") Changed to: " + fullId + "\n";
-                aspaceCopyUtil.addErrorMessage(message);
+                addErrorMessage(message);
             }
 
             // we don't need to return the new id here, since the idParts array
@@ -2538,7 +2550,7 @@ public class ASpaceMapper {
                 eadIDs.add(nid);
 
                 String message = "Duplicate EAD Id: "  + id  + " Changed to: " + nid + "\n";
-                aspaceCopyUtil.addErrorMessage(message);
+                addErrorMessage(message);
 
                 // assign id to new id
                 id = nid;
