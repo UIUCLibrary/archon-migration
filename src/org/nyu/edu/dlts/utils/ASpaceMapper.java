@@ -2271,7 +2271,7 @@ public class ASpaceMapper {
         String message = "";
 
         if(noteType.equals("OtherNote")){
-            regex = "(\\d+ )(Pages|Page|pages|page)";
+            regex = "(\\d+ )(Pages|Page|pages|page)[;\\.]?\\s?\\t?";
             message = "Other note";
         }
         if(noteType.equals("ProcessingInfo")){
