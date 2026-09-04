@@ -940,16 +940,19 @@ public class ASpaceCopyUtil implements  PrintConsole {
             // find the appropriate ASpace relationship type based on agent types and Archon relationship type
             switch (creatorRelationshipTypeID) {
                 case 4:
+                    // archon relationship type 4: temporal-earlier
                     // agent_relationship_earlierlater :: is_earlier_form_of
                     agentRelationJS.put("jsonmodel_type", "agent_relationship_earlierlater");
                     agentRelationJS.put("relator", "is_earlier_form_of");
                     break;
                 case 5:
+                    // archon relationship type 5: temporal-later
                     // agent_relationship_earlierlater :: is_later_form_of
                     agentRelationJS.put("jsonmodel_type", "agent_relationship_earlierlater");
                     agentRelationJS.put("relator", "is_later_form_of");
                     break;
                 case 2:
+                    //archon relationship type 2: hierarchical-parent
                     if (creatorTypeID == 19 || creatorTypeID == 21 || creatorTypeID == 23) {
                         if (relatedCreatorTypeID == 19 || relatedCreatorTypeID == 21 || relatedCreatorTypeID == 23) {
                             // agent_relationship_parentchild :: is_parent_of
@@ -965,6 +968,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         break;
                     }
                 case 3:
+                    // archon relationship typeid 3: hierarchical-child
                     if (creatorTypeID == 19 || creatorTypeID == 21 || creatorTypeID == 23) {
                         if (relatedCreatorTypeID == 19 || relatedCreatorTypeID == 21 || relatedCreatorTypeID == 23) {
                             // agent_relationship_parentchild :: is_child_of
@@ -980,6 +984,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         break;
                     }
                 default:
+                    // archon relationship typeid 1: identity
+                    // archon relationship typeid 6: family
+                    // archon relationship typeid 7: associative
                     // agent_relationship_associative :: is_associative_with
                     agentRelationJS.put("jsonmodel_type", "agent_relationship_associative");
                     agentRelationJS.put("relator", "is_associative_with");
