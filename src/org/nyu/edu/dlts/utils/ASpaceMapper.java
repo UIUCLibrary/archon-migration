@@ -632,6 +632,8 @@ public class ASpaceMapper {
             String legacyIDString = "";
             if(strRecordID.startsWith("subject_")){
                 legacyIDString = "Archon Instance::Subject Record ID " + strRecordID.substring(8);
+            } else if(isAccessionDonor){
+                legacyIDString = "Archon Instance::Accession Record ID " + strRecordID;
             } else {
                 legacyIDString = "Archon Instance::Creator Record ID " + strRecordID;
             }
@@ -695,6 +697,8 @@ public class ASpaceMapper {
             contactsJA.put(contactsJS);
             agentJS.put("agent_contacts", contactsJA);
         }
+
+        addArchonSourceToAgent(record, agentJS, true);
 
         return agentJS;
     }
