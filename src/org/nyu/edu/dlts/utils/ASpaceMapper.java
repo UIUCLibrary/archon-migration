@@ -612,7 +612,21 @@ public class ASpaceMapper {
 
         agentJS.put("names", namesJA);
 
-        //add an unpublished note with the archon record id since aspace 2.6 doesn't save external ids for agents
+        addArchonSourceToAgent(record, agentJS, false);
+
+        return agentJS;
+    }
+
+    /**
+     * Add an unpublished note with the archon record id to the agent
+     * (since aspace 2.6 doesn't save external ids for agents)
+     * @param record
+     * @param agentJS
+     * @param isAccessionDonor
+     * @throws JSONException
+     * @throws Exception
+     */
+    private void addArchonSourceToAgent(JSONObject record, JSONObject agentJS, Boolean isAccessionDonor) throws JSONException, Exception {
         if(addNoteForCreatorArchonID && record.has("ID")){
             String strRecordID = record.getString("ID");
             String legacyIDString = "";
@@ -626,8 +640,6 @@ public class ASpaceMapper {
                 addAgentNote(agentJS, "Legacy Archon ID", legacyIDString, false);
             }
         }
-
-        return agentJS;
     }
 
     /**
