@@ -222,6 +222,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private String containerDefaultType = "box";
     private Boolean addDefaultContainerType = true;
 
+    //option to add more plural container types aside from folders and boxes
+    private Boolean addMorePluralContainerTypes = true;
+
     //substring to indicate that a collection record should not be migrated when in the title
     private String toSkipSubstring = "//DO NOT MIGRATE//";
 
@@ -2394,6 +2397,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // account for plural forms of Archon's default physical content types
         if (splitId[0].equalsIgnoreCase("boxes")) splitId[0] = "box";
         else if (splitId[0].equalsIgnoreCase("folders")) splitId[0] = "folder";
+        // add more to adjust plurals
+        else if(addMorePluralContainerTypes && splitId[0].equalsIgnoreCase("reels")) splitId[0] = "reel";
+        else if (addMorePluralContainerTypes && splitId[0].equalsIgnoreCase("volumes")) splitId[0] = "volume";
+        else if (addMorePluralContainerTypes && splitId[0].equalsIgnoreCase("items")) splitId[0] = "item";
 
         // try to find an Archon physical content type that matches
         // start with just the first word add add on a word at a time, checking for a match whenever a word is added
