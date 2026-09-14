@@ -210,7 +210,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
     //for alternative barcode lengths (default is 14 characters)
     private Boolean checkAlternativeBarcode = true;
-    private Integer[] alternativeBarcodeLengths = {16};
+    private Integer[] alternativeBarcodeLengths = {16,17};
 
     // whether to use the custom location mapper
     private Boolean useCustomLocationMapper = true;
