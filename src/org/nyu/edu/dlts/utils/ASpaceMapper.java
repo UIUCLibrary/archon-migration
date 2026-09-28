@@ -1391,7 +1391,7 @@ public class ASpaceMapper {
     public String[] splitAlternativeExtent(String alternativeExtent)
     {
         alternativeExtent = alternativeExtent.replaceAll("^and ", "");
-        String regex = "\\s?and\\s|\\.\\s|,\\s";
+        String regex = "(\\s?and\\s|\\.\\s|,\\s)(?![^()]*\\))";
         return alternativeExtent.split(regex);
 
     }
