@@ -93,6 +93,7 @@ public class ASpaceMapper {
     private int defaultOpenEndDate = 2025;
 
     //modifications for migration of Other URL field content
+    private String modifyIfStringInOtherURL = "pdf";
     private Boolean migrateFileNameOnlyFromOtherURL = true;
     private String customLabelForOtherURL = "Legacy PDF finding aid";
     private Boolean unpublishOtherURL = true;
@@ -1981,20 +1982,25 @@ public class ASpaceMapper {
      */
     private void addExternalDocument(JSONObject json, String title, String location) throws Exception {
         JSONArray externalDocumentsJA = new JSONArray();
+        Boolean modifyOtherURL = location.toLowerCase().contains(modifyIfStringInOtherURL);
+
+        if(modifyOtherURL){
+            addChangeMessage("Other URL " + location + " modified for " + json.getString("title"));
+        }
 
         JSONObject documentJS = new JSONObject();
-        if(unpublishOtherURL && title.equals("Other URL")){
+        if(modifyOtherURL && unpublishOtherURL && title.equals("Other URL")){
             documentJS.put("publish", false);
         } else {
             documentJS.put("publish", true);
         }
-        if(title.equals("Other URL") && customLabelForOtherURL != null && !customLabelForOtherURL.isEmpty()) {
+        if(modifyOtherURL && title.equals("Other URL") && customLabelForOtherURL != null && !customLabelForOtherURL.isEmpty()) {
             documentJS.put("title", customLabelForOtherURL);
         } else {
             documentJS.put("title", title);
         }
 
-        if(migrateFileNameOnlyFromOtherURL && title.equals("Other URL")){
+        if(modifyOtherURL && migrateFileNameOnlyFromOtherURL && title.equals("Other URL")){
             String filename = location.substring(location.lastIndexOf("/")+1);
             documentJS.put("location", filename);
         } else {
