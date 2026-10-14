@@ -2436,16 +2436,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
             Boolean likelyBoxNumber = isLikelyBoxNumber(content);
             if(addDefaultContainerType && containerDefaultType != null && likelyBoxNumber){
                 containerTypeID = getContainerTypeArchonID(containerDefaultType);
+            } else if(noContainerTypeString != null){
+                containerTypeID = getContainerTypeArchonID(noContainerTypeString);
             }
         }
 
         // find the ASpace container type the Archon physical content type maps to
         containerType = enumUtil.getASpaceInstanceContainerType(containerTypeID);
-
-        // if container type id is null, use no container type string if defined
-        if (containerTypeID == null && noContainerTypeString != null){
-            containerType = noContainerTypeString;
-        }
 
         return new String[]{containerType, containerIndicator};
     }
