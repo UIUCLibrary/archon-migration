@@ -2339,15 +2339,17 @@ public class ASpaceMapper {
      */
     public void addExternalId(JSONObject record, JSONObject recordJS, String source) throws Exception {
         source = "Archon Instance::" + source.toUpperCase();
+        String externalId = record.getString("ID");
 
         if(identifierPrefix != null && !identifierPrefix.isEmpty()) {
             source = identifierPrefix + " " + source;
+            externalId = identifierPrefix.toLowerCase() + "_" + externalId;
         }
 
         JSONArray externalIdsJA = new JSONArray();
         JSONObject externalIdJS = new JSONObject();
 
-        externalIdJS.put("external_id", record.get("ID"));
+        externalIdJS.put("external_id", externalId);
         externalIdJS.put("source", source);
 
         externalIdsJA.put(externalIdJS);
