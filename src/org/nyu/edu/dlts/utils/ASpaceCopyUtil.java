@@ -222,6 +222,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private String containerDefaultType = "box";
     private Boolean addDefaultContainerType = true;
 
+    //specific string to use when there is no identified container type
+    private String noContainerTypeString = "no_type";
+
     //option to add more plural container types aside from folders and boxes
     private Boolean addMorePluralContainerTypes = true;
 
@@ -2433,6 +2436,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
             Boolean likelyBoxNumber = isLikelyBoxNumber(content);
             if(addDefaultContainerType && containerDefaultType != null && likelyBoxNumber){
                 containerTypeID = getContainerTypeArchonID(containerDefaultType);
+            } else if(noContainerTypeString != null){
+                containerTypeID = getContainerTypeArchonID(noContainerTypeString);
             }
         }
 
