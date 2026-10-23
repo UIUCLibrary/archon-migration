@@ -751,6 +751,14 @@ public class ASpaceMapper {
             }
             nameJS.put("primary_name", primary);
             if(!rest.equals("")){
+                if(rest.endsWith(")")){
+                    int startParens = rest.lastIndexOf("(");
+                    String parenthetical = rest.substring(startParens + 1, rest.length()-1);
+                    if(isNameDate(parenthetical)){
+                        nameJS.put("dates",parenthetical);
+                        rest = rest.substring(0,startParens);
+                    }
+                }
                 nameJS.put("rest_of_name", rest);
             }
         }
