@@ -658,7 +658,7 @@ public class ASpaceMapper {
      * @return
      */
     private String getLikelyNameOrder(String name, int creatorTypeId) {
-        if(creatorTypeId == 19 || creatorTypeId == 20 || creatorTypeId == 23){
+        if(creatorTypeId == 19 || creatorTypeId == 21 || creatorTypeId == 23){
             int firstComma = name.indexOf(',');
             int firstSpace = name.indexOf(" ");
             if (firstComma < 0) {
