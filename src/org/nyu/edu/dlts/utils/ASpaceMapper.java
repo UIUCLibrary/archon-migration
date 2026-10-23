@@ -548,14 +548,14 @@ public class ASpaceMapper {
         // add basic information to the names record
         String sortName = record.getString("Name");
         namesJS.put("sort_name", sortName);
-        namesJS.put("name_order", "direct");
+        namesJS.put("name_order", getLikelyNameOrder(sortName,creatorTypeId));
 
         switch (creatorTypeId) {
             case 19:
             case 21:
             case 23:
                 agentJS.put("agent_type", "agent_person");
-                namesJS.put("primary_name", sortName);
+                parsePersonalName(sortName, namesJS);
 
                 if(record.has("NameFullerForm")) {
                     namesJS.put("fuller_form", record.get("NameFullerForm"));
@@ -583,7 +583,7 @@ public class ASpaceMapper {
 
             JSONObject namesVariantJS = new JSONObject();
 
-            namesVariantJS.put("name_order", "direct");
+            namesVariantJS.put("name_order", getLikelyNameOrder(nameVariant,creatorTypeId));
             namesVariantJS.put("source", namesJS.get("source"));
             namesVariantJS.put("sort_name", nameVariant);
 
@@ -603,7 +603,7 @@ public class ASpaceMapper {
 
                 JSONObject nameFullerJS = new JSONObject();
 
-                nameFullerJS.put("name_order", "direct");
+                nameFullerJS.put("name_order", getLikelyNameOrder(nameFuller,creatorTypeId));
                 nameFullerJS.put("sort_name", nameFuller);
 
                 if(namesJS.has("primary_name")) {
@@ -648,6 +648,142 @@ public class ASpaceMapper {
                 addAgentNote(agentJS, "Legacy Archon ID", legacyIDString, false);
             }
         }
+    }
+
+    /**
+     * Method to determine the likely name order based on the creator type and name.
+     * 
+     * @param name
+     * @param creatorTypeId
+     * @return
+     */
+    private String getLikelyNameOrder(String name, int creatorTypeId) {
+        if(creatorTypeId == 19 || creatorTypeId == 20 || creatorTypeId == 23){
+            int firstComma = name.indexOf(',');
+            int firstSpace = name.indexOf(" ");
+            if (firstComma < 0) {
+                if(firstSpace < 0){
+                    //likely simply a last name if there is not a space in the name string
+                    return "indirect";
+                } else {
+                    //likely direct order name if there is a space and no comma
+                    return "direct";
+                }
+            } else {
+                String lastPartOfName = name.substring(firstComma + 1).trim();
+                if(isTitle(lastPartOfName) || isSuffix(lastPartOfName) || isNameDate(lastPartOfName)){
+                    //if what is after the first comma is a title or suffix or dates, then likely a direct order name
+                    return "direct";
+                } else {
+                    return "indirect";
+                }
+            }
+        } else {
+            return "direct";
+        }
+    }
+
+    /**
+     * Method to parse personal name into components based on commas
+     * @param record
+     * @return
+     * @throws Exception
+     */
+    private void parsePersonalName(String name, JSONObject nameJS) throws JSONException{
+        String primary;
+        String rest;
+        String title = "";
+        String dates = "";
+
+        int lastComma = name.lastIndexOf(',');
+
+        // No commas at all
+        if (lastComma < 0) {
+            nameJS.put("primary_name", name);
+        } else {
+            // Check whether the last portion is a title or set of dates
+            String lastPart = name.substring(lastComma + 1).trim();
+            Boolean lastIsTitle = isTitle(lastPart);
+            Boolean lastIsDate = isNameDate(lastPart);
+            if (lastIsTitle || lastIsDate) {
+                String remaining = name.substring(0, lastComma);
+                if(lastIsDate) {
+                    dates = lastPart;
+                    nameJS.put("dates",dates);
+                    int secondLastComma = remaining.lastIndexOf(',');
+                    if(secondLastComma > 0){
+                        String secondLastPart = remaining.substring(secondLastComma + 1).trim();
+                        if(isTitle(secondLastPart)){
+                            nameJS.put("title",secondLastPart);
+                            remaining = name.substring(0,secondLastComma);
+                        }
+                    }
+                } else {
+                    title = lastPart;
+                    nameJS.put("title",title);
+                }
+                
+                int firstComma = remaining.indexOf(',');
+
+                if (firstComma < 0) {
+                    primary = remaining.trim();
+                    rest = "";
+                } else {
+                    primary = remaining.substring(0, firstComma).trim();
+                    rest = remaining.substring(firstComma + 1).trim();
+                }
+            } else {
+                int firstComma = name.indexOf(',');
+
+                primary = name.substring(0, firstComma).trim();
+                rest = name.substring(firstComma + 1).trim();
+            }
+            nameJS.put("primary_name", primary);
+            if(!rest.equals("")){
+                nameJS.put("rest_of_name", rest);
+            }
+        }
+    }
+
+    /**
+     * Method to check if a string part of a name is a title.
+     * @param nameComponent
+     * @return
+     */
+    private Boolean isTitle(String value) {
+        return switch (value.toLowerCase()) {
+            case "dr", "dr.",
+                "mr", "mr.",
+                "mrs", "mrs.",
+                "ms", "ms.",
+                "prof", "prof." -> true;
+            default -> false;
+        };
+    }
+
+    /**
+     * Method to check if a string part of a name is a suffix.
+     * @param nameComponent
+     * @return
+     */
+    private Boolean isSuffix(String value) {
+        return switch (value.toLowerCase()) {
+            case "jr", "jr.",
+                "sr", "sr." -> true;
+            default -> false;
+        };
+    }
+
+    /**
+     * Method to check if a string part of a name is a date.
+     * @param nameComponent
+     * @return
+     */
+    private Boolean isNameDate(String value) {
+        Pattern nameDatePattern = Pattern.compile("^(?:(?:b\\.|born|d\\.|died|fl\\.|active|flourished)\\s)?\\d{4}[?]?(?:-(?:(?:d\\.|died)\\s)?\\d{0,4})?[?]?\\.?$");
+        Matcher matcher = nameDatePattern.matcher(value);
+
+        return matcher.find();
     }
 
     /**
