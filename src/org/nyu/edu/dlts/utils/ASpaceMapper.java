@@ -449,6 +449,10 @@ public class ASpaceMapper {
 
         json.put("source", enumUtil.getASpaceSubjectSource(record.getInt("SubjectSourceID")));
 
+        if(record.has("Identifier")){
+            json.put("authority_id",record.getString("Identifier"));
+        }
+
         // add the terms
         JSONArray termsJA = new JSONArray();
         try {
@@ -544,6 +548,10 @@ public class ASpaceMapper {
         if (record.has("SubjectSourceID")) {
             namesJS.put("source", enumUtil.getASpaceNameSourceForSubject(record.getInt("SubjectSourceID")));
         } else namesJS.put("source", enumUtil.getASpaceNameSource(record.getInt("CreatorSourceID")));
+        
+        if(record.has("Identifier")){
+            namesJS.put("authority_id",record.getString("Identifier"));
+        }
 
         // add basic information to the names record
         String sortName = record.getString("Name");
