@@ -675,7 +675,7 @@ public class ASpaceMapper {
             if (firstComma < 0) {
                 if(firstSpace < 0){
                     //likely simply a last name if there is not a space in the name string
-                    return "indirect";
+                    return "inverted";
                 } else {
                     //likely direct order name if there is a space and no comma
                     return "direct";
@@ -686,7 +686,7 @@ public class ASpaceMapper {
                     //if what is after the first comma is a title or suffix or dates, then likely a direct order name
                     return "direct";
                 } else {
-                    return "indirect";
+                    return "inverted";
                 }
             }
         } else {
