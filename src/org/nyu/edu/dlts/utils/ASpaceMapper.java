@@ -579,21 +579,32 @@ public class ASpaceMapper {
         namesJA.put(namesJS);
 
         if(record.has("NameVariants") && !record.getString("NameVariants").isEmpty()) {
-            String nameVariant = record.getString("NameVariants");
+            String nameVariantString = record.getString("NameVariants");
 
-            JSONObject namesVariantJS = new JSONObject();
+            String[] nameVariantArray = nameVariantString.split(";");
+            for(String nameVariant : nameVariantArray){
+                nameVariant = nameVariant.trim();
 
-            namesVariantJS.put("name_order", getLikelyNameOrder(nameVariant,creatorTypeId));
-            namesVariantJS.put("source", namesJS.get("source"));
-            namesVariantJS.put("sort_name", nameVariant);
+                JSONObject nameVariantJS = new JSONObject();
 
-            if(namesJS.has("primary_name")) {
-                namesVariantJS.put("primary_name", nameVariant);
-            } else {
-                namesVariantJS.put("family_name", nameVariant);
+                nameVariantJS.put("name_order", getLikelyNameOrder(nameVariant,creatorTypeId));
+                nameVariantJS.put("source", namesJS.get("source"));
+
+                nameVariantJS.put("sort_name", nameVariant);
+
+
+                if(namesJS.has("primary_name")) {
+                    if(creatorTypeId == 19 || creatorTypeId == 21 || creatorTypeId == 23){
+                        parsePersonalName(nameVariant, nameVariantJS);
+                    } else {
+                        nameVariantJS.put("primary_name", nameVariant);
+                    }
+                } else {
+                    nameVariantJS.put("family_name", nameVariant);
+                }
+
+                namesJA.put(nameVariantJS);
             }
-
-            namesJA.put(namesVariantJS);
         }
 
         // check corporate and family names for additional variants in the fuller name field
