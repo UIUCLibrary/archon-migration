@@ -822,7 +822,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 case 19:
                 case 21:
                 case 23:
-                    id = saveRecord(ASpaceClient.AGENT_PEOPLE_ENDPOINT, agentJS.toString(), "Creator_Person->" + creator.getString("Name"));
+                    id = saveRecord(ASpaceClient.AGENT_PEOPLE_ENDPOINT, agentJS.toString(), "Creator_Person->" + creator.getString("Name")+ " :: " + arId);
                     if(!id.startsWith(ASpaceClient.AGENT_PEOPLE_ENDPOINT + "/")){
                         uri = ASpaceClient.AGENT_PEOPLE_ENDPOINT + "/" + id;
                     } else {
@@ -830,7 +830,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     }
                     break;
                 case 20:
-                    id = saveRecord(ASpaceClient.AGENT_FAMILY_ENDPOINT, agentJS.toString(), "Creator_Family->" + creator.getString("Name"));
+                    id = saveRecord(ASpaceClient.AGENT_FAMILY_ENDPOINT, agentJS.toString(), "Creator_Family->" + creator.getString("Name")+ " :: " + arId);
                     if(!id.startsWith(ASpaceClient.AGENT_FAMILY_ENDPOINT + "/")){
                         uri = ASpaceClient.AGENT_FAMILY_ENDPOINT + "/" + id;
                     } else {
@@ -838,7 +838,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     }
                     break;
                 case 22:
-                    id = saveRecord(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT, agentJS.toString(), "Creator_Corporate->" + creator.getString("Name"));
+                    id = saveRecord(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT, agentJS.toString(), "Creator_Corporate->" + creator.getString("Name")+ " :: " + arId);
                     if(!id.startsWith(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT + "/")){
                         uri = ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT + "/" + id;
                     } else {
@@ -857,7 +857,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 print("Copied Creator: " + creator.get("Name") + " :: " + id);
                 success++;
             } else {
-                print("Failed -- Creator: " + creator.get("Name"));
+                print("Failed -- Creator: " + creator.get("Name")+ " :: " + arId);
             }
 
             count++;
@@ -885,7 +885,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     } else {
                         JSONObject agentJS = new JSONObject(asAgentJSON);
                         addCreatorRelationShips(records, creator, agentJS);
-                        saveRecord(uri, agentJS.toString(), "Creator->" + creator.getString("Name"));
+                        saveRecord(uri, agentJS.toString(), "Creator->" + creator.getString("Name")+ " :: " + arId);
 
                         successRelationships += 1;
                     }
