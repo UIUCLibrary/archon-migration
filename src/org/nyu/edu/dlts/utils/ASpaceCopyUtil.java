@@ -3167,18 +3167,23 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 } else {
                     try {
                         JSONObject containerJS = new JSONObject(aspaceClient.get(topContainerURI, null));
-                        addLocationInfo(containerJS, location);
-                        //overwrite existing indicator with the parenthetical version
-                        if (isUniqueIndicatorWithParenthetical(hasBarcode, containerIndicator)){
-                            containerJS.put("indicator", containerIndicator);
-                        }
-                        String id = saveRecord(topContainerURI, containerJS.toString(), null);
-                        if (!id.equalsIgnoreCase(NO_ID)) {
-                            print("Added Location to Top Container: " + containerKey);
+                        //if both existing and new top container have barcodes that are different, create a new top container instead of modifying the one found
+                        if(hasBarcode && containerJS.has("barcode") && !containerJS.getString("barcode").equals("") && !containerJS.getString("barcode").equals(location.getString("Shelf"))){
+                            createInstanceForLocation(location, instanceType, containerType, containerIndicator, instancesJA, topContainerURIs, repoURI);
                         } else {
-                            String topContainerError = "Fail -- Add location to Top Container: " + containerKey;
-                            print(topContainerError);
-                            addErrorMessage(topContainerError);
+                            addLocationInfo(containerJS, location);
+                            //overwrite existing indicator with the parenthetical version
+                            if (isUniqueIndicatorWithParenthetical(hasBarcode, containerIndicator)){
+                                containerJS.put("indicator", containerIndicator);
+                            }
+                            String id = saveRecord(topContainerURI, containerJS.toString(), null);
+                            if (!id.equalsIgnoreCase(NO_ID)) {
+                                print("Added Location to Top Container: " + containerKey);
+                            } else {
+                                String topContainerError = "Fail -- Add location to Top Container: " + containerKey;
+                                print(topContainerError);
+                                addErrorMessage(topContainerError);
+                            }
                         }
                     } catch (NullPointerException e) {
                         String topContainerLoadError = "Fail -- Add location to Top Container: " + containerKey + "\nCould not load " + topContainerURI;
@@ -4115,7 +4120,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.copyEnumRecords();
             aspaceCopyUtil.copyRepositoryRecords();
             aspaceCopyUtil.mapRepositoryGroups();
-            /*aspaceCopyUtil.copyUserRecords();
+            /**aspaceCopyUtil.copyUserRecords();
             aspaceCopyUtil.copySubjectRecords();
             aspaceCopyUtil.copyCreatorRecords();*/
             aspaceCopyUtil.copyClassificationRecords();
