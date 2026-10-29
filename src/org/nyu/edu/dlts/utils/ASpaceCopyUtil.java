@@ -817,32 +817,33 @@ public class ASpaceCopyUtil implements  PrintConsole {
             // based on the type of name copy to the correct location
             String id = "";
             String uri = "";
+            String recordInfoString = creator.getString("Name")+ " :: " + arId;
 
             switch (creatorTypeId) {
                 case 19:
                 case 21:
                 case 23:
-                    id = saveRecord(ASpaceClient.AGENT_PEOPLE_ENDPOINT, agentJS.toString(), "Creator_Person->" + creator.getString("Name")+ " :: " + arId);
+                    id = saveRecord(ASpaceClient.AGENT_PEOPLE_ENDPOINT, agentJS.toString(), "Creator_Person->" + recordInfoString);
                     if(!id.startsWith(ASpaceClient.AGENT_PEOPLE_ENDPOINT + "/")){
                         uri = ASpaceClient.AGENT_PEOPLE_ENDPOINT + "/" + id;
                     } else {
-                        uri = id;
+                        uri = checkCreatorURI(ASpaceClient.AGENT_PEOPLE_ENDPOINT, id, creator, creatorTypeId, recordInfoString);
                     }
                     break;
                 case 20:
-                    id = saveRecord(ASpaceClient.AGENT_FAMILY_ENDPOINT, agentJS.toString(), "Creator_Family->" + creator.getString("Name")+ " :: " + arId);
+                    id = saveRecord(ASpaceClient.AGENT_FAMILY_ENDPOINT, agentJS.toString(), "Creator_Family->" + recordInfoString);
                     if(!id.startsWith(ASpaceClient.AGENT_FAMILY_ENDPOINT + "/")){
                         uri = ASpaceClient.AGENT_FAMILY_ENDPOINT + "/" + id;
                     } else {
-                        uri = id;
+                        uri = checkCreatorURI(ASpaceClient.AGENT_FAMILY_ENDPOINT, id, creator, creatorTypeId, recordInfoString);;
                     }
                     break;
                 case 22:
-                    id = saveRecord(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT, agentJS.toString(), "Creator_Corporate->" + creator.getString("Name")+ " :: " + arId);
+                    id = saveRecord(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT, agentJS.toString(), "Creator_Corporate->" + recordInfoString);
                     if(!id.startsWith(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT + "/")){
                         uri = ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT + "/" + id;
                     } else {
-                        uri = id;
+                        uri = checkCreatorURI(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT, id, creator, creatorTypeId, recordInfoString);;
                     }
                     break;
                 default:
@@ -854,10 +855,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             if (!id.equalsIgnoreCase(NO_ID)) {
                 nameURIMap.put(arId, uri);
-                print("Copied Creator: " + creator.get("Name") + " :: " + id);
+                print("Copied Creator: " + recordInfoString);
                 success++;
             } else {
-                print("Failed -- Creator: " + creator.get("Name")+ " :: " + arId);
+                print("Failed -- Creator: " + recordInfoString);
             }
 
             count++;
@@ -1071,6 +1072,35 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             records.put(key, subject);
         }
+    }
+
+    /**
+     * Method to check if creator URI exists. 
+     * If the creator URI does not exist, remove the authority id and try to save again.
+     * @throws Exception
+     * @param endpoint
+     * @param uri
+     * @param agentJS
+     */
+    private String checkCreatorURI(String endpoint, String uri, JSONObject creator, int creatorTypeId, String recordInfoString) throws Exception{
+        String asAgentJSON = aspaceClient.get(uri, null);
+        if(asAgentJSON == null){
+            if(creator.has("Identifier") && !creator.getString("Identifier").equals("")){
+                addChangeMessage("Not migrating authority id value "+ creator.getString("Identifier") +" in Creator record for "+ recordInfoString + " due to conflicting record migration failure");
+                creator.put("Identifier","");
+                JSONObject agentJS = mapper.convertCreator(creator, creatorTypeId);
+                String id = saveRecord(endpoint, agentJS.toString(), "Creator->" + recordInfoString);
+                if(!id.startsWith(endpoint + "/")){
+                    uri = endpoint + "/" + id;
+                } else {
+                    uri = id;
+                }
+            } else {
+                addErrorMessage("Non-existant ArchivesSpace URI returned for Creator-> "+ recordInfoString +", not able to migrate");
+                uri = null;
+            }
+        } 
+        return uri;
     }
 
     /**
