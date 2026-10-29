@@ -11,6 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -261,14 +262,27 @@ public class ASpaceClient {
                 // record.
 
                 JSONObject response = new JSONObject(responseBody);
-                JSONArray conflictingRecords = response.getJSONObject("error").getJSONArray("conflicting_record");
+                JSONObject errorJS = response.getJSONObject("error");
+                JSONArray conflictingRecords = errorJS.getJSONArray("conflicting_record");
+                String errorInfo = "";
+                Iterator<String> keys = errorJS.keys();
+
+                while (keys.hasNext()) {
+                    String key = keys.next();
+
+                    if ("conflicting_record".equals(key))
+                        continue;
+
+                    errorInfo += key + "=>" + errorJS.get(key).toString()+ " ";
+                }
 
                 String conflictingUri = conflictingRecords.getString(0);
                 id = conflictingUri.substring(conflictingUri.lastIndexOf(" ") + 1);
 
                 errorBuffer.append("Endpoint: ").append(post.getURI()).append("\n").
                         append("AR Identifier: ").append(arId).append("\n").
-                        append("Re-using existing ASpace record: ").append(conflictingUri).append("\n\n");
+                        append("Re-using existing ASpace record: ").append(conflictingUri).append("\n").
+                        append("Error info: ").append(errorInfo).append("\n\n");
 
                 aspaceCopyUtil.incrementASpaceErrorCount();
                 aspaceCopyUtil.incrementSaveErrorCount();
