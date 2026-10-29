@@ -764,7 +764,7 @@ public class ASpaceMapper {
                     String parenthetical = rest.substring(startParens + 1, rest.length()-1);
                     if(isNameDate(parenthetical)){
                         nameJS.put("dates",parenthetical);
-                        rest = rest.substring(0,startParens);
+                        rest = rest.substring(0,startParens).trim();
                     }
                 }
                 nameJS.put("rest_of_name", rest);
