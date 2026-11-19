@@ -4,6 +4,7 @@ import org.apache.commons.httpclient.NameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.nyu.edu.dlts.utils.uiuc.UIUCPropertiesReader;
 
 import javax.swing.*;
 import java.io.File;
@@ -53,6 +54,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
     // hashmap that maps location from the old database with copy in new database
     private HashMap<String, String> locationURIMap = new HashMap<String, String>();
+    //hashmap that maps the uri in new database to the location in the old database
+    private HashMap<String, String> locationURIKeyMap = new HashMap<String, String>();
 
     // hashmap that maps subjects from old database with copy in new database
     private HashMap<String, String> subjectURIMap = new HashMap<String, String>();
@@ -105,7 +108,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // random string generator to use when simulating rest calls
     private RandomString randomString = new RandomString(3);
 
-    // specify the current record type and ID in case we have fetal error during migration
+    // specify the current record type and ID in case we have fatal error during migration
     private String currentRecordType = "";
     private String currentRecordIdentifier = "";
     private String currentRecordDBID = "";
@@ -122,8 +125,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private int locationTotal = 0;
     private int locationSuccess = 0;
 
-    // boolean to specify weather to save digital objects by themselves or with the resource records
+    // boolean to specify whether to save digital objects by themselves or with the resource records
     boolean saveDigitalObjectsWithResources = true;
+
+    //integers to keep track of digital objects for collections and collection content copied
+    private int collDigitalObjTotal = 0;
+    private int collDigitalObjSuccess = 0;
+    private int contentDigitalObjTotal = 0;
+    private int contentDigitalObjSuccess = 0;
 
     // These fields are used to track of the number of messages posted to the output console
     // in order to prevent memory usage errors
@@ -161,8 +170,17 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // this list is used to copy a specific resource
     private ArrayList<String> collectionsIDsList;
 
+    // this list is used to copy a specific resource
+    private ArrayList<String> collArchonIDsList;
+
     // A string builder object to track errors
     private StringBuilder errorBuffer = new StringBuilder();
+
+    // A string builder object to track data changes
+    private StringBuilder changelogBuffer = new StringBuilder();
+
+    // count the number of changes logged
+    private int changelogCount = 0;
 
     private File recordDumpDirectory = null;
 
@@ -171,8 +189,53 @@ public class ASpaceCopyUtil implements  PrintConsole {
     // the default repository id
     private String defaultRepositoryId;
 
+    // variable to set the default instance type
+    // todo: set using the GUI
+    private String defaultInstanceType = "mixed_materials";
+
     // a hashmap for getting Archon enum IDs from enum values
     private HashMap<String, String> archonValuesToIDs = new HashMap<String, String>();
+
+    //Boolean to set whether location content ranges (e.g. Box 1-10) should be expanded into individual boxes
+    private Boolean expandLocationContentRange = true;
+
+    //Boolean to block splitting accession location content descriptions
+    private Boolean doNotSplitAccessionLocationContent = true;
+    
+    // whether to check if the shelf field in the location holds the barcode for the box
+    private Boolean checkShelfForBarcode = true;
+
+    // a hashmap for tracking what barcodes have already been added
+    private HashMap<String, String> barcodesAddedMap = new HashMap<String, String>();
+
+    //for alternative barcode lengths (default is 14 characters)
+    private Boolean checkAlternativeBarcode = true;
+    private Integer[] alternativeBarcodeLengths = {16,17};
+
+    // whether to use the custom location mapper
+    private Boolean useCustomLocationMapper = true;
+    
+    //custom location mapper object
+    private CustomArchonLocationMapper archonLocationMapper;
+
+    //default container label if not found in content string for locations
+    private String containerDefaultType = "box";
+    private Boolean addDefaultContainerType = true;
+
+    //specific string to use when there is no identified container type
+    private String noContainerTypeString = "no_type";
+
+    //option to add more plural container types aside from folders and boxes
+    private Boolean addMorePluralContainerTypes = true;
+
+    //substring to indicate that a collection record should not be migrated when in the title
+    private String toSkipSubstring = "//DO NOT MIGRATE//";
+
+    //whether to update content type if both physical and intellectual but has no descriptive metadata
+    private Boolean adjustCollectionContentType = true;
+
+    //create single line error messages
+    private Boolean createSingleLineErrorMessages = true;
 
     /**
      * The main constructor, used when running as a stand alone application
@@ -228,6 +291,33 @@ public class ASpaceCopyUtil implements  PrintConsole {
         mapper.setDigitalObjectBaseURI(baseURI);
     }
 
+    
+    /**
+     * Method to set the default instance type
+     *
+     * @param instanceType
+     */
+    public void setDefaultInstanceType(String instanceType) {
+        //todo: check that the string is a valid instance type for aspace
+        defaultInstanceType = instanceType;
+    }
+
+    /**
+     * Method to set the identifer prefix to differentiate between multiple instances of archon
+     * @param prefix
+     */
+    public void setIdentifierPrefix(String prefix) {
+        mapper.setIdentifierPrefix(prefix);
+    }
+
+    /**
+     * Method to set whether ranges of boxes should be expanded into individual records or not
+     * @param option
+     */
+    public void setExpandLocationContent(Boolean option){
+        this.expandLocationContentRange = option;
+    }
+
     /**
      * Method to set the output console
      *
@@ -270,6 +360,24 @@ public class ASpaceCopyUtil implements  PrintConsole {
             defaultRepositoryId = sa[0];
         } else {
             defaultRepositoryId = id;
+        }
+    }
+
+    /**
+     * Checks the CustomArchonLocationMapper and returns true if it is ready to use.
+     * If the archonLocationMapper variable is not yet set, it will create it.
+     * Returns false if useCustomLocationMapper is set to false.
+     * @return
+     */
+    private Boolean checkCustomArchonLocationMapper(){
+        if(useCustomLocationMapper) {
+            if(archonLocationMapper == null) {
+                // create custom location mapper
+                archonLocationMapper = new CustomArchonLocationMapper(mapper.getIdentifierPrefix());
+            }
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -335,6 +443,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copyRepositoryRecords() throws Exception {
+        currentRecordType = "Repository Record";
+
         print("Copying repository records ...");
 
         // update the progress bar to indicate loading of records
@@ -344,6 +454,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // A hashmap to map the short name to the repository URI to prevent duplications
         HashMap<String, String> shortNamesToURIMap = new HashMap<String, String>();
+
+        //load the repositories already in ASpace, if applicable
+        HashMap<String, String> currentRepos = aspaceClient.loadRepositories();
+        if(currentRepos != null) shortNamesToURIMap = currentRepos;
 
         // these are used to update the progress bar
         int total = records.length();
@@ -456,6 +570,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copyUserRecords() throws Exception {
+        currentRecordType = "User Record";
+        
         print("Copying User records ...");
 
         // update the progress bar here to indicate loading of records
@@ -585,6 +701,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copySubjectRecords() throws Exception {
+        currentRecordType = "Subject Record";
+        
         print("Copying Subject records ...");
 
         // update the progress so that the title changes
@@ -605,6 +723,11 @@ public class ASpaceCopyUtil implements  PrintConsole {
             JSONObject subject = records.getJSONObject(key);
 
             String arId = subject.getString("ID");
+
+            //set these so they can be referenced in the case of an error
+            currentRecordIdentifier = "DB ID: " + arId;
+            currentRecordDBID = arId;
+
             int subjectTypeID = subject.getInt("SubjectTypeID");
 
             // check the subject type id since some of these subject need to be converted
@@ -651,6 +774,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copyCreatorRecords() throws Exception {
+        currentRecordType = "Creator Record";
+        
         print("Copying Creator records ...");
 
         // update the progress so that the title changes
@@ -676,6 +801,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             String arId = creator.getString("ID");
 
+            //set these so they can be referenced in the case of an error
+            currentRecordIdentifier = "DB ID: " + arId;
+            currentRecordDBID = arId;
+
             int creatorTypeId = creator.getInt("CreatorTypeID");
 
             JSONObject agentJS = mapper.convertCreator(creator, creatorTypeId);
@@ -688,32 +817,48 @@ public class ASpaceCopyUtil implements  PrintConsole {
             // based on the type of name copy to the correct location
             String id = "";
             String uri = "";
+            String recordInfoString = creator.getString("Name")+ " :: " + arId;
 
             switch (creatorTypeId) {
                 case 19:
                 case 21:
                 case 23:
-                    id = saveRecord(ASpaceClient.AGENT_PEOPLE_ENDPOINT, agentJS.toString(), "Creator_Person->" + creator.getString("Name"));
-                    uri = ASpaceClient.AGENT_PEOPLE_ENDPOINT + "/" + id;
+                    id = saveRecord(ASpaceClient.AGENT_PEOPLE_ENDPOINT, agentJS.toString(), "Creator_Person->" + recordInfoString);
+                    if(!id.startsWith(ASpaceClient.AGENT_PEOPLE_ENDPOINT + "/")){
+                        uri = ASpaceClient.AGENT_PEOPLE_ENDPOINT + "/" + id;
+                    } else {
+                        uri = checkCreatorURI(ASpaceClient.AGENT_PEOPLE_ENDPOINT, id, creator, creatorTypeId, recordInfoString);
+                    }
                     break;
                 case 20:
-                    id = saveRecord(ASpaceClient.AGENT_FAMILY_ENDPOINT, agentJS.toString(), "Creator_Family->" + creator.getString("Name"));
-                    uri = ASpaceClient.AGENT_FAMILY_ENDPOINT + "/" + id;
+                    id = saveRecord(ASpaceClient.AGENT_FAMILY_ENDPOINT, agentJS.toString(), "Creator_Family->" + recordInfoString);
+                    if(!id.startsWith(ASpaceClient.AGENT_FAMILY_ENDPOINT + "/")){
+                        uri = ASpaceClient.AGENT_FAMILY_ENDPOINT + "/" + id;
+                    } else {
+                        uri = checkCreatorURI(ASpaceClient.AGENT_FAMILY_ENDPOINT, id, creator, creatorTypeId, recordInfoString);;
+                    }
                     break;
                 case 22:
-                    id = saveRecord(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT, agentJS.toString(), "Creator_Corporate->" + creator.getString("Name"));
-                    uri = ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT + "/" + id;
+                    id = saveRecord(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT, agentJS.toString(), "Creator_Corporate->" + recordInfoString);
+                    if(!id.startsWith(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT + "/")){
+                        uri = ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT + "/" + id;
+                    } else {
+                        uri = checkCreatorURI(ASpaceClient.AGENT_CORPORATE_ENTITY_ENDPOINT, id, creator, creatorTypeId, recordInfoString);;
+                    }
                     break;
                 default:
+                    String errorMessage = "Invalid CreatorTypeID for: " + creator.getString("Name") + ", Archon ID: " + arId;
+                    print(errorMessage);
+                    addErrorMessage(errorMessage);
                     break;
             }
 
             if (!id.equalsIgnoreCase(NO_ID)) {
                 nameURIMap.put(arId, uri);
-                print("Copied Creator: " + creator.get("Name") + " :: " + id);
+                print("Copied Creator: " + recordInfoString);
                 success++;
             } else {
-                print("Failed -- Creator: " + creator.get("Name"));
+                print("Failed -- Creator: " + recordInfoString);
             }
 
             count++;
@@ -724,21 +869,35 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // now add the relationships between creators
         print("Adding related creator relationships ...");
+        // track progress for relationships
+        int totalRelationships = 0;
+        int successRelationships = 0;
         for (String key : invertedKeys) {
             JSONObject creator = records.getJSONObject(key);
             // add any relationships if needed
             if(creator.has("CreatorRelationships") && !creator.getString("CreatorRelationships").equals("null")) {
+                totalRelationships += 1;
                 try {
                     String arId = creator.getString("ID");
                     String uri = nameURIMap.get(arId);
-                    JSONObject agentJS = new JSONObject(aspaceClient.get(uri, null));
-                    addCreatorRelationShips(records, creator, agentJS);
-                    saveRecord(uri, agentJS.toString(), "Creator->" + creator.getString("Name"));
+                    String asAgentJSON = aspaceClient.get(uri, null);
+                    if(asAgentJSON == null){
+                        print("Error in retrieving agent from aspace for ArchonID " + arId + " using uri " + uri + "; relationships not added for " + creator.getString("Name"));
+                    } else {
+                        JSONObject agentJS = new JSONObject(asAgentJSON);
+                        addCreatorRelationShips(records, creator, agentJS);
+                        saveRecord(uri, agentJS.toString(), "Creator->" + creator.getString("Name")+ " :: " + arId);
+
+                        successRelationships += 1;
+                    }
                 } catch(Exception e) {
-                    print("Invalid Relationship Record For: " + creator.getString("Name"));
+                    String errorMessage = "Invalid Relationship Record For: " + creator.getString("Name") + ", ArchonID: " + creator.getInt("ID") +"; error: " + e.toString();
+                    print(errorMessage);
+                    addErrorMessage(errorMessage);
                 }
             }
         }
+        updateRecordTotals("Creators with Relationships", totalRelationships, successRelationships);
 
         // refresh the database connection to prevent heap space error
         freeMemory();
@@ -754,8 +913,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private void addCreatorRelationShips(JSONObject records, JSONObject creator, JSONObject agentJS) throws Exception {
         JSONArray relationships = creator.getJSONArray("CreatorRelationships");
         int creatorTypeID = creator.getInt("CreatorTypeID");
-
-        JSONArray relatedAgentsJA = new JSONArray();
+        JSONArray relatedAgentsJA;
+        if(agentJS.has("related_agents")){
+            relatedAgentsJA = agentJS.getJSONArray("related_agents");
+        } else {
+            relatedAgentsJA = new JSONArray();
+        }
 
         for(int i = 0; i < relationships.length(); i++) {
             JSONObject relationship = relationships.getJSONObject(i);
@@ -782,18 +945,23 @@ public class ASpaceCopyUtil implements  PrintConsole {
             }
 
             // find the appropriate ASpace relationship type based on agent types and Archon relationship type
+            // note that the archon terminology is a descriptor for the related creator
+            // whereas the aspace terminology is for the agent being described in relationship
             switch (creatorRelationshipTypeID) {
-                case 4:
+                case 5:
+                    // archon relationship type 5: temporal-later
                     // agent_relationship_earlierlater :: is_earlier_form_of
                     agentRelationJS.put("jsonmodel_type", "agent_relationship_earlierlater");
                     agentRelationJS.put("relator", "is_earlier_form_of");
                     break;
-                case 5:
+                case 4:
+                    // archon relationship type 4: temporal-earlier
                     // agent_relationship_earlierlater :: is_later_form_of
                     agentRelationJS.put("jsonmodel_type", "agent_relationship_earlierlater");
                     agentRelationJS.put("relator", "is_later_form_of");
                     break;
-                case 2:
+                case 3:
+                    // archon relationship typeid 3: hierarchical-child
                     if (creatorTypeID == 19 || creatorTypeID == 21 || creatorTypeID == 23) {
                         if (relatedCreatorTypeID == 19 || relatedCreatorTypeID == 21 || relatedCreatorTypeID == 23) {
                             // agent_relationship_parentchild :: is_parent_of
@@ -808,7 +976,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         agentRelationJS.put("relator", "is_superior_of");
                         break;
                     }
-                case 3:
+                case 2:
+                    //archon relationship type 2: hierarchical-parent
                     if (creatorTypeID == 19 || creatorTypeID == 21 || creatorTypeID == 23) {
                         if (relatedCreatorTypeID == 19 || relatedCreatorTypeID == 21 || relatedCreatorTypeID == 23) {
                             // agent_relationship_parentchild :: is_child_of
@@ -824,19 +993,57 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         break;
                     }
                 default:
+                    // archon relationship typeid 1: identity
+                    // archon relationship typeid 6: family
+                    // archon relationship typeid 7: associative
                     // agent_relationship_associative :: is_associative_with
                     agentRelationJS.put("jsonmodel_type", "agent_relationship_associative");
                     agentRelationJS.put("relator", "is_associative_with");
             }
 
-            relatedAgentsJA.put(agentRelationJS);
+            if(!agentRelationshipExists(relatedAgentsJA, agentRelationJS)){
+                relatedAgentsJA.put(agentRelationJS);
+                System.out.println("Adding relationship " + relationship.toString());
+            } else {
+                System.out.println("Not adding relationship (already exists) " + relationship.toString());
+            }
 
-            System.out.println("Adding relationship " + relationship.toString());
         }
 
         if(relatedAgentsJA.length() > 0) {
             agentJS.put("related_agents", relatedAgentsJA);
         }
+    }
+
+
+    /**
+     * Check whether a relationship is already in the agent record (for when the related creator
+     * already established the relationship)
+     * @param relatedAgents
+     * @param agentRelationJS
+     * @throws JSONException 
+     */
+    private boolean agentRelationshipExists(JSONArray relatedAgents, JSONObject agentRelationJS) throws JSONException {
+        String ref = agentRelationJS.getString("ref");
+        String jsonModelType = agentRelationJS.getString("jsonmodel_type");
+        String relator = agentRelationJS.getString("relator");
+        
+        for (int i = 0; i < relatedAgents.length(); i++) {
+            JSONObject relatedAgent = relatedAgents.getJSONObject(i);
+
+            if (ref.equals(relatedAgent.optString("ref"))
+                    && jsonModelType.equals(relatedAgent.optString("jsonmodel_type"))
+                    && relator.equals(relatedAgent.optString("relator"))) {
+                if(relatedAgent.has("Description") && agentRelationJS.has("Description")){
+                    if (!relatedAgent.getString("Description").equals(agentRelationJS.getString("Description"))){
+                        addErrorMessage("Conflicting relationship description for " + ref);
+                    }
+                }
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -868,11 +1075,42 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Method to check if creator URI exists. 
+     * If the creator URI does not exist, remove the authority id and try to save again.
+     * @throws Exception
+     * @param endpoint
+     * @param uri
+     * @param agentJS
+     */
+    private String checkCreatorURI(String endpoint, String uri, JSONObject creator, int creatorTypeId, String recordInfoString) throws Exception{
+        String asAgentJSON = aspaceClient.get(uri, null);
+        if(asAgentJSON == null){
+            if(creator.has("Identifier") && !creator.getString("Identifier").equals("")){
+                addChangeMessage("Not migrating authority id value "+ creator.getString("Identifier") +" in Creator record for "+ recordInfoString + " due to conflicting record migration failure");
+                creator.put("Identifier","");
+                JSONObject agentJS = mapper.convertCreator(creator, creatorTypeId);
+                String id = saveRecord(endpoint, agentJS.toString(), "Creator->" + recordInfoString);
+                if(!id.startsWith(endpoint + "/")){
+                    uri = endpoint + "/" + id;
+                } else {
+                    uri = id;
+                }
+            } else {
+                addErrorMessage("Non-existant ArchivesSpace URI returned for Creator-> "+ recordInfoString +", not able to migrate");
+                uri = null;
+            }
+        } 
+        return uri;
+    }
+
+    /**
      * Method to copy classification records
      *
      * @throws Exception
      */
     public void copyClassificationRecords() throws Exception {
+        currentRecordType = "Classification Record";
+        
         print("Copying Classification records ...");
 
         // update the progress so that the title changes
@@ -896,6 +1134,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
             JSONObject classification = records.getJSONObject(key);
 
             String arId = classification.getString("ID");
+
+            //set these so they can be referenced in the case of an error
+            currentRecordIdentifier = "DB ID: " + arId;
+            currentRecordDBID = arId;
 
             JSONObject classificationJS = mapper.convertClassification(classification);
 
@@ -1108,6 +1350,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copyAccessionRecords() throws Exception {
+        currentRecordType = "Accession Record";
+        
         print("Copying Accession records ...");
 
         // update the progress so that the title changes
@@ -1132,6 +1376,34 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             String arId = accession.getString("ID");
             String accessionTitle = accession.getString("Title");
+
+            //set these so they can be referenced in the case of an error
+            currentRecordIdentifier = "DB ID: " + arId;
+            currentRecordDBID = arId;
+
+            // check to see if we are only copying accessions for specific collections based on collection archon ID
+            if(collArchonIDsList != null) {
+                Boolean attachedToCollInList = false;
+                String notInList = "";
+                if(accession.has("Collections")) {
+                    JSONArray collectionIds = accession.getJSONArray("Collections");
+                    for(int i = 0; i < collectionIds.length(); i++) {
+                        String cid = collectionIds.getString(i);
+                        if(collArchonIDsList.contains(cid)){
+                            attachedToCollInList = true;
+                            break;
+                        } else {
+                            notInList += ", " + cid;
+                        }
+                    }
+                } else {
+                    notInList = ", no collection ID noted";
+                }
+                if(!attachedToCollInList){
+                    print("Not Copied: Accession not attached to Archon Collection ID in list: " + accessionTitle + notInList);
+                    continue;
+                }
+            }
 
             JSONObject accessionJS = mapper.convertAccession(accession);
 
@@ -1216,6 +1488,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @throws Exception
      */
     public void copyDigitalObjectRecords() throws Exception {
+        currentRecordType = "Digital Object Record";
+        
         print("Copying Digital Object records ...");
 
         // update the progress so that the title changes
@@ -1244,6 +1518,26 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             String arId = digitalObject.getString("ID");
             String digitalObjectTitle = digitalObject.getString("Title");
+
+            //set these so they can be referenced in the case of an error
+            currentRecordIdentifier = "DB ID: " + arId;
+            currentRecordDBID = arId;
+
+            // check to see if we are only copying digital objects for specific collections based on collection archon ID
+            String strCollectionID = digitalObject.getString("CollectionID");
+            if(collArchonIDsList != null && !collArchonIDsList.contains(strCollectionID)) {
+                print("Not Copied: Digital Object not attached to Archon Collection ID in list: " + digitalObjectTitle);
+                continue;
+            }
+
+            // check if title indicates it should not be migrated
+            if (hasToSkipSubstring(digitalObjectTitle)) {
+                String skippedRecordMessage = "Digital Object with Archon ID " + arId + " not copied (title indicating not to migrate): " + digitalObjectTitle;
+                addChangeMessage(skippedRecordMessage);
+                print(skippedRecordMessage);
+                updateProgress("Digital Objects", total, count);
+                continue;
+            }
 
             // create the batch import JSON array and dummy URI now
             JSONArray batchJA = new JSONArray();
@@ -1392,6 +1686,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
         }
 
         digitalObjectList.add(batchJA);
+        
+        if(collectionID != 0){
+            if(contentID != 0){
+                contentDigitalObjTotal++;
+            } else {
+                collDigitalObjTotal++;
+            }
+        }
     }
 
     /**
@@ -1432,6 +1734,20 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Method to check if a record title includes a substring indicating that it should not be migrated.
+     * @param titleString
+     */
+    private Boolean hasToSkipSubstring(String titleString){
+        Boolean result;
+        if(titleString != null && toSkipSubstring != null) {
+            result = titleString.contains(toSkipSubstring);
+        } else {
+            result = false;
+        }
+        return result;
+    }
+
+    /**
      * Method to copy resource records from one database to the next
      *
      * @throws Exception
@@ -1468,6 +1784,12 @@ public class ASpaceCopyUtil implements  PrintConsole {
         int count = 0;
         int maxBatchLength = 0;
 
+        //counts for collection content
+        int countWithCollContent = 0;
+        int successWithCollContent = 0;
+        int countCollContent = 0;
+        int successCollContent = 0;
+
         // if we in debug mode, then set total to max
         if(debug && max < total) total = max;
 
@@ -1490,6 +1812,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
             // get the record id
             String dbId = collection.getString("ID");
             int intID = Integer.parseInt(dbId);
+            
+            if (hasToSkipSubstring(collectionTitle) && collection.getInt("Enabled") != 1) {
+                String skippedRecordMessage = "Archon ID " + dbId + " not copied (title indicating not to migrate): " + collectionTitle;
+                addChangeMessage(skippedRecordMessage);
+                print(skippedRecordMessage);
+                updateProgress("Collection Records", total, count);
+                continue;
+            }
 
             // get the parent repository
             String repositoryID = collection.getString("RepositoryID");
@@ -1508,9 +1838,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
             // set the atId in the mapper object
             mapper.setCurrentCollectionRecordIdentifier(arId);
 
-            // check to see if we are not just copy a single resource
+            // check to see if we are not just copying a single resource based on collection identifier
             if(collectionsIDsList != null && !collectionsIDsList.contains(arId)) {
-                print("Not Copied: Collection not in list: " + collectionTitle);
+                print("Not Copied: Collection not in Collection identifier list: " + collectionTitle);
+                continue;
+            }
+            // check to see if we are not just copying a single resource based on archon ID
+            if(collArchonIDsList != null && !collArchonIDsList.contains(dbId)) {
+                print("Not Copied: Collection not in Archon ID list: " + collectionTitle);
                 continue;
             }
 
@@ -1576,6 +1911,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 // add any archival objects here
                 JSONObject resourceComponents = archonClient.getCollectionContentRecords(dbId);
 
+                //for tracking whether any content is added
+                Boolean addedCollContent = false;
+
                 // stores any component IDs that are referenced as parents but not actually in the database
                 HashSet<String> notFoundIDs = new HashSet<String>();
 
@@ -1604,8 +1942,17 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 // store physical content IDs we may not need to add an instance for since they have child physical content
                 HashSet<String> skipParentInstanceFor = new HashSet<String>();
 
+                // reference map of digital objects for the collection
+                HashMap<Integer, ArrayList<JSONArray>> collectionDOMap = digitalObjectMap.get(intID);
+
+                if(resourceComponents != null && resourceComponents.length()>0){
+                    countWithCollContent++;
+                    if(adjustCollectionContentType) updateCollectionContentTypes(resourceComponents, collectionDOMap);
+                }
+
                 Iterator<String> ckeys = resourceComponents.sortedKeys();
                 while (ckeys.hasNext()) {
+                    countCollContent++;
                     JSONObject component = resourceComponents.getJSONObject(ckeys.next());
                     String title = component.getString("Title");
 
@@ -1718,6 +2065,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
                             intellectualComponents.put(cid, componentJS);
 
                             print("Copied Resource Component: " + title + " :: " + cid + "\n");
+                            addedCollContent = true;
+                            successCollContent++;
                         } else {
                             print("Fail -- Resource Component to JSON: " + title);
                         }
@@ -1829,12 +2178,11 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
                 // add an instance that holds the location information
                 if(collection.has("Locations")) {
-                    addLocationInstances(resourceJS, collection.getJSONArray("Locations"), "text",
+                    addLocationInstances(resourceJS, collection.getJSONArray("Locations"), defaultInstanceType,
                             topContainerURIs, repoURI);
                 }
 
                 // add any digital instances that were attached to a component that was not found
-                HashMap<Integer, ArrayList<JSONArray>> collectionDOMap = digitalObjectMap.get(intID);
                 if (collectionDOMap != null) {
                     Integer[] notFoundKeys = collectionDOMap.keySet().toArray(new Integer[0]);
                     for (int id : notFoundKeys) {
@@ -1849,8 +2197,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 // add warning about any component IDs that were missing from Archon
                 if (notFoundIDs.size() != 0) {
                     StringBuilder errorMessage = new StringBuilder();
-                    errorMessage.append("Could not find ").append(notFoundIDs.size())
-                            .append(" component(s) for resource: ").append(arId);
+                    errorMessage.append("Components not found for ArchonID " + dbId + " -- could not find ").append(notFoundIDs.size())
+                            .append(" component(s) for collection with identifier: ").append(arId);
                     if (notFoundIDs.size() <= 20) {
                         errorMessage.append("\nNot found components:");
                         for (String id : notFoundIDs) errorMessage.append(" ").append(id);
@@ -1872,7 +2220,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 if (invalidParentIDs.size() != 0) {
                     StringBuilder errorMessage = new StringBuilder();
                     errorMessage.append("Invalid parent relationships found for ").append(invalidParentIDs.size())
-                            .append(" component(s) for resource: ").append(arId);
+                            .append(" component(s) for collection with identifier: ").append(arId).append(" (ArchonID " + dbId +")");
                     if (invalidParentIDs.size() <= 20) {
                         errorMessage.append("\nInvalid relationships found for components:");
                         for (String id : invalidParentIDs) errorMessage.append(" ").append(id);
@@ -1897,10 +2245,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     updateResourceURIMap(dbId, resourceURI);
                     incrementCopyCount();
 
+                    // update count for collections with collection content
+                    if(addedCollContent){
+                        successWithCollContent++;
+                    }
+
                     // update the copy message
                     updateRecordTotals("Instance Digital Objects", digitalObjectTotal, digitalObjectSuccess);
+                    updateRecordTotals("Instance Digital Objects at Collection level", collDigitalObjTotal, collDigitalObjSuccess);
+                    updateRecordTotals("Instance Digital Objects at Collection Content level", contentDigitalObjTotal, contentDigitalObjSuccess);
                     updateRecordTotals("Locations", locationTotal, locationSuccess);
                     updateRecordTotals("Collections", total, copyCount);
+
+                    // updates added for collection content
+                    updateRecordTotals("Collections with collection content", countWithCollContent, successWithCollContent);
+                    updateRecordTotals("Collection content", countCollContent, successCollContent);
 
                     print("Batch Copied Collection: " + collectionTitle + " :: " + resourceURI);
                 } else {
@@ -1915,12 +2274,20 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // update the number of digital records that were copied during processing of collection records
         updateRecordTotals("Instance Digital Objects", digitalObjectTotal, digitalObjectSuccess);
+        updateRecordTotals("Instance Digital Objects at Collection level", collDigitalObjTotal, collDigitalObjSuccess);
+        updateRecordTotals("Instance Digital Objects at Collection Content level", contentDigitalObjTotal, contentDigitalObjSuccess);
 
         // update the number of location records copied
         updateRecordTotals("Locations", locationTotal, locationSuccess);
 
         // update the number of resource actually copied
         updateRecordTotals("Collections", total, copyCount);
+
+        // update collections with collection content copied
+        updateRecordTotals("Collections with collection content", countWithCollContent, successWithCollContent);
+
+        // update collections with collection content copied
+        updateRecordTotals("Collection content", countCollContent, successCollContent);
     }
 
     /**
@@ -1996,6 +2363,57 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Method to adjust collection content to check if a physical and intellectual content type is
+     * both in the particular context or only physical.
+     * 
+     * 
+     * @param resourceComponents
+     * @throws Exception
+     */
+    public void updateCollectionContentTypes(JSONObject resourceComponents, HashMap<Integer, ArrayList<JSONArray>> collectionDOMap) throws Exception{
+        Iterator<String> ckeys = resourceComponents.sortedKeys();
+        while (ckeys.hasNext()) {
+            JSONObject component = resourceComponents.getJSONObject(ckeys.next());
+            int contentID = component.getInt("ID");
+            int contentType = component.getInt("ContentType");
+            if(contentType == 3){
+                Boolean physicalOnly = true;
+                String[] stringFieldsToCheck = {"Title","Description","Date"};
+                String[] arrayFieldsToCheck = {"Creators","Subjects"};
+                for(String strFieldName : stringFieldsToCheck){
+                    if(!component.getString(strFieldName).isEmpty()){
+                        physicalOnly = false;
+                        break;
+                    }
+                }
+                if(physicalOnly){
+                    for(String arrFieldName : arrayFieldsToCheck){
+                        if(component.getJSONArray(arrFieldName).length()>0){
+                            physicalOnly = false;
+                            break;
+                        }
+                    }
+                }
+                if(physicalOnly){
+                    Object object = component.get("Notes");
+                    if(object instanceof JSONObject) {
+                        physicalOnly = false;
+                    }
+                }
+                if(physicalOnly){
+                   if (collectionDOMap != null && collectionDOMap.get(contentID) != null){
+                        physicalOnly = false;
+                   }
+                }
+                //if no intellectual metadata found for the component, update content type to be 2 (only physical)
+                if(physicalOnly){
+                    component.put("ContentType","2");
+                }
+            }
+        }
+    }
+
+    /**
      * method to figure out what the container type and indicator should be for a linked location based on location content
      * sometimes the content field will be making an obvious reference to an existing container - this method identifies those
      * this could be made to work for more situations but its not really worth expending too much migration time on
@@ -2012,6 +2430,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // account for plural forms of Archon's default physical content types
         if (splitId[0].equalsIgnoreCase("boxes")) splitId[0] = "box";
         else if (splitId[0].equalsIgnoreCase("folders")) splitId[0] = "folder";
+        // add more to adjust plurals
+        else if(addMorePluralContainerTypes && splitId[0].equalsIgnoreCase("reels")) splitId[0] = "reel";
+        else if (addMorePluralContainerTypes && splitId[0].equalsIgnoreCase("volumes")) splitId[0] = "volume";
+        else if (addMorePluralContainerTypes && splitId[0].equalsIgnoreCase("items")) splitId[0] = "item";
 
         // try to find an Archon physical content type that matches
         // start with just the first word add add on a word at a time, checking for a match whenever a word is added
@@ -2029,18 +2451,46 @@ public class ASpaceCopyUtil implements  PrintConsole {
         if (indicatorStart == splitId.length - 1) containerIndicator = splitId[indicatorStart];
         else {
             StringBuilder indicatorSb = new StringBuilder();
-            for (int i = indicatorStart; i < splitId.length; i++) indicatorSb.append(splitId[i]);
-            containerIndicator = indicatorSb.toString();
+            if (indicatorStart < splitId.length) indicatorSb.append(splitId[indicatorStart]);
+            for (int i = indicatorStart+1; i < splitId.length; i++){
+                indicatorSb.append(" " + splitId[i]);
+            }
+            containerIndicator = indicatorSb.toString().trim();
 
         }
 
         // if no type was found, type will be empty and the indicator will be location content
-        if (containerTypeID == null) containerIndicator = content;
+        if (containerTypeID == null) {
+            containerIndicator = content;
+            //if no type found, provide a default label if specified if the first character is a number
+            Boolean likelyBoxNumber = isLikelyBoxNumber(content);
+            if(addDefaultContainerType && containerDefaultType != null && likelyBoxNumber){
+                containerTypeID = getContainerTypeArchonID(containerDefaultType);
+            } else if(noContainerTypeString != null){
+                containerTypeID = getContainerTypeArchonID(noContainerTypeString);
+            }
+        }
 
         // find the ASpace container type the Archon physical content type maps to
         containerType = enumUtil.getASpaceInstanceContainerType(containerTypeID);
 
         return new String[]{containerType, containerIndicator};
+    }
+
+    /**
+     * Method to check if a content string is likely a box number
+     * Checks whether it starts with a digit and if isn't a possible acccesion number
+     * 
+     * @param content
+     * @return
+     */
+    private Boolean isLikelyBoxNumber(String content){
+        Boolean possibleAccessionNumber = content.contains(".");
+        if(!possibleAccessionNumber && Character.isDigit(content.charAt(0))){
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -2076,7 +2526,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // create a json object for the instance
         JSONObject json = new JSONObject();
 
-        json.put("instance_type", "text");
+        json.put("instance_type", defaultInstanceType);
 
         // json object for the sub container
         JSONObject containerJS = new JSONObject();
@@ -2116,6 +2566,29 @@ public class ASpaceCopyUtil implements  PrintConsole {
             recordJS.put("instances", instanceJA);
         }
     }
+
+    /**
+    * method to check whether a string is likely a barcode (14 characters long)
+    * todo: also check that it consists of digits rather than letters or other characters
+    @param possibleBarcode
+    @return
+     */
+     private Boolean isBarcode(String possibleBarcode){
+        Boolean barcodeMatch = false;
+        if (!possibleBarcode.equals("null") && !possibleBarcode.isEmpty()){
+            if(possibleBarcode.length() == 14) {
+                barcodeMatch = true;
+            } else if(checkAlternativeBarcode){
+                for(int num : alternativeBarcodeLengths){
+                    if (possibleBarcode.length() == num){
+                        barcodeMatch = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return barcodeMatch;
+     }
 
     /**
      * method to add a top container to ASpace or return the URI of a previously added equivalent one
@@ -2158,7 +2631,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 topContainerURIs.put(containerKey, uri);
                 topContainerURIs.put(cid, uri);
             } else {
-                print("Fail -- Top Container: " + containerKey);
+                String topContainerCopyError = "Fail -- Top Container: " + containerKey;
+                print(topContainerCopyError);
+                addErrorMessage(topContainerCopyError);
                 return null;
             }
         }
@@ -2176,17 +2651,55 @@ public class ASpaceCopyUtil implements  PrintConsole {
     private void addLocationInfo(JSONObject containerJS, JSONObject location) throws Exception {
         // add the extent information
         String extentNote = "";
+        String extentString ="";
 
         if(location.has("Extent")) {
-            extentNote += location.getString("Extent") + " ";
-            extentNote += enumUtil.getASpaceExtentType(location.getInt("ExtentUnitID"));
+            extentString += location.getString("Extent");
+            if(!extentString.equals("0.00")){
+            String extentNoteUnit = enumUtil.getASpaceExtentType(location.getInt("ExtentUnitID"), ASpaceEnumUtil.UNMAPPED);
+            if(!extentNoteUnit.equals(ASpaceEnumUtil.UNMAPPED)){
+                extentNoteUnit = extentNoteUnit.replace("_"," ");
+            }
+                extentString = "noted as " + extentString + " " + extentNoteUnit;
+            } else {
+                extentString = "not noted";
         }
+        }
+        extentNote = "Extent of '" + location.getString("Content") + "' "+ extentString + " (data migrated from Archon)";
 
         // add a location record record now
         String building = location.getString("Location");
         String coordinate1 = location.getString("RangeValue");
         String coordinate2 = location.getString("Section");
         String coordinate3 = location.getString("Shelf");
+
+        Boolean hasBarcode = checkShelfForBarcode && isBarcode(location.getString("Shelf"));
+
+        String currentRecordInfo = currentRecordType + ", ArchonID " + currentRecordDBID + " ("+ location.getString("Content") +")";
+
+        //if shelf field for the location is a barcode, add that to the top container instead
+        if (hasBarcode) {
+            String existingBarcodeInfo = barcodesAddedMap.putIfAbsent(coordinate3, currentRecordInfo);
+            if(existingBarcodeInfo == null){
+                containerJS.put("barcode", coordinate3);
+            } else {
+                String barcodeError = "Barcode for " + currentRecordInfo + " already in use for " + existingBarcodeInfo + "; barcode not added to container";
+                addErrorMessage(barcodeError + "\n");
+                extentNote += " (shared barcode with " + existingBarcodeInfo + ": " + coordinate3 +")";
+            }
+            coordinate3 = "";
+        }
+        //if using custom location mapper, split section on separator into coordinate 2 or 3 if there is a barcode
+        //or if it is set to always split the section value
+        if(checkCustomArchonLocationMapper() && coordinate2 != null && coordinate2.length()>1){
+            if(hasBarcode || archonLocationMapper.getAlwaysSplitSectionValue()){
+                String[] splitSection = coordinate2.split(archonLocationMapper.getSectionSeparator(),2);
+                coordinate2 = splitSection[0].trim();
+                if(splitSection.length==2 && (coordinate3.isEmpty() || coordinate3 == "null")){
+                    coordinate3 = splitSection[1].trim();
+                }
+            }
+        }
 
         String locationURI = getLocationURI(building, coordinate1, coordinate2, coordinate3);
 
@@ -2203,6 +2716,58 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             locationsJA.put(locationJS);
 
+            //check whether the container already has location info
+            if(containerJS.has("container_locations")){
+                JSONArray existingLocationJA = containerJS.getJSONArray("container_locations");
+                if(existingLocationJA.length()>0){
+                    JSONObject existingLocationJS = existingLocationJA.getJSONObject(0);
+                    if(existingLocationJS.has("note")){
+                        String combinedExtentNote = existingLocationJS.getString("note");
+                        if(!extentNote.isEmpty()){
+                            combinedExtentNote += "; " + extentNote;
+                        }
+                        locationJS.put("note", combinedExtentNote);
+                    }
+                    if(existingLocationJS.has("ref")){
+                        String existingLocationURI = existingLocationJS.getString("ref");
+                        
+                        if(!existingLocationURI.equals(locationURI)){
+                            Boolean retainExistingLocation = false;
+                            String existingLocationKey = locationURIKeyMap.get(existingLocationURI);
+                            String newLocationKey = locationURIKeyMap.get(locationURI);
+                            if(hasBarcode){
+                                //prefer new location for anything with a barcode, unless the old location is a more specific version of the new one
+                                if(existingLocationKey.startsWith(newLocationKey)){
+                                    retainExistingLocation = true;
+                                } else {
+                                    retainExistingLocation = false;
+                                }
+                            } else if(location.getString("Shelf").isEmpty()||location.getString("Shelf").equals("null")){
+                                //prefer the existing location if there is nothing in the shelf field for the new one
+                                if(!existingLocationKey.startsWith(newLocationKey)){
+                                    addErrorMessage("Contradictory locations found for " + currentRecordInfo + ": "+ existingLocationKey + " (retained) vs. " + newLocationKey + " (not migrated; no barcode)\n");
+                                }
+                                retainExistingLocation = true;
+                            }
+                            if(retainExistingLocation){
+                                locationJS.put("ref", existingLocationJS.getString("ref"));
+                            }
+                        }
+                    }
+                }
+            }
+
+            //check whether the extent note is too long for the database and adjust as needed
+            if(locationJS.has("note")){
+                String fullExtentNote = locationJS.getString("note");
+                if(fullExtentNote.length() > 255){
+                    String truncExtentNote = fullExtentNote.substring(0,250)+"[...]";
+                    String truncationError = "Extent note too long for " + currentRecordType + " with ArchonID " + currentRecordDBID + " ("+ fullExtentNote.length() +" characters). Migrated in truncated form. Full note: " + fullExtentNote;
+                    addErrorMessage(truncationError + "\n");
+                    locationJS.put("note", truncExtentNote);
+                }
+            }
+
             // put all the records together now
             containerJS.put("container_locations", locationsJA);
         }
@@ -2217,7 +2782,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
      */
     private void addDigitalInstances(JSONObject json, int collectionID, int contentID, String recordTitle, String batchEndpoint) throws Exception {
 
-        JSONArray instancesJA = new JSONArray();
+        JSONArray instancesJA;
+        //check if the recordJS already has instances added
+        if(json.has("instances")){
+            instancesJA = json.getJSONArray("instances");
+        } else {
+            instancesJA = new JSONArray();
+        } 
 
         HashMap<Integer, ArrayList<JSONArray>> collectionMap = digitalObjectMap.get(collectionID);
         ArrayList<JSONArray> digitalObjectList;
@@ -2261,6 +2832,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 instancesJA.put(instanceJS);
 
                 if (debug) print("Added Digital Object Instance to " + recordTitle);
+
+                if(collectionID != 0){
+                    if(contentID != 0){
+                        contentDigitalObjSuccess++;
+                    } else {
+                        collDigitalObjSuccess++;
+                    }
+                }
             }
         }
 
@@ -2284,8 +2863,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     accessionsJA.put(mapper.getReferenceObject(accessionURI));
                     if (debug) print("Added Accession to Resource: " + arId);
                 } else {
-                    message = "Repository Mismatch Between Resource -- Accession: " +
-                            arId + " [ " + recordRepoURI + " ] / [ " + accessionURI + " ]\n";
+                    message = "Repository Mismatch Between Resource -- Accession (for collection with Archon ID: " + dbId + "); Resource Repository URI [ "+ recordRepoURI + " ] / Accession URI [ " + accessionURI + " ]\n";
                     addErrorMessage(message);
                 }
             }
@@ -2504,7 +3082,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
                                       HashMap<String, String> topContainerURIs, String repoURI) throws Exception {
         if (topContainerURIs == null) topContainerURIs = new HashMap<String, String>();
 
-        JSONArray instancesJA = new JSONArray();
+        JSONArray instancesJA;
+        //check if the recordJS already has instances added (e.g., from digital objects)
+        if(recordJS.has("instances")){
+            instancesJA = recordJS.getJSONArray("instances");
+        } else {
+            instancesJA = new JSONArray();
+        } 
 
         for (int i = 0; i < locations.length(); i++) {
 
@@ -2522,10 +3106,14 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         if (!id.equalsIgnoreCase(NO_ID)) {
                             print("Added Location to Top Container: all");
                         } else {
-                            print("Fail -- Add location to Top Container: all");
+                            String topContainerAllError = "Fail -- Add location to Top Container: all";
+                            print(topContainerAllError);
+                            addErrorMessage(topContainerAllError);
                         }
                     } catch (NullPointerException e) {
-                        print("Fail -- Add location to Top Container: all\nCould not load " + topContainerURI);
+                        String topContainerAllLoadError = "Fail -- Add location to Top Container: all\nCould not load " + topContainerURI;
+                        print(topContainerAllLoadError);
+                        addErrorMessage(topContainerAllLoadError);
                     }
                 }
                 continue;
@@ -2535,14 +3123,73 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             String containerType = info[0];
 
-            ArrayList<String> containerIndicators = getContainerIndicators(info[1]);
+            ArrayList<String> containerIndicators;
+
+            Boolean hasBarcode = checkShelfForBarcode && isBarcode(location.getString("Shelf"));
+            
+            if (hasBarcode || (instanceType.equals("accession") && doNotSplitAccessionLocationContent)) {
+                //keep the whole indicator string together
+                containerIndicators = new ArrayList<String>();
+                containerIndicators.add(info[1]);
+            } else {
+                //split indicator string based on commas or dashes to create separate instances
+                containerIndicators = getContainerIndicators(info[1]);
+            }
 
             for (String containerIndicator : containerIndicators) {
-
+                
                 String topContainerURI = null;
-                String containerKey = containerType + " " + containerIndicator;
+                String containerKey = (containerType + " " + containerIndicator).toLowerCase();
 
                 topContainerURI = topContainerURIs.get(containerKey);
+
+                //try alternative versions of the indicator to see if a match can be found
+                if(topContainerURI == null && !topContainerURIs.isEmpty()){
+                    ArrayList<String> modifiedIndicators = new ArrayList<String>();
+                    if(containerIndicator.length()>1 && containerIndicator.charAt(0)=='0'){
+                        //try looking for 1 or 2 leading zeroes to remove from the indicator (don't convert to int because an indicator could be 043A or something similiar)
+                        if(containerIndicator.charAt(1)=='0' && containerIndicator.length() >= 3){
+                            //if two leading zeros
+                            modifiedIndicators.add(containerIndicator.substring(2));                        
+                        } else {
+                            //if one leading zero
+                            modifiedIndicators.add(containerIndicator.substring(1));
+                        }
+                    }
+                    //try a version(s) without parenthetical note at end if there is a barcode
+                    if (isUniqueIndicatorWithParenthetical(hasBarcode, containerIndicator)) {
+                        modifiedIndicators.add(containerIndicator.replaceAll("\\s?\\(.*?\\)$",""));
+                        if(modifiedIndicators.size() > 1){
+                            ArrayList<String> tempModifiedIndicators = new ArrayList<String>();
+                            for(String modifiedIndicator : modifiedIndicators){
+                                if(modifiedIndicator.endsWith(")")){
+                                        tempModifiedIndicators.add(modifiedIndicator.replaceAll("\\s?\\(.*?\\)$",""));
+                                }
+                            }
+                            modifiedIndicators.addAll(tempModifiedIndicators);
+                        }
+                    }
+                    //try adding in leading zeroes if it resulted from splitting up a longer indicator string
+                    if(containerIndicators.size()>1){
+                        Boolean indicatorIsInteger = false;
+                        try {
+                            Integer indicatorInt = Integer.parseInt(containerIndicator);
+                            if(indicatorInt > 0 ) indicatorIsInteger = true;
+                        } catch (NumberFormatException e) {
+                            indicatorIsInteger = false;
+                        }
+                        if(indicatorIsInteger){
+                            modifiedIndicators.add("0" + containerIndicator);
+                            modifiedIndicators.add("00" + containerIndicator);
+                        }
+                    }
+                    //try these alternative equivalent indicators, stopping if a match is found
+                    for(String modifiedIndicator : modifiedIndicators){
+                        String modifiedContainerKey = (containerType + " " + modifiedIndicator).toLowerCase();
+                        topContainerURI = topContainerURIs.get(modifiedContainerKey);
+                        if(topContainerURI != null) break;
+                    }
+                }
 
                 if (topContainerURI == null) {
                     createInstanceForLocation(location, instanceType, containerType, containerIndicator, instancesJA,
@@ -2550,15 +3197,28 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 } else {
                     try {
                         JSONObject containerJS = new JSONObject(aspaceClient.get(topContainerURI, null));
-                        addLocationInfo(containerJS, location);
-                        String id = saveRecord(topContainerURI, containerJS.toString(), null);
-                        if (!id.equalsIgnoreCase(NO_ID)) {
-                            print("Added Location to Top Container: " + containerKey);
+                        //if both existing and new top container have barcodes that are different, create a new top container instead of modifying the one found
+                        if(hasBarcode && containerJS.has("barcode") && !containerJS.getString("barcode").equals("") && !containerJS.getString("barcode").equals(location.getString("Shelf"))){
+                            createInstanceForLocation(location, instanceType, containerType, containerIndicator, instancesJA, topContainerURIs, repoURI);
                         } else {
-                            print("Fail -- Add location to Top Container: " + containerKey);
+                            addLocationInfo(containerJS, location);
+                            //overwrite existing indicator with the parenthetical version
+                            if (isUniqueIndicatorWithParenthetical(hasBarcode, containerIndicator)){
+                                containerJS.put("indicator", containerIndicator);
+                            }
+                            String id = saveRecord(topContainerURI, containerJS.toString(), null);
+                            if (!id.equalsIgnoreCase(NO_ID)) {
+                                print("Added Location to Top Container: " + containerKey);
+                            } else {
+                                String topContainerError = "Fail -- Add location to Top Container: " + containerKey;
+                                print(topContainerError);
+                                addErrorMessage(topContainerError);
+                            }
                         }
                     } catch (NullPointerException e) {
-                        print("Fail -- Add location to Top Container: " + containerKey + "\nCould not load " + topContainerURI);
+                        String topContainerLoadError = "Fail -- Add location to Top Container: " + containerKey + "\nCould not load " + topContainerURI;
+                        print(topContainerLoadError);
+                        addErrorMessage(topContainerLoadError);
                     }
                 }
             }
@@ -2568,6 +3228,18 @@ public class ASpaceCopyUtil implements  PrintConsole {
         if (instancesJA.length() != 0) {
             recordJS.put("instances", instancesJA);
         }
+    }
+
+    /**
+     * Assesses whether the indicator has a parenthetical note at the end and is likely unique
+     * (due to having a barcode or barcode equivalent)
+     *
+     * @param hasBarcode
+     * @param containerIndicator
+     * @return
+     */
+    private boolean isUniqueIndicatorWithParenthetical(Boolean hasBarcode, String containerIndicator) {
+        return hasBarcode && containerIndicator.contains("(") && !containerIndicator.startsWith("(") && containerIndicator.endsWith(")");
     }
 
     /**
@@ -2586,7 +3258,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
             // a dash probably indicates a range
             // if the items on either side are numbers use these numbers and if so add these and all in between
-            if (str.contains("-")) {
+            if (expandLocationContentRange && str.contains("-")) {
+                Boolean convertOpenRange = false;
                 String[] bounds = str.split("-");
                 if (bounds.length == 2) {
                     try {
@@ -2599,6 +3272,10 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     } catch (NumberFormatException e) {
                         containerIndicators.add(str.trim());
                     }
+                } else if(convertOpenRange && bounds.length == 1 && str.endsWith("-")){
+                    containerIndicators.add(bounds[0].trim());
+                } else {
+                    containerIndicators.add(str.trim());
                 }
             } else {
                 containerIndicators.add(str.trim());
@@ -2654,31 +3331,76 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         String key = building;
 
+        String keySeparator = "_";
+
         // lets create a JSON object for the location in case we need to save it
         JSONObject locationJS = new JSONObject();
+
+        //get the custom building, floor, room, and area text for the location text ("building")
+        if(checkCustomArchonLocationMapper()){
+            String locationText = building;
+            String floor = "";
+            String room = "";
+            String area = "";
+            JSONObject locationComponents = archonLocationMapper.getLocationComponents(locationText);
+            if(locationComponents != null){
+                //find building for location text or use default text since this is a required field
+                if(locationComponents.has("Building")) {
+                    building = locationComponents.getString("Building");
+                } else {
+                    building = "Unknown";
+                    addErrorMessage("No building found for " + locationText);
+                }
+                floor = (locationComponents.has("Floor")) ? locationComponents.getString("Floor") : "";
+                room = (locationComponents.has("Room")) ? locationComponents.getString("Room") : "";
+                area = (locationComponents.has("Area")) ? locationComponents.getString("Area") : "";
+                //also overwrite default starting key to include the new building text
+                key = building;
+            }else{
+                String locationErrorType ="";
+                if(locationComponents == null){
+                    locationErrorType = "locations map is null";
+                }    
+                String locationErrorMessage = "Error with archonLocationMapper with mapping " + locationText + "; " + locationErrorType;
+                addErrorMessage(locationErrorMessage);
+            }
+            if (!floor.equals("null") && !floor.isEmpty()) {
+                locationJS.put("floor", floor);
+                key += keySeparator + floor;
+            }
+            if (!room.equals("null") && !room.isEmpty()) {
+                locationJS.put("room", room);
+                key += keySeparator + room;
+            }
+            if (!area.equals("null") && !area.isEmpty()) {
+                locationJS.put("area", area);
+                key += keySeparator + area;
+            }
+        }
+
         locationJS.put("building", building);
 
         if (!coordinate1.equals("null") && !coordinate1.isEmpty()) {
             locationJS.put("coordinate_1_label", "Range");
             locationJS.put("coordinate_1_indicator", coordinate1);
-            key += "-" + coordinate1;
+            key += keySeparator + coordinate1;
         } else {
             // put in dummy range so record saves
             locationJS.put("coordinate_1_label", "Range");
-            locationJS.put("coordinate_1_indicator", "0");
-            key += "-0";
+            locationJS.put("coordinate_1_indicator", "n/a");
+            key += keySeparator + "na";
         }
 
         if (!coordinate2.equals("null") && !coordinate2.isEmpty()) {
             locationJS.put("coordinate_2_label", "Section");
             locationJS.put("coordinate_2_indicator", coordinate2);
-            key += "-" + coordinate2;
+            key += keySeparator + coordinate2;
         }
 
         if (!coordinate3.equals("null") && !coordinate3.isEmpty()) {
             locationJS.put("coordinate_3_label", "Shelf");
             locationJS.put("coordinate_3_indicator", coordinate3);
-            key += "-" + coordinate3;
+            key += keySeparator + coordinate3;
         }
 
         if(locationURIMap.containsKey(key)) {
@@ -2691,6 +3413,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
             if (!id.equalsIgnoreCase(NO_ID)) {
                 String uri = ASpaceClient.LOCATION_ENDPOINT + "/" + id;
                 locationURIMap.put(key, uri);
+                locationURIKeyMap.put(uri, key);
                 locationSuccess++;
                 print("Copied Location: " + key + " :: " + id);
                 return uri;
@@ -2851,6 +3574,24 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // since this should never occur in a properly formatted AT database
         if(repoID != null && !repoID.isEmpty() && repositoryURIMap.containsKey(repoID)) {
             return repositoryURIMap.get(repoID);
+        } else if(repositoryURIMap.size()>1){
+            Integer minRepoKey = null;
+            for (String repoKey : repositoryURIMap.keySet()) {
+                try {
+                    int repoKeyVal = Integer.parseInt(repoKey);
+                    if (minRepoKey == null || repoKeyVal < minRepoKey) {
+                        minRepoKey = repoKeyVal;
+                    }
+                } catch(Exception e){
+                    continue;
+                }
+            }
+            if(minRepoKey != null){
+                repoID = String.valueOf(minRepoKey);
+                return repositoryURIMap.get(repoID);
+            } else {
+                return "/repositories/2";
+            }
         } else {
             return "/repositories/2";
         }
@@ -3060,8 +3801,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
      * @param message
      */
     public void addErrorMessage(String message) {
+        if(createSingleLineErrorMessages){
+            message = message.replaceAll("(?<=.)\\n(?=.)","; ").replaceAll(":;",":");
+        }
         errorBuffer.append(message).append("\n");
         incrementASpaceErrorCount();
+    }
+
+    /**
+     * Method to add an change log message to the buffer
+     *
+     * @param message
+     */
+    public void addChangeMessage(String message) {
+        changelogBuffer.append(message).append("\n");
+        changelogCount++;
     }
 
     /**
@@ -3077,6 +3831,15 @@ public class ASpaceCopyUtil implements  PrintConsole {
                 "\n\nNUMBER OF RECORDS COPIED: \n" + getTotalRecordsCopiedMessage();
 
         return errorMessage;
+    }
+
+    /**
+     * Method to return the change log messages that occurred during the transfer process
+     * @return
+     */
+    public String getChangeLogMessages() {
+        String changelogMessage = "RECORD CONVERSION CHANGES NOTED ( " + changelogCount + " ) ::\n\n" + changelogBuffer.toString();
+        return changelogMessage;
     }
 
     /**
@@ -3201,19 +3964,26 @@ public class ASpaceCopyUtil implements  PrintConsole {
     /**
      * Method to return the keys in inverted order. Used to correctly assign creator
      * relationships, otherwise a relationship is created to an agent that's not yet created
+     * Sorts those records coming from subject records last in the array since they likely
+     * have less information than the creator records.
      *
      * @param records
      * @return
      */
     private String[] getKeysInInvertedOrder(JSONObject records) {
-        String[] invertedKeys = new String[records.length()];
-        int start = records.length() - 1;
-
-        Iterator<String> keys = records.sortedKeys();
+        Iterator<String> keys = records.keys();
+        
+        List<String> keyList = new ArrayList<>();
         while (keys.hasNext()) {
-            invertedKeys[start] = keys.next();
-            start--;
+            keyList.add(keys.next());
         }
+        
+        keyList.sort(
+            Comparator.comparing((String k) -> k.startsWith("subject"))
+              .thenComparing(Comparator.reverseOrder())
+        );
+
+        String[] invertedKeys = keyList.toArray(new String[0]);
 
         return invertedKeys;
     }
@@ -3260,6 +4030,19 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Method to set the resources to copy by archon collection ID
+     *
+     * @param collArchonIDsList
+     */
+    public void setCollArchonIDToCopyList(ArrayList<String> collArchonIDsList) {
+        if(collArchonIDsList.size() != 0) {
+            this.collArchonIDsList = collArchonIDsList;
+        } else {
+            this.collArchonIDsList = null;
+        }
+    }
+
+    /**
      * Method to get the current
      * @return
      */
@@ -3281,6 +4064,22 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     /**
+     * Print the EnumIDsToValues list entries for a given starting string
+     * for testing/debugging 
+     * @param type
+     */
+    public void printEnumIDList(String type){
+        HashMap<String, String> enumIDList = enumUtil.getEnumListIDsToValues();
+        System.out.println("\n**Contents of Enum ID List for " + type + "**");
+        for (Map.Entry<String, String> e : enumIDList.entrySet()){
+            if(e.getKey().startsWith(type)){    
+                System.out.println("Key: " + e.getKey() + " Value: " + e.getValue());
+            }
+        }
+        System.out.println("**End contents of Enum ID List for " + type + "**");
+    }
+
+    /**
      * Method to test the conversion without having to startup the gui
      *
      * @param args
@@ -3288,14 +4087,59 @@ public class ASpaceCopyUtil implements  PrintConsole {
     public static void main(String[] args) throws JSONException {
         //String host = "http://archives-dev.library.illinois.edu/archondev/tracer";
         String host = "http://localhost/~nathan/archon";
-        ArchonClient archonClient = new ArchonClient(host, "admin", "admin");
+        String username = "admin";
+        String password = "admin";
+        if (UIUCPropertiesReader.getUIUCProperties() != null) {
+            host = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.source");
+            username = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.user");
+            password = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.password");
+        }
+        
+        ArchonClient archonClient = new ArchonClient(host, username, password);
 
         archonClient.getSession();
 
-        ASpaceCopyUtil aspaceCopyUtil  = new ASpaceCopyUtil(archonClient, "http://54.227.35.51:8089", "admin", "admin");
+        String aspaceHost = "http://54.227.35.51:8089";
+        String aspaceAdminUser = "admin";
+        String aspacePassword = "admin";
+
+        if (UIUCPropertiesReader.getUIUCProperties() != null) {
+            aspaceHost = UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.host");
+            aspaceAdminUser = UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.admin");
+            aspacePassword = UIUCPropertiesReader.getUIUCProperties().getProperty("aspace.password");
+        }
+
+        ASpaceCopyUtil aspaceCopyUtil  = new ASpaceCopyUtil(archonClient, aspaceHost, aspaceAdminUser, aspacePassword);
         aspaceCopyUtil.setSimulateRESTCalls(false);
         aspaceCopyUtil.getSession();
         aspaceCopyUtil.setBBCodeOption("-bbcode_html");
+
+        String archonInstance = "";
+        if (UIUCPropertiesReader.getUIUCProperties() != null) {
+            archonInstance = UIUCPropertiesReader.getUIUCProperties().getProperty("archon.prefix");
+        }
+        aspaceCopyUtil.setIdentifierPrefix(archonInstance);
+
+        ArchonIDListReader archonIDListReader = new ArchonIDListReader(archonInstance);
+        ArrayList<String> archonIDList = archonIDListReader.getRecordSubset();
+
+        if(archonIDList != null && !archonIDList.isEmpty()){
+            aspaceCopyUtil.setCollArchonIDToCopyList(archonIDList);
+        }else {
+            //limit collections for testing by archon collection ID
+            ArrayList<String> collArchonIDsList = new ArrayList<String>();
+            collArchonIDsList.add("8434");
+            aspaceCopyUtil.setCollArchonIDToCopyList(collArchonIDsList);
+        }
+        aspaceCopyUtil.setExpandLocationContent(true);
+        
+        archonClient.setDebugMode(false);
+        String testString = archonIDListReader.getSuffixForTesting();
+        if(testString != null && !testString.isEmpty()){
+            aspaceCopyUtil.mapper.setAppendTestIdentifier(testString);
+        } else {
+            aspaceCopyUtil.mapper.setAppendTestIdentifier("test");
+        }
 
         try {
             /*
@@ -3306,16 +4150,16 @@ public class ASpaceCopyUtil implements  PrintConsole {
             aspaceCopyUtil.copyEnumRecords();
             aspaceCopyUtil.copyRepositoryRecords();
             aspaceCopyUtil.mapRepositoryGroups();
-            aspaceCopyUtil.copyUserRecords();
+            /**aspaceCopyUtil.copyUserRecords();
             aspaceCopyUtil.copySubjectRecords();
-            aspaceCopyUtil.copyCreatorRecords();
+            aspaceCopyUtil.copyCreatorRecords();*/
             aspaceCopyUtil.copyClassificationRecords();
             aspaceCopyUtil.findAccessionRecordRepositories();
             aspaceCopyUtil.copyAccessionRecords();
             aspaceCopyUtil.copyDigitalObjectRecords();
             aspaceCopyUtil.copyCollectionRecords(100000);
 
-            aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
+            //aspaceCopyUtil.downloadDigitalObjectFiles(new File("/Users/nathan/temp/archon_files"));
 
             // removed all unused classifications
             aspaceCopyUtil.deleteUnlinkedClassifications();
@@ -3325,6 +4169,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
 
         // print out the error messages
         System.out.println("\n\nSave Errors:\n" + aspaceCopyUtil.getSaveErrorMessages());
+        // print out record changes
+        System.out.println("\n\nData changes:\n" + aspaceCopyUtil.getChangeLogMessages());
         System.exit(0);
     }
 
@@ -3333,6 +4179,8 @@ public class ASpaceCopyUtil implements  PrintConsole {
     }
 
     private String getContainerTypeArchonID(String value) {
-        return archonValuesToIDs.get(value.toLowerCase().trim());
+        String modifiedValue = value.toLowerCase().trim();
+        modifiedValue = modifiedValue.replace(" ", "_");
+        return archonValuesToIDs.get(modifiedValue);
     }
 }

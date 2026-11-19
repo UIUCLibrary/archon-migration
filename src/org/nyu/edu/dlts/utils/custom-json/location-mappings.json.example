@@ -1,0 +1,5 @@
+{
+    "Archon location description example1": {"LocationText": "Archon location description example1", "Building": "Example Building A", "Floor": "1", "Room": "", "Area": "Test Area 1A"},
+    "Archon location description example2": {"LocationText": "Archon location description example2", "Building": "Example Building A", "Floor": "2", "Room": "", "Area": "Test Area 2A"},
+    "Archon location description example3": {"LocationText": "Archon location description example3", "Building": "Example Building B", "Floor": "1", "Room": "102", "Area": "Test Area 1B"},
+}
