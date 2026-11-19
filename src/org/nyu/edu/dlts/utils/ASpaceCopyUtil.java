@@ -999,6 +999,21 @@ public class ASpaceCopyUtil implements  PrintConsole {
                     // agent_relationship_associative :: is_associative_with
                     agentRelationJS.put("jsonmodel_type", "agent_relationship_associative");
                     agentRelationJS.put("relator", "is_associative_with");
+                    
+                    //add change message if type was collapsed into associative category
+                    if(creatorRelationshipTypeID != 7){
+                        String changeMessageForRelationshipType = "Creator relationship type migrated as associative but should be ";
+                        if(creatorRelationshipTypeID == 1){
+                            // archon relationship typeid 1: identity
+                            changeMessageForRelationshipType += "identity: ";
+                        } else if(creatorRelationshipTypeID == 6){
+                            // archon relationship typeid 6: family
+                            changeMessageForRelationshipType += "family: ";
+                        } else {
+                            changeMessageForRelationshipType += "[unknown type: "+ creatorRelationshipTypeID + "]: ";
+                        }
+                        addChangeMessage(changeMessageForRelationshipType + uri);
+                    }
             }
 
             if(!agentRelationshipExists(relatedAgentsJA, agentRelationJS)){
