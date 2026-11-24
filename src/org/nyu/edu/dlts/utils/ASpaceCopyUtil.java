@@ -1012,7 +1012,7 @@ public class ASpaceCopyUtil implements  PrintConsole {
                         } else {
                             changeMessageForRelationshipType += "[unknown type: "+ creatorRelationshipTypeID + "]: ";
                         }
-                        addChangeMessage(changeMessageForRelationshipType + uri);
+                        String creatorURI = nameURIMap.get(creator.getString("ID"));addChangeMessage(changeMessageForRelationshipType + " [agent uri] " + creatorURI + " [related to] " + uri);
                     }
             }
 
