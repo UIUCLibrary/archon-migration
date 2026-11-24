@@ -109,6 +109,9 @@ public class ASpaceMapper {
     //add prefix to donor name; set to empty string
     private String prefixDonorName = "Donor";
 
+    //whether to add dates to the sort name if present in creator record
+    private Boolean addDatesToSortName = true;
+
     /**
      *  Main constructor
      */
@@ -635,6 +638,12 @@ public class ASpaceMapper {
             }
         }
 
+        //update sort name with dates if applicable
+        if(addDatesToSortName && record.has("Dates") && !record.getString("Dates").isEmpty()) {
+            String newSortName = sortName + " (" + record.getString("Dates") + ")";
+            namesJS.put("sort_name", newSortName);
+        }    
+
         agentJS.put("names", namesJA);
 
         addArchonSourceToAgent(record, agentJS, false);
@@ -844,7 +853,7 @@ public class ASpaceMapper {
         if(prefixDonorName != null && !prefixDonorName.equals("")){
             sortName = prefixDonorName + ": " + sortName;
         }
-        namesJS.put("sort_name", sortName);
+        if(addDatesToSortName) namesJS.put("sort_name", sortName);
         namesJS.put("name_order", "direct");
 
         agentJS.put("agent_type", "agent_person");
