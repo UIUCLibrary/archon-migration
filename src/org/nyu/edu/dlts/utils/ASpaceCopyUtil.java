@@ -237,6 +237,9 @@ public class ASpaceCopyUtil implements  PrintConsole {
     //create single line error messages
     private Boolean createSingleLineErrorMessages = true;
 
+    //block migration of all user records
+    private Boolean doNotMigrateUserRecords = true;
+
     /**
      * The main constructor, used when running as a stand alone application
      *
@@ -577,7 +580,13 @@ public class ASpaceCopyUtil implements  PrintConsole {
         // update the progress bar here to indicate loading of records
         updateProgress("Users", 0, 0);
 
-        JSONObject records = archonClient.getUserRecords();
+        JSONObject records;
+        if(doNotMigrateUserRecords){
+            records = new JSONObject();
+            addChangeMessage("Migration of user records intentionally blocked.");
+        } else {
+            records = archonClient.getUserRecords();
+        }
 
         // these are used to update the progress bar
         int total = records.length();
